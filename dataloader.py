@@ -171,6 +171,10 @@ class _template_sampled_data_format(sampled_data):
         """
         super(self.__class__,self).__init__(*args,**kwargs)
 
+        # get time series
+        datafile = 'FILENAME.DAT'
+        self.ts = TimeSeries(self.outputDir,datafile)
+
         # set convenience variables
         NX = self.NX
         NY = self.NY
@@ -225,7 +229,7 @@ class foam_ensight_array(sampled_data):
 
         # read mesh
         with open(os.path.join(self.ts.dirList[0],self.prefix+'.mesh'),'r') as f:
-            for _ in range(8): # skip header
+            for _ in range(8):  # skip header
                 f.readline()
             N = int(f.readline())
             xdata = np.zeros(3*N)
