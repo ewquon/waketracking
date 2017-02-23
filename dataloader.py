@@ -53,9 +53,11 @@ class sampled_data(object):
             self.x = savedarrays['x']
             self.y = savedarrays['y']
             self.z = savedarrays['z']
-            self.data = savedarrays['data']
             assert(self.x.shape == self.y.shape == self.z.shape)
+
+            self.data = savedarrays['data']
             try:
+                self.Ntimes = self.data.shape[0]
                 self.NX, self.NY, self.NZ = self.x.shape
                 self.datasize = self.data.shape[4]
                 if self.data.shape[4] == datasize \
@@ -73,13 +75,9 @@ class sampled_data(object):
         if self.datasize==1:
             s = 'Scalar data array'
             s += ' with shape ({:d},{:d},{:d})'.format(self.NX,self.NY,self.NZ)
-            if self.ts is not None:
-                s += ' in a series with ' + str(self.ts)
         elif self.datasize==3:
             s = 'Vector data array'
             s += ' with shape ({:d},{:d},{:d})'.format(self.NX,self.NY,self.NZ)
-            if self.ts is not None:
-                s += ' in a series with ' + str(self.ts)
         else:
             s = str(self.datasize)+'-D vector data array'
             s += ' with shape ({:d},{:d},{:d})'.format(self.NX,self.NY,self.NZ)
@@ -93,22 +91,49 @@ class sampled_data(object):
         if i0 is not None and i0==i1:
             print 'Slicing data at i=',i0
             print '  x ~=',np.mean(self.x[i0,:,:])
-            x1 = self.y[i0,:,:]
-            x2 = self.z[i0,:,:]
+            x1 = self.y[i0,j0:j1,k0:k1]
+            x2 = self.z[i0,j0:j1,k0:k1]
             u = self.data[:,i0,:,:,:]
         elif j0 is not None and j0==j1:
             print 'Slicing data at j=',j0
             print '  y ~=',np.mean(self.y[:,j0,:])
-            x1 = self.x[:,j0,:]
-            x2 = self.z[:,j0,:]
+            x1 = self.x[i0:i1,j0,k0:k1]
+            x2 = self.z[i0:i1,j0,k0:k1]
             u = self.data[:,:,j0,:,:]
         elif k0 is not None and k0==k1:
             print 'Slicing data at k=',k0
             print '  z ~=',np.mean(self.z[:,:,k0])
-            x1 = self.x[:,:,k0]
-            x2 = self.y[:,:,k0]
+            x1 = self.x[i0:i1,j0:j1,k0]
+            x2 = self.y[i0:i1,j0:j1,k0]
             u = self.data[:,:,:,k0,:]
+        else:
+            print 'Slicing ranges ambiguous:',i0,i1,j0,j1,k0,k1
+            return None
         return x1,x2,u
+
+    def sliceI(self,i):
+        """ Return slice through the dimension 1 """
+        if i >= 0 and i < self.NX:
+            return self._slice(i0=i,i1=i)
+        else:
+            print 'I=',i,'outside of range [ 0,',self.NX,']'
+            return None
+
+    def sliceJ(self,j):
+        """ Return slice through the dimension 2 """
+        if j >= 0 and j < self.NY:
+            return self._slice(j0=j,j1=j)
+        else:
+            print 'J=',j,'outside of range [ 0,',self.NY,']'
+            return None
+
+    def sliceK(self,k):
+        """ Return slice through the dimension 3 """
+        if k >= 0 and k < self.NZ:
+            return self._slice(k0=k,k1=k)
+        else:
+            print 'K=',k,'outside of range [ 0,',self.NZ,']'
+            return None
 
     def slice_at(self,xs=None,ys=None,zs=None):
         """ Returns a set of 2D data (x1,x2,u) nearest to the specified
@@ -120,12 +145,45 @@ class sampled_data(object):
         Example: for an x-slice (xs is not None), N1=NY and N2=NZ
         """
         if xs is not None:
-            i0 = i1 = 0
+            xmid = self.x[:,self.NY/2,self.NZ/2]
+            i0 = np.argmin(np.abs(xmid-xs))
+            return self.sliceI(i0)
         elif ys is not None:
-            j0 = j1 = 0
+            ymid = self.y[self.NX/2,:,self.NZ/2]
+            j0 = np.argmin(np.abs(ymid-ys))
+            return self.sliceJ(j0)
         elif zs is not None:
-            k0 = k1 = 0
-        return _slice(i0,i1,j0,j1,k0,k1)
+            zmid = self.z[self.NX/2,self.NY/2,:]
+            k0 = np.argmin(np.abs(zmid-zs))
+            return self.sliceK(k0)
+        else:
+            return None
+
+class _template_sampled_data_format(sampled_data):
+    """ Template for other data readers
+    
+    Inherits superclass sampled_data.
+    """
+    def __init__(self,*args,**kwargs):
+        """ DESCRIPTION HERE
+
+        """
+        super(self.__class__,self).__init__(*args,**kwargs)
+
+        # set convenience variables
+        NX = self.NX
+        NY = self.NY
+        NZ = self.NZ
+
+        # read mesh
+        self.x = None
+        self.y = None
+        self.z = None
+
+        # read data
+        self.data = None
+        self.dataReadFrom = None
+
 
 class foam_ensight_array(sampled_data):
     """ OpenFOAM array sampling data in Ensight format
@@ -144,11 +202,19 @@ class foam_ensight_array(sampled_data):
         once from the first directory)
         """
         super(self.__class__,self).__init__(*args,**kwargs)
-        if self.dataReadFrom is not None:
-            return
+
         # get time series
         datafile = self.prefix+'.000.U'
         self.ts = TimeSeries(self.outputDir,datafile)
+
+        if self.dataReadFrom is not None:
+            # Previously saved $npzdata was read in super().__init__
+            if self.Ntimes == self.ts.Ntimes:
+                return
+            else:
+                print self.dataReadFrom,'has',self.Ntimes,'data series,', \
+                    'expected',self.ts.Ntimes
+
         self.Ntimes = self.ts.Ntimes
 
         # set convenience variables
