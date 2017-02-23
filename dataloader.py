@@ -5,19 +5,20 @@ import numpy as np
 from timeseries import TimeSeries
 
 class sampled_data(object):
-    """ Generic regularly sampled data object """
+    """Generic regularly sampled data object"""
 
     def __init__(self,
             outputDir='.', prefix=None,
             NX=1, NY=None, NZ=None, datasize=3,
             npzdata='arrayData.npz'
             ):
-        """ Attempts to read data with shape (Ntimes,NX,NY,NZ,datasize)
+        """Attempts to read data with shape (Ntimes,NX,NY,NZ,datasize)
         The $npzdata keyword indicates the compressed npz file to load
         from and save to.
 
         All inherited readers should call this generic data reader for
         consistency. The object should contain:
+
         * ts: TimeSeries object with information regarding the location
               of the data (None for raw data)
         * Ntimes: Number of output time directories
@@ -112,7 +113,7 @@ class sampled_data(object):
         return x1,x2,u
 
     def sliceI(self,i):
-        """ Return slice through the dimension 1 """
+        """Return slice through the dimension 1"""
         if i >= 0 and i < self.NX:
             return self._slice(i0=i,i1=i)
         else:
@@ -120,7 +121,7 @@ class sampled_data(object):
             return None
 
     def sliceJ(self,j):
-        """ Return slice through the dimension 2 """
+        """Return slice through the dimension 2"""
         if j >= 0 and j < self.NY:
             return self._slice(j0=j,j1=j)
         else:
@@ -128,7 +129,7 @@ class sampled_data(object):
             return None
 
     def sliceK(self,k):
-        """ Return slice through the dimension 3 """
+        """Return slice through the dimension 3"""
         if k >= 0 and k < self.NZ:
             return self._slice(k0=k,k1=k)
         else:
@@ -136,7 +137,7 @@ class sampled_data(object):
             return None
 
     def slice_at(self,x=None,y=None,z=None):
-        """ Returns a set of 2D data (x1,x2,u) nearest to the specified
+        """Returns a set of 2D data (x1,x2,u) nearest to the specified
         slice location.
 
         * x1,x2: has dimensions (N1,N2)
@@ -160,12 +161,12 @@ class sampled_data(object):
             return None
 
 class _template_sampled_data_format(sampled_data):
-    """ Template for other data readers
+    """TEMPLATE for other data readers
     
     Inherits superclass sampled_data.
     """
     def __init__(self,*args,**kwargs):
-        """ DESCRIPTION HERE
+        """DESCRIPTION HERE
 
         """
         super(self.__class__,self).__init__(*args,**kwargs)
@@ -186,13 +187,13 @@ class _template_sampled_data_format(sampled_data):
 
 
 class foam_ensight_array(sampled_data):
-    """ OpenFOAM array sampling data in Ensight format
+    """OpenFOAM array sampling data in Ensight format
     
     Inherits superclass sampled_data.
     """
 
     def __init__(self,*args,**kwargs):
-        """ Reads time series data from subdirectories in $outputDir.
+        """Reads time series data from subdirectories in $outputDir.
         Each time subdirectory should contain a file named $prefix.000.U
 
         If NY or NZ are set to None, then the array dimensions 

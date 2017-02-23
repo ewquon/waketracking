@@ -1,0 +1,6 @@
+*******
+Samples
+*******
+
+Reference journal article
+
