@@ -89,20 +89,20 @@ class sampled_data(object):
 
     def _slice(self,i0=None,i1=None,j0=None,j1=None,k0=None,k1=None):
         if i0 is not None and i0==i1:
-            print 'Slicing data at i=',i0
-            print '  x ~=',np.mean(self.x[i0,:,:])
+            print 'Slicing data at i=',i0, \
+                  ' x ~=',np.mean(self.x[i0,:,:])
             x1 = self.y[i0,j0:j1,k0:k1]
             x2 = self.z[i0,j0:j1,k0:k1]
             u = self.data[:,i0,:,:,:]
         elif j0 is not None and j0==j1:
-            print 'Slicing data at j=',j0
-            print '  y ~=',np.mean(self.y[:,j0,:])
+            print 'Slicing data at j=',j0, \
+                  ' y ~=',np.mean(self.y[:,j0,:])
             x1 = self.x[i0:i1,j0,k0:k1]
             x2 = self.z[i0:i1,j0,k0:k1]
             u = self.data[:,:,j0,:,:]
         elif k0 is not None and k0==k1:
-            print 'Slicing data at k=',k0
-            print '  z ~=',np.mean(self.z[:,:,k0])
+            print 'Slicing data at k=',k0, \
+                  ' z ~=',np.mean(self.z[:,:,k0])
             x1 = self.x[i0:i1,j0:j1,k0]
             x2 = self.y[i0:i1,j0:j1,k0]
             u = self.data[:,:,:,k0,:]
@@ -135,7 +135,7 @@ class sampled_data(object):
             print 'K=',k,'outside of range [ 0,',self.NZ,']'
             return None
 
-    def slice_at(self,xs=None,ys=None,zs=None):
+    def slice_at(self,x=None,y=None,z=None):
         """ Returns a set of 2D data (x1,x2,u) nearest to the specified
         slice location.
 
@@ -144,17 +144,17 @@ class sampled_data(object):
 
         Example: for an x-slice (xs is not None), N1=NY and N2=NZ
         """
-        if xs is not None:
+        if x is not None:
             xmid = self.x[:,self.NY/2,self.NZ/2]
-            i0 = np.argmin(np.abs(xmid-xs))
+            i0 = np.argmin(np.abs(xmid-x))
             return self.sliceI(i0)
-        elif ys is not None:
+        elif y is not None:
             ymid = self.y[self.NX/2,:,self.NZ/2]
-            j0 = np.argmin(np.abs(ymid-ys))
+            j0 = np.argmin(np.abs(ymid-y))
             return self.sliceJ(j0)
-        elif zs is not None:
+        elif z is not None:
             zmid = self.z[self.NX/2,self.NY/2,:]
-            k0 = np.argmin(np.abs(zmid-zs))
+            k0 = np.argmin(np.abs(zmid-z))
             return self.sliceK(k0)
         else:
             return None
