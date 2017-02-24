@@ -6,7 +6,8 @@ SPHINXOPTS    =
 SPHINXBUILD   = sphinx-build
 SPHINXPROJ    = pyWakeTracking
 SOURCEDIR     = .
-BUILDDIR      = _build
+#BUILDDIR      = _build
+BUILDDIR      = $(HOME)/ewquon.github.io/waketracking
 
 # Put it first so that "make" without argument is like "make help".
 help:
