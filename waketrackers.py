@@ -1,4 +1,6 @@
 import os
+import importlib
+import inspect
 
 import matplotlib.pyplot as plt
 import matplotlib.path as mpath
@@ -6,15 +8,46 @@ import matplotlib.patches as mpatch
 
 import contour
 
-class WakeTracker(object):
+def track(*args,**kwargs):
+    """Returns the specified waketracker object.
+
+    Arguments and keyword arguments are passed to the resultant object.
+
+    Parameters
+    ----------
+    method : string
+        Should correspond to a Tracker class object.
+    """
+    trackerList = {}
+    for f in os.listdir(os.path.dirname(__file__)):
+        if f.endswith('WakeTracker.py'):
+            mod = importlib.import_module('waketracking.'+f[:-3])
+            for name,cls in inspect.getmembers(mod,inspect.isclass):
+                if cls.__module__ == mod.__name__:
+                    trackerList[name] = cls
+        
+    try:
+        method = kwargs['method']
+        assert(method in trackerList.keys())
+    except (KeyError,AssertionError):
+        print "Need to specify 'method' as one of:"
+        for name,tracker in trackerList.iteritems():
+            print '  {:s} ({:s})'.format(name,tracker.__module__)
+        return None
+    else:
+        tracker = trackerList[method]
+        print tracker
+        return tracker(*args,**kwargs)
+
+class waketracker(object):
     """A general class for wake tracking operations.
 
     Tracking algorithms are expected to be implemented as children of
     this class.
     """
 
-    def __init__(self,dataLoaderObject):
-        print 'Processing data from',dataLoaderObject
+    def __init__(self,*args,**kwargs):
+        print 'Processing data...'
 
     def fixTrajectoryErrors(self,update=False,istart=0,iend=None):
         """Some wake detection algorithms are not guaranteed to provide
@@ -94,16 +127,110 @@ class WakeTracker(object):
         self.ax.set_ylabel(r'$z (m)$', fontsize=14)
         #self.ax.set_title('Wake tracking method: {:}'.format(self.wakeTracking))
 
+    def plotContour(self,
+                    itime,
+                    cmin=-5.0,cmax=5.0,
+                    cmap='jet',
+                    markercolor='w',
+                    writepng=False,name='',
+                    dpi=100):
+        """Plot/update contour and center marker at time ${itime}.
+        
+        Parameters
+        ----------
+        itime : integer
+            Index of the wake snapshot to plot.
+        cmin,cmax : float, optional
+            Range of contour values to plot.
+        cmap : string, optional
+            Colormap for the contour plot.
+        markercolor : any matplotlib color, optional
+            To plot the detected wake center, otherwise set to None.
+        writepng : boolean, optional
+            If True, save image to
+            ${outdir}/<timeName>_${name}${downD}D_U.png
+        """ 
+        if not self.plotInitialized:
+            self._initPlot()  # first time
 
-class ContourWakeTracker(WakeTracker):
+            self.plot_clevels = np.linspace(cmin, cmax, 100)
+            self.plotobj_cf = self.ax.contourf(self.yg, self.zg, self.u[itime,:,:],
+                                               self.plot_clevels, cmap=cmap, extend='both')
+
+            # add marker for detected wake center
+            if markercolor is not None:
+                self.plotobj_ctr, = self.ax.plot(self.ywake[itime], self.zwake[itime], '+',
+                                                 color=markercolor, alpha=0.5,
+                                                 markersize=10,
+                                                 markeredgewidth=1.)
+                self.plotobj_crc, = self.ax.plot(self.ywake[itime], self.zwake[itime], 'o',
+                                                 color=markercolor, alpha=0.5,
+                                                 markersize=10,
+                                                 markeredgewidth=1.,
+                                                 markeredgecolor=markercolor )
+
+            # add colorbar
+            cb_ticks = np.linspace(cmin, cmax, 11)
+            cb = self.fig.colorbar( self.plotobj_cf, ticks=cb_ticks, label=r'$U \ (m/s)$' )
+
+            # add time annotation
+            #self.plotobj_txt = self.ax.text(0.98, 0.97,'t={:.1f}'.format(self.t[itime]),
+            #        horizontalalignment='right', verticalalignment='center',
+            #        transform=self.ax.transAxes)
+
+            self.plotInitialized = True
+
+        else:
+            # update plot
+            for i in range( len(self.plotobj_cf.collections) ):
+                self.plotobj_cf.collections[i].remove()
+            self.plotobj_cf = self.ax.contourf(
+                    self.yg, self.zg, self.u[itime,:,:],
+                    self.plot_clevels, cmap=cmap, extend='both')
+
+            if not markercolor=='':
+                self.plotobj_ctr.set_data(self.ywake[itime], self.zwake[itime])
+                self.plotobj_crc.set_data(self.ywake[itime], self.zwake[itime])
+            try:
+                for i in range(len(self.plotobj_cnt.collections)):
+                    self.plotobj_cnt.collections[i].remove()
+                self.plotobj_cnt = self.ax.contour(
+                        self.yg, self.zg, self.u[itime,:,:], [self.Clevels[itime]],
+                        colors='w', linestyles='-', linewidths=2)
+            except: pass
+
+        if writepng:
+            if name: name += '_'
+            fname = os.path.join(
+                    self.outdir,
+                    '{:g}_{:s}{:d}D_U.png'.format(float(self.dirs[itime]),name,self.downD)
+                    )
+            self.fig.savefig(fname, dpi=dpi)
+            print 'Saved',fname
+
+    def printSnapshots(self,**kwargs):
+        """Write out all snapshots to $outdir.
+
+        See plotContour for keyword arguments.
+        """ 
+        kwargs['writepng'] = True
+        if self.wakeTracking:
+            print 'Outputting snapshots (wake tracking method: {:})'.format(self.wakeTracking)
+            for itime in range(self.Ntimes):
+                self.plotContour(itime,**kwargs)
+        else:
+            print 'Wake centers have not been calculated!'
+
+
+class contourwaketracker(waketracker):
     """Class for wake tracking based on (velocity) contours
     
     Inherits superclass WakeTracker
     """
 
-    def __init__(self,dataLoaderObject):
-        super(self.__class__,self).__init__(*args,**kwargs)
-        print 'Processing data from',dataLoaderObject
+    def __init__(self,*args,**kwargs):
+        print 'Contour-based wake tracker',self.__class__
+        super(contourwaketracker,self).__init__(*args,**kwargs)
 
     def _findContourCenter(self,
                            itime,
@@ -232,113 +359,28 @@ class ContourWakeTracker(WakeTracker):
         except:
             print pklname,'was not read'
 
-    def plotContour(self,
-                    itime,
-                    cmin=-5.0,cmax=5.0,
-                    cmap='jet',
-                    markercolor='w',
-                    plotpath=True,
-                    writepng=False,name='',
-                    dpi=100):
-        """Plot/update contour and center marker at time ${itime}.
-        
-        Parameters
-        ----------
-        itime : integer
-            Index of the wake snapshot to plot.
-        cmin,cmax : float, optional
-            Range of contour values to plot.
-        cmap : string, optional
-            Colormap for the contour plot.
-        markercolor : any matplotlib color, optional
-            To plot the detected wake center, otherwise set to None.
+    def plotContour(self,itime,**kwargs):
+        """Overridden plotContour function to include the calculated 
+        wake contour outline.
+
+        See waketracker.plotContour for more information
+
+        Additional Parameters
+        ---------------------
         plotpath : boolean, optional
-            Whether to plot the identified contour path (as an outline).
-        writepng : boolean, optional
-            If True, save image to
-            ${outdir}/<timeName>_${name}${downD}D_U.png
-        """ 
-        if not self.plotInitialized:
-            self._initPlot()  # first time
-
-            self.plot_clevels = np.linspace(cmin, cmax, 100)
-            self.plotobj_cf = self.ax.contourf(self.yg, self.zg, self.u[itime,:,:],
-                                               self.plot_clevels, cmap=cmap, extend='both')
-
-            # add marker for detected wake center
-            if markercolor is not None:
-                self.plotobj_ctr, = self.ax.plot(self.ywake[itime], self.zwake[itime], '+',
-                                                 color=markercolor, alpha=0.5,
-                                                 markersize=10,
-                                                 markeredgewidth=1.)
-                self.plotobj_crc, = self.ax.plot(self.ywake[itime], self.zwake[itime], 'o',
-                                                 color=markercolor, alpha=0.5,
-                                                 markersize=10,
-                                                 markeredgewidth=1.,
-                                                 markeredgecolor=markercolor )
-
-            # add time annotation
-            #self.plotobj_txt = self.ax.text(0.98, 0.97,'t={:.1f}'.format(self.t[itime]),
-            #        horizontalalignment='right', verticalalignment='center',
-            #        transform=self.ax.transAxes)
-
-            # add colorbar
-            cb_ticks = np.linspace(cmin, cmax, 11)
-            cb = self.fig.colorbar( self.plotobj_cf, ticks=cb_ticks, label=r'$U \ (m/s)$' )
-
-            self.plotInitialized = True
-
-        else:
-            # update plot
-            for i in range( len(self.plotobj_cf.collections) ):
-                self.plotobj_cf.collections[i].remove()
-            self.plotobj_cf = self.ax.contourf(
-                    self.yg, self.zg, self.u[itime,:,:],
-                    self.plot_clevels, cmap=cmap, extend='both')
-
-            if not markercolor=='':
-                self.plotobj_ctr.set_data(self.ywake[itime], self.zwake[itime])
-                self.plotobj_crc.set_data(self.ywake[itime], self.zwake[itime])
+            Plot the wake contour path.
+        """
+        if self.plotInitialized and plotpath:
             try:
-                for i in range(len(self.plotobj_cnt.collections)):
-                    self.plotobj_cnt.collections[i].remove()
-                self.plotobj_cnt = self.ax.contour(
-                        self.yg, self.zg, self.u[itime,:,:], [self.Clevels[itime]],
-                        colors='w', linestyles='-', linewidths=2)
+                self.plotobj_pth.remove()
             except: pass
 
-            if plotpath:
-                try:
-                    self.plotobj_pth.remove()
-                except: pass
+        super(contourwaketracker,self).plotContour(itime,**kwargs)
 
         if plotpath:
-            # add contour if available
             try:
                 path = mpath.Path(self.paths[itime])
                 self.plotobj_pth = mpatch.PathPatch(path,edgecolor='w',facecolor='none',ls='-')
                 self.ax.add_patch(self.plotobj_pth)
             except: pass
-
-        if writepng:
-            if name: name += '_'
-            fname = os.path.join(
-                    self.outdir,
-                    '{:g}_{:s}{:d}D_U.png'.format(float(self.dirs[itime]),name,self.downD)
-                    )
-            self.fig.savefig(fname, dpi=dpi)
-            print 'Saved',fname
-
-    def printSnapshots(self,**kwargs):
-        """Write out all snapshots to $outdir.
-
-        See plotContour for keyword arguments.
-        """ 
-        kwargs['writepng'] = True
-        if self.wakeTracking:
-            print 'Outputting snapshots (wake tracking method: {:})'.format(self.wakeTracking)
-            for itime in range(self.Ntimes):
-                self.plotContour(itime,**kwargs)
-        else:
-            print 'Wake centers have not been calculated!'
 

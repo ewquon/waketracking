@@ -1,6 +1,10 @@
-from waketracker import WakeTracker
+import os
+import importlib
 
-class const_area(WakeTracker):
+from waketrackers import contourwaketracker
+import contour
+
+class ConstantArea(contourwaketracker):
     """ Identifies a wake as a region with velocity contour enclosing an
     area closest to the rotor (or another specified reference area).
 
@@ -10,5 +14,7 @@ class const_area(WakeTracker):
     This is the fastest of the contour-based tracking methods.
     """
 
-    def __init__(self):
-        print 'constant area method'
+    def __init__(self,*args,**kwargs):
+        print 'CONSTANT AREA METHOD'
+        super(self.__class__,self).__init__(*args,**kwargs)
+
