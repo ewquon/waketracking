@@ -1,0 +1,172 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Methodology &#8212; waketracking  documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Usage" href="usage.html" />
+    <link rel="prev" title="Python Wake Tracking" href="index.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="methodology">
+<h1>Methodology<a class="headerlink" href="#methodology" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="gaussian-fit-approach">
+<h2>Gaussian-Fit Approach<a class="headerlink" href="#gaussian-fit-approach" title="Permalink to this headline">¶</a></h2>
+<p>The Gaussian test function <span class="math">\(\phi\)</span> is defined as</p>
+<div class="math">
+\[\phi(y,z) = -u_{max} \exp \left[ -\frac{1}{2}\left( \frac{(\Delta y)^2}{\sigma_y^2} + \frac{(\Delta z)^2}{\sigma_z^2} \right) \right]\]</div>
+<p>where the <span class="math">\(\Delta y\)</span> and <span class="math">\(\Delta z\)</span> are the in-plane horizontal and vertical separation relative to location (y,z).
+<span class="math">\(\sigma_y\)</span> and <span class="math">\(\sigma_z\)</span> are parameters describing the variances associated with the y- and z-directions.</p>
+<p>The magnitude <span class="math">\(u_{max}\)</span> is calculated from the largest absolute value of the x-velocity with the wind shear removed.
+The mean velocity profile can either be a specified array, the precursor inflow profile, or calculated on-the-fly as the time-averaged value from the fringes (y=min(y) and max(y)) of all sampled planes.
+<em>The on-the-fly method is not recommended; preliminary studies have shown inconsistency (overprediction) of the mean velocity profile when estimated based on fringe values compared to the reference inflow profile. This overprediction is likely due to naive averaging that doesn&#8217;t account for the transient flow at early times.</em></p>
+<p>First, an idealized 2D wake field is calculated based on <span class="math">\(u_{max}\)</span>, <span class="math">\(\sigma_y\)</span>, and <span class="math">\(\sigma_z\)</span>. Then the idealized wake is translated to points in the sampled plane for comparison. This search only considers locations between 25% and 75% of the width and height of the sampling plane. A squared error is calculated between the u-velocity of the ideal wake and the actual sampled wake. The location with the least squared error is considered to be the wake center.</p>
+<p>Note that this approach will never &#8220;fail&#8221;; it will always return the best possible fit, which may or may not be valid.</p>
+<dl class="docutils">
+<dt>Specific fit types:</dt>
+<dd><ul class="first last simple">
+<li>&#8220;simple&#8221;: 1-D Gaussian function (<span class="math">\(\sigma_y=\sigma_z\)</span>, least-squares fit of wake centers only)</li>
+<li>&#8220;elliptic&#8221;: Rotated 2-D Gaussian (fit of wake centers and the correlation parameter, only makes sense if <span class="math">\(\sigma_y\neq\sigma_z\)</span>)</li>
+<li>&#8220;general&#8221;: General 2-D Gaussian (fit of wake centers, correlation parameters, and width parameters)</li>
+<li>&#8220;double&#8221;: Double Gaussian, assuming both Gaussians have the same orientation (fit of both wake centers, a single correlation parameter, both sets of wake centers, and both function amplitudes)</li>
+</ul>
+</dd>
+</dl>
+<p>Least-squares optimization initial guesses and constraints...</p>
+</div>
+<div class="section" id="weighted-geometric-center-approach">
+<h2>Weighted Geometric-Center Approach<a class="headerlink" href="#weighted-geometric-center-approach" title="Permalink to this headline">¶</a></h2>
+<p>The horizontal position of the wake is determined as follows:</p>
+<div class="math">
+\[y_{wake} = \frac{ \sum_i u_iy_i }{\sum_i u_i}, \qquad \forall u_i &lt; u_{thresh}\]</div>
+<p>where <span class="math">\(u_i\)</span> is the instantaneous sampled velocity with mean shear removed, and <span class="math">\(u_{thresh}\)</span> is a user-specified threshold value. The vertical position is determined analogously by replacing <span class="math">\(y\)</span> with <span class="math">\(z\)</span>.</p>
+<p><em>This detection algorithm fails when</em> <span class="math">\(u_{thresh}\)</span> <em>is set too large and typically fails for larger distances from the rotor when the wake deficit has been significantly reduced by turbulent mixing.</em>
+In this case, the set of points identified as being in the wake (<span class="math">\(u_i &lt; u_{thresh}\)</span>) is zero and the denominator vanishes. An ad hoc threshold value of -3.0 m/s has been used and invalid wake-center coordinates are corrected with <code class="docutils literal"><span class="pre">fixTrajectoryErrors()</span></code> by piecewise linear interpolation.</p>
+<p>Possible improvements:</p>
+<ul class="simple">
+<li>Adaptively set/adjust the threshold value.</li>
+</ul>
+</div>
+<div class="section" id="contour-area-approach">
+<h2>Contour-Area Approach<a class="headerlink" href="#contour-area-approach" title="Permalink to this headline">¶</a></h2>
+<p>The contours of the wake velocity are calculated and the closed contour with enclosed area closest to the rotor area is considered representative of the wake location. The wake center is then identified as the geometric center, the average of all the points along the representative contour.
+Requires specifying the number of test contours to identify.</p>
+<p>Possible improvements:</p>
+<ul class="simple">
+<li>Use a weighted average (as in the density approach) to account for wake skew. This introduces additional options, e.g. how to use the velocity as a weighting function. By default, the absolute value is used (expected to be perform better for unstable wakes and more robust by avoiding the possibility of summing to zero); a simpler approach may be to negate the instantaneous velocity (with shear removed) to favor large wake velocity deficits.</li>
+<li>Optimize the contour level selection to obtain the closed contour that has exactly the same area as the reference area; this is not likely to have a significant impact on the estimated wake center location.</li>
+</ul>
+</div>
+<div class="section" id="contour-momentum-approach">
+<h2>Contour-Momentum Approach<a class="headerlink" href="#contour-momentum-approach" title="Permalink to this headline">¶</a></h2>
+<p>The momentum deficit behind the rotor is estimated...</p>
+<p>Contours are selected with the same momentum deficit...</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">waketracking</a></h1>
+
+
+
+<p class="blurb">A set of tools for rotor wake analysis</p>
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=ewquon&repo=waketracking&type=watch&count=true&size=large&v=2"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Methodology</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#gaussian-fit-approach">Gaussian-Fit Approach</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#weighted-geometric-center-approach">Weighted Geometric-Center Approach</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#contour-area-approach">Contour-Area Approach</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#contour-momentum-approach">Contour-Momentum Approach</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="samples.html">Samples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="code.html">Code Reference</a></li>
+</ul>
+
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Eliot Quon.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+      |
+      <a href="_sources/methodology.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

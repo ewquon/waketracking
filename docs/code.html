@@ -1,0 +1,311 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Code Reference &#8212; waketracking  documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Samples" href="samples.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="code-reference">
+<h1>Code Reference<a class="headerlink" href="#code-reference" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="dataloaders-module">
+<h2>dataloaders module<a class="headerlink" href="#dataloaders-module" title="Permalink to this headline">¶</a></h2>
+<p>This module includes all data processing routines to arbitrary scalar or vector data into a standard form.</p>
+<span class="target" id="module-waketracking.dataloaders"></span><dl class="class">
+<dt id="waketracking.dataloaders.foam_ensight_array">
+<em class="property">class </em><code class="descclassname">waketracking.dataloaders.</code><code class="descname">foam_ensight_array</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.dataloaders.foam_ensight_array" title="Permalink to this definition">¶</a></dt>
+<dd><p>OpenFOAM array sampling data in Ensight format</p>
+<p>Inherits superclass sampled_data.</p>
+<p>Reads time series data from subdirectories in ${outputDir}.
+Each time subdirectory should contain a file named
+&#8216;${prefix}.000.U&#8217;.</p>
+<p>If NY or NZ are set to None, then the array dimensions
+will be guessed from the data.</p>
+<p>The .mesh files are assumed identical (the mesh is only read
+once from the first directory)</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="waketracking.dataloaders.sampled_data">
+<em class="property">class </em><code class="descclassname">waketracking.dataloaders.</code><code class="descname">sampled_data</code><span class="sig-paren">(</span><em>outputDir='.'</em>, <em>prefix=None</em>, <em>NX=1</em>, <em>NY=None</em>, <em>NZ=None</em>, <em>datasize=3</em>, <em>npzdata='arrayData.npz'</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.dataloaders.sampled_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generic regularly sampled data object</p>
+<p>Attempts to read data with shape (Ntimes,NX,NY,NZ,datasize)
+The ${npzdata} keyword indicates the compressed npz file to load
+from and save to.</p>
+<p>All inherited readers should call this generic data reader for
+consistency. The object should contain:</p>
+<ul class="simple">
+<li><dl class="first docutils">
+<dt>ts: TimeSeries object with information regarding the location</dt>
+<dd>of the data (None for raw data)</dd>
+</dl>
+</li>
+<li>Ntimes: Number of output time directories</li>
+<li>NX,NY,NZ: Number of points in the x,y,z directions</li>
+<li>datasize: Dimension of the data (scalar=1, vector=3)</li>
+<li>x,y,z: Arrays with shape (NX,NY,NZ)</li>
+<li>data: Array with shape (Ntimes,NX,NY,NZ,datasize)</li>
+</ul>
+<dl class="method">
+<dt id="waketracking.dataloaders.sampled_data.sliceI">
+<code class="descname">sliceI</code><span class="sig-paren">(</span><em>i</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.dataloaders.sampled_data.sliceI" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return slice through the dimension 1</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="waketracking.dataloaders.sampled_data.sliceJ">
+<code class="descname">sliceJ</code><span class="sig-paren">(</span><em>j</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.dataloaders.sampled_data.sliceJ" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return slice through the dimension 2</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="waketracking.dataloaders.sampled_data.sliceK">
+<code class="descname">sliceK</code><span class="sig-paren">(</span><em>k</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.dataloaders.sampled_data.sliceK" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return slice through the dimension 3</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="waketracking.dataloaders.sampled_data.slice_at">
+<code class="descname">slice_at</code><span class="sig-paren">(</span><em>x=None</em>, <em>y=None</em>, <em>z=None</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.dataloaders.sampled_data.slice_at" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a set of 2D data (x1,x2,u) nearest to the specified
+slice location.</p>
+<ul class="simple">
+<li>x1,x2: has dimensions (N1,N2)</li>
+<li>u: has dimensions (Ntimes,N1,N2,datasize)</li>
+</ul>
+<p>Example: for an x-slice (xs is not None), N1=NY and N2=NZ</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="waketrackers-module">
+<h2>waketrackers module<a class="headerlink" href="#waketrackers-module" title="Permalink to this headline">¶</a></h2>
+<p>This module includes generic helper wake-tracking helper routines. These classes provide common functionality but should not be used directly.</p>
+<span class="target" id="module-waketracking.waketrackers"></span><dl class="class">
+<dt id="waketracking.waketrackers.contourwaketracker">
+<em class="property">class </em><code class="descclassname">waketracking.waketrackers.</code><code class="descname">contourwaketracker</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.waketrackers.contourwaketracker" title="Permalink to this definition">¶</a></dt>
+<dd><p>Class for wake tracking based on (velocity) contours</p>
+<p>Inherits superclass WakeTracker</p>
+<dl class="method">
+<dt id="waketracking.waketrackers.contourwaketracker.plotContour">
+<code class="descname">plotContour</code><span class="sig-paren">(</span><em>itime</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.waketrackers.contourwaketracker.plotContour" title="Permalink to this definition">¶</a></dt>
+<dd><p>Overridden plotContour function to include the calculated
+wake contour outline.</p>
+<p>See waketracker.plotContour for more information</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>plotpath</strong> (<em>boolean</em><em>, </em><em>optional</em>) &#8211; Plot the wake contour path.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="waketracking.waketrackers.track">
+<code class="descclassname">waketracking.waketrackers.</code><code class="descname">track</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.waketrackers.track" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the specified waketracker object.</p>
+<p>Arguments and keyword arguments are passed to the resultant object.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>method</strong> (<em>string</em>) &#8211; Should correspond to a Tracker class object.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="class">
+<dt id="waketracking.waketrackers.waketracker">
+<em class="property">class </em><code class="descclassname">waketracking.waketrackers.</code><code class="descname">waketracker</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.waketrackers.waketracker" title="Permalink to this definition">¶</a></dt>
+<dd><p>A general class for wake tracking operations.</p>
+<p>Tracking algorithms are expected to be implemented as children of
+this class.</p>
+<dl class="method">
+<dt id="waketracking.waketrackers.waketracker.fixTrajectoryErrors">
+<code class="descname">fixTrajectoryErrors</code><span class="sig-paren">(</span><em>update=False</em>, <em>istart=0</em>, <em>iend=None</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.waketrackers.waketracker.fixTrajectoryErrors" title="Permalink to this definition">¶</a></dt>
+<dd><p>Some wake detection algorithms are not guaranteed to provide
+a valid trajectory. By default, the coordinates of failed
+detection points is set to be (${y_start},${z_start}). This
+routine locates points believed to be problem points and
+interpolates between surrounding points. Piecewise linear
+interpolation (np.interp) is used.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>update</strong> (<em>boolean</em><em>, </em><em>optional</em>) &#8211; Set to True to udpate the ywake and zwake in place.</li>
+<li><strong>istart</strong><strong>,</strong><strong>iend</strong> (<em>integer</em><em>, </em><em>optional</em>) &#8211; The range of values to correct.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>yw_fix,zw_fix</strong> &#8211; Cleaned-up coordinates</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">ndarray</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="waketracking.waketrackers.waketracker.plotContour">
+<code class="descname">plotContour</code><span class="sig-paren">(</span><em>itime</em>, <em>cmin=-5.0</em>, <em>cmax=5.0</em>, <em>cmap='jet'</em>, <em>markercolor='w'</em>, <em>writepng=False</em>, <em>name=''</em>, <em>dpi=100</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.waketrackers.waketracker.plotContour" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plot/update contour and center marker at time ${itime}.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>itime</strong> (<em>integer</em>) &#8211; Index of the wake snapshot to plot.</li>
+<li><strong>cmin</strong><strong>,</strong><strong>cmax</strong> (<em>float</em><em>, </em><em>optional</em>) &#8211; Range of contour values to plot.</li>
+<li><strong>cmap</strong> (<em>string</em><em>, </em><em>optional</em>) &#8211; Colormap for the contour plot.</li>
+<li><strong>markercolor</strong> (<em>any matplotlib color</em><em>, </em><em>optional</em>) &#8211; To plot the detected wake center, otherwise set to None.</li>
+<li><strong>writepng</strong> (<em>boolean</em><em>, </em><em>optional</em>) &#8211; If True, save image to
+${outdir}/&lt;timeName&gt;_${name}${downD}D_U.png</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="waketracking.waketrackers.waketracker.printSnapshots">
+<code class="descname">printSnapshots</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.waketrackers.waketracker.printSnapshots" title="Permalink to this definition">¶</a></dt>
+<dd><p>Write out all snapshots to ${outdir}.</p>
+<p>See plotContour for keyword arguments.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="tracker-modules">
+<h2>Tracker modules<a class="headerlink" href="#tracker-modules" title="Permalink to this headline">¶</a></h2>
+<p>These modules (that have the *WakeTracker suffix) implement the actual wake tracking algorithms.</p>
+<span class="target" id="module-waketracking.ContourWakeTracker"></span><dl class="class">
+<dt id="waketracking.ContourWakeTracker.ConstantArea">
+<em class="property">class </em><code class="descclassname">waketracking.ContourWakeTracker.</code><code class="descname">ConstantArea</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.ContourWakeTracker.ConstantArea" title="Permalink to this definition">¶</a></dt>
+<dd><p>Identifies a wake as a region with velocity contour enclosing an
+area closest to the rotor (or another specified reference area).</p>
+<p>The wake center is identified as the velocity-deficit-weighted
+&#8220;center of mass&#8221; of all points within the enclosed region.</p>
+<p>This is the fastest of the contour-based tracking methods.</p>
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">waketracking</a></h1>
+
+
+
+<p class="blurb">A set of tools for rotor wake analysis</p>
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=ewquon&repo=waketracking&type=watch&count=true&size=large&v=2"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="methodology.html">Methodology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="samples.html">Samples</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Code Reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#dataloaders-module">dataloaders module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#waketrackers-module">waketrackers module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#tracker-modules">Tracker modules</a></li>
+</ul>
+</li>
+</ul>
+
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Eliot Quon.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+      |
+      <a href="_sources/code.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

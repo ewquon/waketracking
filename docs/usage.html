@@ -1,0 +1,161 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Usage &#8212; waketracking  documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Samples" href="samples.html" />
+    <link rel="prev" title="Methodology" href="methodology.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="usage">
+<h1>Usage<a class="headerlink" href="#usage" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="data-formats">
+<h2>Data Formats<a class="headerlink" href="#data-formats" title="Permalink to this headline">¶</a></h2>
+<p>talk about data loaders class here</p>
+<p>regular data</p>
+<p>template, etc</p>
+<div class="section" id="raw-data">
+<h3>Raw Data<a class="headerlink" href="#raw-data" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="openfoam-array-data">
+<h3>OpenFOAM array data<a class="headerlink" href="#openfoam-array-data" title="Permalink to this headline">¶</a></h3>
+</div>
+</div>
+<div class="section" id="wake-processing">
+<h2>Wake Processing<a class="headerlink" href="#wake-processing" title="Permalink to this headline">¶</a></h2>
+<ol class="arabic simple">
+<li>Import appropriate modules.</li>
+</ol>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">waketracking.dataloaders</span> <span class="kn">import</span> <span class="n">foam_ensight_array</span>
+<span class="kn">from</span> <span class="nn">waketracking.waketrackers</span> <span class="kn">import</span> <span class="n">track</span>
+</pre></div>
+</div>
+<ol class="arabic simple">
+<li>First load the data using the appropriate data loader (if necessary), as discussed in the previous section.</li>
+</ol>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">arraydata</span> <span class="o">=</span> <span class="n">foam_ensight_array</span><span class="p">(</span>
+        <span class="n">outputDir</span><span class="o">=</span><span class="s1">&#39;postProcessing/array.3D&#39;</span><span class="p">,</span>
+        <span class="n">prefix</span><span class="o">=</span><span class="s1">&#39;array.3D_U&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<ol class="arabic simple">
+<li>Since the input data may be three-dimensional, extract a slice of the data (if necessary).</li>
+</ol>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">y</span><span class="p">,</span><span class="n">z</span><span class="p">,</span><span class="n">u</span> <span class="o">=</span> <span class="n">arraydata</span><span class="o">.</span><span class="n">sliceI</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>         <span class="c1"># slice by index</span>
+<span class="n">y</span><span class="p">,</span><span class="n">z</span><span class="p">,</span><span class="n">u</span> <span class="o">=</span> <span class="n">arraydata</span><span class="o">.</span><span class="n">slice_at</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="mf">1000.</span><span class="p">)</span> <span class="c1"># slice at location</span>
+</pre></div>
+</div>
+<ol class="arabic simple">
+<li>Perform the wake analysis. The <em>track</em> function may be called without a specified method to return a list of available tracking methods.</li>
+</ol>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">wake</span> <span class="o">=</span> <span class="n">track</span><span class="p">(</span>\<span class="o">*</span><span class="n">args</span><span class="p">,</span>\<span class="o">*</span>\<span class="o">*</span><span class="n">kwargs</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;ConstantArea&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">waketracking</a></h1>
+
+
+
+<p class="blurb">A set of tools for rotor wake analysis</p>
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=ewquon&repo=waketracking&type=watch&count=true&size=large&v=2"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="methodology.html">Methodology</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#data-formats">Data Formats</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#wake-processing">Wake Processing</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="samples.html">Samples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="code.html">Code Reference</a></li>
+</ul>
+
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Eliot Quon.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+      |
+      <a href="_sources/usage.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
