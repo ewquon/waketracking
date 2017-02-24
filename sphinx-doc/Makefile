@@ -11,6 +11,7 @@ PUBLISHDIR	  = ../docs
 
 # publish HTML to docs folder
 default: html
+	mkdir -p $(PUBLISHDIR)
 	cp -r $(BUILDDIR)/html/* $(PUBLISHDIR)/	
 
 # Put it first so that "make" without argument is like "make help".

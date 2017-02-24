@@ -20,10 +20,11 @@ import os
 import sys
 # sys.path.insert(0, os.path.abspath('.'))
 #sys.path.insert(0, os.path.abspath('..'))
+import imp
 try:
     imp.find_module('waketracking')
 except ImportError:
-    print 'waketracking module not found in path'
+    print 'Note: waketracking module not found in path'
     # TODO: specify module path here
     sys.path.insert(0, os.environ['HOME'])
 
