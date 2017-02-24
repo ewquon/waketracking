@@ -13,7 +13,7 @@ class sampled_data(object):
             npzdata='arrayData.npz'
             ):
         """Attempts to read data with shape (Ntimes,NX,NY,NZ,datasize)
-        The $npzdata keyword indicates the compressed npz file to load
+        The ${npzdata} keyword indicates the compressed npz file to load
         from and save to.
 
         All inherited readers should call this generic data reader for
@@ -197,8 +197,9 @@ class foam_ensight_array(sampled_data):
     """
 
     def __init__(self,*args,**kwargs):
-        """Reads time series data from subdirectories in $outputDir.
-        Each time subdirectory should contain a file named $prefix.000.U
+        """Reads time series data from subdirectories in ${outputDir}.
+        Each time subdirectory should contain a file named
+        '${prefix}.000.U'.
 
         If NY or NZ are set to None, then the array dimensions 
         will be guessed from the data.

@@ -209,7 +209,7 @@ class waketracker(object):
             print 'Saved',fname
 
     def printSnapshots(self,**kwargs):
-        """Write out all snapshots to $outdir.
+        """Write out all snapshots to ${outdir}.
 
         See plotContour for keyword arguments.
         """ 
@@ -365,8 +365,8 @@ class contourwaketracker(waketracker):
 
         See waketracker.plotContour for more information
 
-        Additional Parameters
-        ---------------------
+        Parameters
+        ----------
         plotpath : boolean, optional
             Plot the wake contour path.
         """

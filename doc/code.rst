@@ -2,11 +2,28 @@
 Code Reference
 **************
 
-dataloader module
-=================
+dataloaders module
+==================
 
-.. automodule:: dataloader
+This module includes all data processing routines to arbitrary scalar or vector data into a standard form. 
+
+.. automodule:: dataloaders
     :members:
 
-waketracker module
-==================
+
+waketrackers module
+===================
+
+This module includes generic helper wake-tracking helper routines. These classes provide common functionality but should not be used directly.
+
+.. automodule:: waketrackers
+    :members:
+
+Tracker modules
+===============
+
+These modules (that have the \*WakeTracker suffix) implement the actual wake tracking algorithms.
+
+.. automodule:: ContourWakeTracker
+    :members:
+
