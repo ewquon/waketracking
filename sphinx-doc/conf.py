@@ -193,6 +193,9 @@ texinfo_documents = [
 # Print out docstring for __init__
 autoclass_content = 'both'
 
+# default order is 'alphabetical'
+autodoc_member_order = 'groupwise'
+
 # -- Options for napoleon (autodoc preprocessor) --------------------------
 # This is needed to handle numpy-style docstrings...
 napoleon_google_docstring = False

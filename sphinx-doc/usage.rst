@@ -44,7 +44,7 @@ Wake Processing
     y,z,u = arraydata.sliceI(0)         # slice by index
     y,z,u = arraydata.slice_at(x=1000.) # slice at location
 
-#. Perform the wake analysis. The *track* function may be called without a specified method to return a list of available tracking methods.
+#. Perform the wake analysis. The ``track`` function may be called without a specified method to return a list of available tracking methods.
 
 .. code-block:: python
 

@@ -89,31 +89,43 @@ class sampled_data(object):
         return s
 
     def _slice(self,i0=None,i1=None,j0=None,j1=None,k0=None,k1=None):
+        """Note: This only extracts slices of the array, no
+                 interpolation is performed to perform actual slicing
+                 through the computational domain. The regularly
+                 sampled data should be properly rotated to the rotor-
+                 aligned frame.
+         """
         if i0 is not None and i0==i1:
             print 'Slicing data at i=',i0, \
                   ' x ~=',np.mean(self.x[i0,:,:])
+            x0 = self.x[i0,j0:j1,k0:k1]
             x1 = self.y[i0,j0:j1,k0:k1]
             x2 = self.z[i0,j0:j1,k0:k1]
             u = self.data[:,i0,:,:,:]
         elif j0 is not None and j0==j1:
             print 'Slicing data at j=',j0, \
                   ' y ~=',np.mean(self.y[:,j0,:])
-            x1 = self.x[i0:i1,j0,k0:k1]
+            x0 = self.x[i0:i1,j0,k0:k1]
+            x1 = self.y[i0:i1,j0,k0:k1]
             x2 = self.z[i0:i1,j0,k0:k1]
             u = self.data[:,:,j0,:,:]
         elif k0 is not None and k0==k1:
             print 'Slicing data at k=',k0, \
                   ' z ~=',np.mean(self.z[:,:,k0])
-            x1 = self.x[i0:i1,j0:j1,k0]
-            x2 = self.y[i0:i1,j0:j1,k0]
+            x0 = self.x[i0:i1,j0:j1,k0]
+            x1 = self.y[i0:i1,j0:j1,k0]
+            x2 = self.z[i0:i1,j0:j1,k0]
             u = self.data[:,:,:,k0,:]
         else:
             print 'Slicing ranges ambiguous:',i0,i1,j0,j1,k0,k1
             return None
-        return x1,x2,u
+        return x0,x1,x2,u
 
     def sliceI(self,i):
-        """Return slice through the dimension 1"""
+        """Return slice through the dimension 0
+
+        This is probably the only slicing that makes sense...
+        """
         if i >= 0 and i < self.NX:
             return self._slice(i0=i,i1=i)
         else:
@@ -121,7 +133,11 @@ class sampled_data(object):
             return None
 
     def sliceJ(self,j):
-        """Return slice through the dimension 2"""
+        """Return slice through the dimension 1
+
+        Warning: Depending on the data sampling set up, this slicing
+        probably does not make sense.
+        """
         if j >= 0 and j < self.NY:
             return self._slice(j0=j,j1=j)
         else:
@@ -129,7 +145,11 @@ class sampled_data(object):
             return None
 
     def sliceK(self,k):
-        """Return slice through the dimension 3"""
+        """Return slice through the dimension 2
+
+        Warning: Depending on the data sampling set up, this slicing
+        probably does not make sense.
+        """
         if k >= 0 and k < self.NZ:
             return self._slice(k0=k,k1=k)
         else:
@@ -137,13 +157,16 @@ class sampled_data(object):
             return None
 
     def slice_at(self,x=None,y=None,z=None):
-        """Returns a set of 2D data (x1,x2,u) nearest to the specified
+        """Create a set of 2D data (x0,x1,x2,u) near/at the specified
         slice location.
 
-        * x1,x2: has dimensions (N1,N2)
-        * u: has dimensions (Ntimes,N1,N2,datasize)
-
-        Example: for an x-slice (xs is not None), N1=NY and N2=NZ
+        Returns
+        -------
+        * x0,x1,x2 : ndarray
+            Sampling grid with dimensions (N1,N2); coordinates are in
+            the Cartesian reference frame.
+        * u : ndarray
+            Velocity array with dimensions (Ntimes,N1,N2,datasize).
         """
         if x is not None:
             xmid = self.x[:,self.NY/2,self.NZ/2]

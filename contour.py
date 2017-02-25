@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.path as mpath
 
-def calcContourArea(path):
+def calcArea(path):
     """Calculate the area enclosed by an arbitrary path using Green's
     Theorem
     """
@@ -21,7 +21,7 @@ def calcContourArea(path):
     dy = np.diff(yp)
     return 0.5*np.abs(np.sum(yp[:-1]*dx - xp[:-1]*dy))
 
-def calcContourFunction(contourPts,xg,yg,Ug,vd,fn):
+def integrateFunction(contourPts,xg,yg,Ug,vd,fn):
     """Integrate a specified function within an arbitrary region defined
     by contourPts.
     'vd' is the velocity deficit array
@@ -62,7 +62,7 @@ def calcContourFunction(contourPts,xg,yg,Ug,vd,fn):
     
     return corr * np.sum( fvals )*cellFaceArea, vd_avg, corr
 
-def calcContourWeightedCenter(contourPts,xg,yg,fg,wfn=None):
+def calcWeightedCenter(contourPts,xg,yg,fg,wfn=None):
     """Calculated the velocity-weighted center given an arbitrary path
     defined by contourPts. Using the function values fg and the
     weighting function wfn, the center is determined from values in grid

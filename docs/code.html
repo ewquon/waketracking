@@ -46,7 +46,7 @@
   <div class="section" id="code-reference">
 <h1>Code Reference<a class="headerlink" href="#code-reference" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="dataloaders-module">
-<h2>dataloaders module<a class="headerlink" href="#dataloaders-module" title="Permalink to this headline">¶</a></h2>
+<h2><code class="docutils literal"><span class="pre">dataloaders</span></code> module<a class="headerlink" href="#dataloaders-module" title="Permalink to this headline">¶</a></h2>
 <p>This module includes all data processing routines to arbitrary scalar or vector data into a standard form.</p>
 <span class="target" id="module-waketracking.dataloaders"></span><dl class="class">
 <dt id="waketracking.dataloaders.foam_ensight_array">
@@ -86,39 +86,52 @@ consistency. The object should contain:</p>
 <dl class="method">
 <dt id="waketracking.dataloaders.sampled_data.sliceI">
 <code class="descname">sliceI</code><span class="sig-paren">(</span><em>i</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.dataloaders.sampled_data.sliceI" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return slice through the dimension 1</p>
+<dd><p>Return slice through the dimension 0</p>
+<p>This is probably the only slicing that makes sense...</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="waketracking.dataloaders.sampled_data.sliceJ">
 <code class="descname">sliceJ</code><span class="sig-paren">(</span><em>j</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.dataloaders.sampled_data.sliceJ" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return slice through the dimension 2</p>
+<dd><p>Return slice through the dimension 1</p>
+<p>Warning: Depending on the data sampling set up, this slicing
+probably does not make sense.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="waketracking.dataloaders.sampled_data.sliceK">
 <code class="descname">sliceK</code><span class="sig-paren">(</span><em>k</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.dataloaders.sampled_data.sliceK" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return slice through the dimension 3</p>
+<dd><p>Return slice through the dimension 2</p>
+<p>Warning: Depending on the data sampling set up, this slicing
+probably does not make sense.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="waketracking.dataloaders.sampled_data.slice_at">
 <code class="descname">slice_at</code><span class="sig-paren">(</span><em>x=None</em>, <em>y=None</em>, <em>z=None</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.dataloaders.sampled_data.slice_at" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns a set of 2D data (x1,x2,u) nearest to the specified
+<dd><p>Create a set of 2D data (x0,x1,x2,u) near/at the specified
 slice location.</p>
-<ul class="simple">
-<li>x1,x2: has dimensions (N1,N2)</li>
-<li>u: has dimensions (Ntimes,N1,N2,datasize)</li>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><ul class="simple">
+<li><strong>* x0,x1,x2</strong> (<em>ndarray</em>) &#8211; Sampling grid with dimensions (N1,N2); coordinates are in
+the Cartesian reference frame.</li>
+<li><strong>* u</strong> (<em>ndarray</em>) &#8211; Velocity array with dimensions (Ntimes,N1,N2,datasize).</li>
 </ul>
-<p>Example: for an x-slice (xs is not None), N1=NY and N2=NZ</p>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 </dd></dl>
 
 </div>
 <div class="section" id="waketrackers-module">
-<h2>waketrackers module<a class="headerlink" href="#waketrackers-module" title="Permalink to this headline">¶</a></h2>
-<p>This module includes generic helper wake-tracking helper routines. These classes provide common functionality but should not be used directly.</p>
+<h2><code class="docutils literal"><span class="pre">waketrackers</span></code> module<a class="headerlink" href="#waketrackers-module" title="Permalink to this headline">¶</a></h2>
+<p>This module defines generic wake-tracking objects with general helper routines. To access the Tracker objects, the <code class="docutils literal"><span class="pre">track</span></code> function should be used. The classes here provide common functionality but should not be used directly.</p>
 <span class="target" id="module-waketracking.waketrackers"></span><dl class="class">
 <dt id="waketracking.waketrackers.contourwaketracker">
 <em class="property">class </em><code class="descclassname">waketracking.waketrackers.</code><code class="descname">contourwaketracker</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.waketrackers.contourwaketracker" title="Permalink to this definition">¶</a></dt>
@@ -142,27 +155,46 @@ wake contour outline.</p>
 
 </dd></dl>
 
-<dl class="function">
-<dt id="waketracking.waketrackers.track">
-<code class="descclassname">waketracking.waketrackers.</code><code class="descname">track</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.waketrackers.track" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns the specified waketracker object.</p>
-<p>Arguments and keyword arguments are passed to the resultant object.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>method</strong> (<em>string</em>) &#8211; Should correspond to a Tracker class object.</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
 <dl class="class">
 <dt id="waketracking.waketrackers.waketracker">
 <em class="property">class </em><code class="descclassname">waketracking.waketrackers.</code><code class="descname">waketracker</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.waketrackers.waketracker" title="Permalink to this definition">¶</a></dt>
 <dd><p>A general class for wake tracking operations.</p>
 <p>Tracking algorithms are expected to be implemented as children of
 this class.</p>
+<p>Process structured data in rotor-aligned frames of reference.
+Arguments may be in the form:</p>
+<blockquote>
+<div>waketracker(xh, xv, u, ...)</div></blockquote>
+<p>or</p>
+<blockquote>
+<div>waketracker((xh,xv,u), ...)</div></blockquote>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>x</strong><strong>,</strong><strong>y</strong><strong>,</strong><strong>z</strong> (<em>ndarray</em>) &#8211; Sampling grid coordinates in a Cartesian reference frame,
+with shape (Nh,Nv). Used to calculate xh and xv, the
+horizontal and vertical grid coordinates in the rotor-
+aligned frame.</li>
+<li><strong>u</strong> (<em>ndarray</em>) &#8211; Instantaneous velocity array with shape
+(Ntimes,Nh,Nv,datasize) or (Ntimes,Nh,Nv) for which
+datasize=1 (i.e., scalar field) is assumed. In the scalar
+case, the velocity is assumed normal to the sampling plane;
+in the vector case, the horizontal velocity is calculated
+from the first two components.</li>
+<li><strong>shearRemoval</strong> (<em>string</em><em>, </em><em>optional</em>) &#8211; Specify method to remove wind shear, or None to use data as
+is; some methods may require additional keyword arguments</li>
+<li><strong>Navg</strong> (<em>integer</em><em>, </em><em>optional</em>) &#8211; Number of snapshots to average over to obtain an
+instaneous average (when shearRemoval==&#8217;default&#8217;).
+If Navg &lt; 0, average from end of series only.</li>
+<li><strong>outputDir</strong> (<em>string</em><em>, </em><em>optional</em>) &#8211; Output directory to save processed data and images.</li>
+<li><strong>verbose</strong> (<em>boolean</em><em>, </em><em>optional</em>) &#8211; Screen output verbosity.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
 <dl class="method">
 <dt id="waketracking.waketrackers.waketracker.fixTrajectoryErrors">
 <code class="descname">fixTrajectoryErrors</code><span class="sig-paren">(</span><em>update=False</em>, <em>istart=0</em>, <em>iend=None</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.waketrackers.waketracker.fixTrajectoryErrors" title="Permalink to this definition">¶</a></dt>
@@ -221,11 +253,39 @@ ${outdir}/&lt;timeName&gt;_${name}${downD}D_U.png</li>
 <p>See plotContour for keyword arguments.</p>
 </dd></dl>
 
+<dl class="method">
+<dt id="waketracking.waketrackers.waketracker.removeShear">
+<code class="descname">removeShear</code><span class="sig-paren">(</span><em>removalMethod='default'</em>, <em>Navg=1</em>, <em>windProfile=None</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.waketrackers.waketracker.removeShear" title="Permalink to this definition">¶</a></dt>
+<dd><p>Removes wind shear from data.</p>
+<p>Calculates self.u from self.utot.</p>
+<p>Current supported methods:
+* &#8220;default&#8221;: Estimate from fringes
+* &#8220;specified&#8221;: Wind profile specified as either a function or
+an array of heights vs horizontal velocity</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="waketracking.waketrackers.track">
+<code class="descclassname">waketracking.waketrackers.</code><code class="descname">track</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.waketrackers.track" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the specified waketracker object. If no method is
+specified, then a list of available Tracker objects is printed.</p>
+<p>All arguments and keyword arguments are passed to the resultant
+object.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>method</strong> (<em>string</em>) &#8211; Should correspond to a Tracker class object.</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 </div>
 <div class="section" id="tracker-modules">
-<h2>Tracker modules<a class="headerlink" href="#tracker-modules" title="Permalink to this headline">¶</a></h2>
+<h2><code class="docutils literal"><span class="pre">Tracker</span></code> modules<a class="headerlink" href="#tracker-modules" title="Permalink to this headline">¶</a></h2>
 <p>These modules (that have the *WakeTracker suffix) implement the actual wake tracking algorithms.</p>
 <span class="target" id="module-waketracking.ContourWakeTracker"></span><dl class="class">
 <dt id="waketracking.ContourWakeTracker.ConstantArea">
@@ -270,9 +330,9 @@ area closest to the rotor (or another specified reference area).</p>
 <li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a></li>
 <li class="toctree-l1"><a class="reference internal" href="samples.html">Samples</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Code Reference</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#dataloaders-module">dataloaders module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#waketrackers-module">waketrackers module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#tracker-modules">Tracker modules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#dataloaders-module"><code class="docutils literal"><span class="pre">dataloaders</span></code> module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#waketrackers-module"><code class="docutils literal"><span class="pre">waketrackers</span></code> module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#tracker-modules"><code class="docutils literal"><span class="pre">Tracker</span></code> modules</a></li>
 </ul>
 </li>
 </ul>
