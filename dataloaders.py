@@ -75,17 +75,13 @@ class sampled_data(object):
     def __repr__(self):
         if self.datasize==1:
             s = 'Scalar data array'
-            s += ' with shape ({:d},{:d},{:d})'.format(self.NX,self.NY,self.NZ)
         elif self.datasize==3:
             s = 'Vector data array'
-            s += ' with shape ({:d},{:d},{:d})'.format(self.NX,self.NY,self.NZ)
         else:
             s = str(self.datasize)+'-D vector data array'
-            s += ' with shape ({:d},{:d},{:d})'.format(self.NX,self.NY,self.NZ)
-
+        s += ' with shape ({:d},{:d},{:d})'.format(self.NX,self.NY,self.NZ)
         if self.ts is not None:
             s += ' in a series with ' + str(self.ts)
-
         return s
 
     def _slice(self,i0=None,i1=None,j0=None,j1=None,k0=None,k1=None):
@@ -291,9 +287,9 @@ class foam_ensight_array(sampled_data):
         for itime,fname in enumerate(self.ts):
             print 'Processing frame',itime
             u = np.loadtxt(fname,skiprows=4).reshape((self.datasize,N))
-            data[itime,:,:,:,0] = u[0,:].reshape((NX,NY,NZ))
-            data[itime,:,:,:,1] = u[1,:].reshape((NX,NY,NZ))
-            data[itime,:,:,:,2] = u[2,:].reshape((NX,NY,NZ))
+            data[itime,:,:,:,0] = u[0,:].reshape((NX,NY,NZ),order='F')
+            data[itime,:,:,:,1] = u[1,:].reshape((NX,NY,NZ),order='F')
+            data[itime,:,:,:,2] = u[2,:].reshape((NX,NY,NZ),order='F')
         self.data = data
         self.dataReadFrom = os.path.join(self.outputDir,'*',datafile)
 

@@ -17,5 +17,6 @@ class ConstantArea(contourwaketracker):
     def __init__(self,*args,**kwargs):
         super(self.__class__,self).__init__(*args,**kwargs)
         if self.verbose:
-            print '...finished initializing',self.__class__.__name__
+            print '\n...finished initializing',self.__class__.__name__
 
+    

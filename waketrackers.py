@@ -40,7 +40,7 @@ def track(*args,**kwargs):
         return None
     else:
         tracker = trackerList[method]
-        print tracker
+        print 'Selected Tracker:',tracker,'\n'
         return tracker(*args,**kwargs)
 
 class waketracker(object):
@@ -74,13 +74,6 @@ class waketracker(object):
             case, the velocity is assumed normal to the sampling plane;
             in the vector case, the horizontal velocity is calculated
             from the first two components.
-        shearRemoval : string, optional
-            Specify method to remove wind shear, or None to use data as
-            is; some methods may require additional keyword arguments
-        Navg : integer, optional
-            Number of snapshots to average over to obtain an
-            instaneous average (when shearRemoval=='default').
-            If Navg < 0, average from end of series only.
         outputDir : string, optional
             Output directory to save processed data and images.
         verbose : boolean, optional
@@ -93,6 +86,8 @@ class waketracker(object):
 
         # set initial/default values
         self.wakeTracked = False
+        self.shearRemoval = None
+        self.Navg = None  # for removing shear
         self.plotInitialized = False
 
         self.outdir = kwargs.get('outputDir','.')
@@ -100,25 +95,23 @@ class waketracker(object):
             if self.verbose: print 'Creating output dir:', self.outdir
             os.makedirs(self.outdir)
 
-        self.shearRemoval = kwargs.get('shearRemoval','default')
-        self.Navg = kwargs.get('Navg',-300)
 
         # check and store sampling mesh
         if type(args[0]) in (list,tuple):
-            x = args[0][0]
-            y = args[0][1]
-            z = args[0][2]
-            u = args[0][3]
+            xdata = args[0][0]
+            ydata = args[0][1]
+            zdata = args[0][2]
+            udata = args[0][3]
         else:
-            x = args[0]
-            y = args[1]
-            z = args[2]
-            u = args[3]
-        assert(x.shape == y.shape == z.shape)
-        self.x = x
-        self.y = y
-        self.z = z
-        self.Nh, self.Nv = x.shape
+            xdata = args[0]
+            ydata = args[1]
+            zdata = args[2]
+            udata = args[3]
+        assert(xdata.shape == ydata.shape == zdata.shape)
+        self.x = xdata
+        self.y = ydata
+        self.z = zdata
+        self.Nh, self.Nv = self.x.shape
 
         yvec = (self.x[-1, 0] - self.x[ 0,0],
                 self.y[-1, 0] - self.y[ 0,0],
@@ -130,84 +123,130 @@ class waketracker(object):
         self.norm = norm / np.sqrt(norm.dot(norm))
         if self.verbose:
             print 'Sampling plane normal vector:',self.norm
-            if not self.norm[2] == 0.:
-                print 'Warning: sampling plane is tilted?'
+            if not self.norm[2] == 0:
+                print 'WARNING: sampling plane is tilted?'
 
         # setup planar coordinates
+        # d: downwind (x)
+        # h: horizontal (y)
+        # v: vertical (z)
         #self.xh = y  # rotor axis aligned with Cartesian axes
-        self.xv = z
+        self.xv = self.z
         ang = np.arctan2(self.norm[1],self.norm[0])  # ang>0: rotating from x-dir to y-dir
         if self.verbose:
-            print 'Rotating to rotor-aligned axes (about z),',ang*180./np.pi,'deg'
-        self.ang_ra = ang
-        xd = np.cos(ang)*x + np.sin(ang)*y  # streamwise coordinate--not used
-        self.xh = -np.sin(ang)*x + np.cos(ang)*y  # clockwise rotation (seen from above)
+            print '  rotated to rotor-aligned axes (about z):',ang*180./np.pi,'deg'
+        self.yaw = ang
+        self.xh = -np.sin(ang)*self.x + np.cos(ang)*self.y  # clockwise rotation (seen from above)
+
+        xd = np.cos(ang)*self.x + np.sin(ang)*self.y  # streamwise coordinate--not used for tracking
+        self.xd = np.mean(xd) # sampling plane downwind position
+
+        # check plane yaw
+        # note: rotated plane should be in y-z with min(x)==max(x)
+        #       and tracking should be performed using the xh-xv coordinates
         xd_diff = np.max(xd) - np.min(xd)
-        if np.abs(xd_diff) > 1e-6:
-            print 'Warning: problem with rotation to rotor-aligned frame?'
         if self.verbose:
             print '  rotation error:',xd_diff
+        if np.abs(xd_diff) > 1e-6:
+            print 'WARNING: problem with rotation to rotor-aligned frame?'
         
         # set dummy values in case wake tracking algorithm breaks down
         self.xh_fail = self.xh[0,0]
         self.xv_fail = self.xv[0,0]
 
         # check and calculate instantaneous velocities including shear,
-        # utot
-        assert(len(u.shape) in (3,4)) 
-        assert((self.Nh,self.Nv) == u.shape[1:3])
-        self.Ntimes = u.shape[0]
-        if len(u)==3:
+        # u_tot
+        assert(len(udata.shape) in (3,4)) 
+        assert((self.Nh,self.Nv) == udata.shape[1:3])
+        self.Ntimes = udata.shape[0]
+        if len(udata.shape)==3:
             self.datasize = 1
-            self.utot = u  # shape=(Ntimes,Nh,Nv)
+            self.u_tot = udata  # shape=(Ntimes,Nh,Nv)
         else:
-            self.datasize = u.shape[3]
+            self.datasize = udata.shape[3]
+            assert(self.datasize == 3)
+
             # calculate horizontal velocity
 #            assert(self.datasize <= 3) 
-#            self.utot = np.sqrt(u[:,:,:,0]**2 + u[:,:,:,1]**2)
+#            self.u_tot = np.sqrt(u[:,:,:,0]**2 + u[:,:,:,1]**2)
 
             # calculate velocity normal to sampling plane
-            assert(self.datasize == 3) 
-            self.utot = np.zeros((self.Ntimes,self.Nh,self.Nv))
+            self.u_tot = np.zeros((self.Ntimes,self.Nh,self.Nv))
             for itime in range(self.Ntimes):
                 for ih in range(self.Nh):
                     for iv in range(self.Nv):
-                        self.utot[itime,ih,iv] = u[itime,ih,iv,:].dot(self.norm)
+                        self.u_tot[itime,ih,iv] = udata[itime,ih,iv,:].dot(self.norm)
 
-        # remove wind shear from sampled data
-        self.removeShear(removalMethod=self.shearRemoval,
-                         Navg=self.Navg,
-                         **kwargs)
+        self.u = self.u_tot  # in case input u already has shear removed
 
         if self.verbose:
-            print 'waketracker object initialized.'
+            print 'Number of time frames to process:',self.Ntimes
+            print '\n...finished initializing waketracker'
 
 
-    def removeShear(self,removalMethod='default',Navg=1,windProfile=None,**kwargs):
+    def __repr__(self):
+        s = 'Tracking '+str(self.Ntimes)+' sampled planes of '
+        if self.datasize==1:
+            s += 'scalars'
+        elif self.datasize==3:
+            s += 'vectors'
+        else:
+            s += str(self.datasize)+'-D data'
+        s += ' with shape ({:d},{:d})'.format(self.Nh,self.Nv)
+        return s
+
+    def __str__(self):
+        s = 'Sampled planes of '
+        if self.datasize==1:
+            s += 'scalars'
+        elif self.datasize==3:
+            s += 'vectors'
+        else:
+            s += str(self.datasize)+'-D data'
+        s += ' with shape ({:d},{:d})\n'.format(self.Nh,self.Nv)
+        s += '  Number of frames       : {:d}\n'.format(self.Ntimes)
+        s += '  Sampling plane yaw     : {:.1f} deg\n'.format(self.yaw*180/np.pi)
+        s += '  Shear removal          : {}\n'.format(self.shearRemoval)
+        s += '  Wake tracking complete : {}\n'.format(self.wakeTracked)
+        return s
+
+    def removeShear(self,method='default',Navg=-300,windProfile=None,**kwargs):
         """Removes wind shear from data.
 
-        Calculates self.u from self.utot.
+        Calculates self.u from self.u_tot.
 
         Current supported methods:
         * "default": Estimate from fringes 
         * "specified": Wind profile specified as either a function or
         an array of heights vs horizontal velocity
+
+        method : string, optional
+            Specify method to remove wind shear, or None to use data as
+            is; some methods may require additional keyword arguments
+        Navg : integer, optional
+            Number of snapshots to average over to obtain an
+            instaneous average (when shearRemoval=='default').
+            If Navg < 0, average from end of series only.
         """
+        Navg = int(Navg)
+        self.Navg = Navg
+        self.shearRemoval = method
+
         # determine the wind profile
-        if removalMethod == 'default':
+        if method == 'default':
             if self.verbose:
                 print 'Estimating velocity profile from fringes of sampling plane', \
                       'with Navg=',Navg
             if Navg < 0:
-                self.uavg = np.mean(self.utot[-Navg:,:,:], axis=0)  # shape=(Nh,Nv)
+                self.uavg = np.mean(self.u_tot[-Navg:,:,:], axis=0)  # shape=(Nh,Nv)
                 self.Uprofile = (self.uavg[0,:] + self.uavg[-1,:]) / 2  # shape=(Nv)
             else:
                 if Navg == 0:
                     Navg = 1  # no averaging performed
-                self.uavg = uniform_filter1d(self.utot, size=self.Navg, axis=0, mode='mirror')  # see http://stackoverflow.com/questions/22669252/how-exactly-does-the-reflect-mode-for-scipys-ndimage-filters-work
+                self.uavg = uniform_filter1d(self.u_tot, size=self.Navg, axis=0, mode='mirror')  # see http://stackoverflow.com/questions/22669252/how-exactly-does-the-reflect-mode-for-scipys-ndimage-filters-work
                 self.Uprofile = (self.uavg[:,0,:] + self.uavg[:,-1,:]) / 2 # shape=(Ntimes,Nv)
 
-        elif removalMethod == 'specified':
+        elif method == 'specified':
             if windProfile is None:
                 print 'Need to specify windProfile, shear not removed.'
                 return
@@ -217,26 +256,32 @@ class waketracker(object):
             elif isinstance(windProfile, str):
                 #zref,Uref = readRef(windProfile)
                 #self.Uprofile = np.interp(self.z,zref,Uref) 
-                print 'Read wind profile from file not yet implemented--shear not removed.'
-                return
+                self.Uprofile = np.loadtxt(windProfile)
+                print 'Wind profile read from',windProfile
 
-        elif removalMethod is not None:
-            print 'Shear removal method (',removalMethod,') not supported.'
+        elif method is not None:
+            print 'Shear removal method (',method,') not supported.'
             return
 
         # actually remove shear now
-        self.u = np.copy(self.utot)  # utot.shape==(Ntimes,Nh,Nv)
+        self.u = np.copy(self.u_tot)  # u_tot.shape==(Ntimes,Nh,Nv)
 
         if len(self.Uprofile.shape)==1:
+            if self.verbose:
+                print '  subtracting out constant profile'
             # Uprofile.shape==(Nv)
             for k,umean in enumerate(self.Uprofile):
                 self.u[:,:,k] -= umean
         else:
+            if self.verbose:
+                print '  subtracting out time-varying profile'
             # Uprofile.shape==(Ntimes,Nv)
             for itime in range(self.Ntimes):
-                for k in range(self.Nv):
-                    self.u[itime,:,k] -= self.Uprofile[itime,k]
+                for k,umean in enumerate(self.Uprofile[itime,:]):
+                    self.u[itime,:,k] -= umean
 
+    def findCenters(self):
+        print self.__class__.__name,'needs to override this function!'
 
     def fixTrajectoryErrors(self,update=False,istart=0,iend=None):
         """Some wake detection algorithms are not guaranteed to provide
@@ -425,7 +470,7 @@ class contourwaketracker(waketracker):
     def __init__(self,*args,**kwargs):
         super(contourwaketracker,self).__init__(*args,**kwargs)
         if self.verbose:
-            print '...finished initializing contourwaketracker'
+            print '\n...finished initializing contourwaketracker'
 
     def _findContourCenter(self,
                            itime,
@@ -449,7 +494,7 @@ class contourwaketracker(waketracker):
             def Cfn(path):
                 return contour.integrateFunction(
                         path, self.yg, self.zg,
-                        self.utot[itime,:,:], self.u[itime,:,:],
+                        self.u_tot[itime,:,:], self.u[itime,:,:],
                         fn)
 
         converged = False
