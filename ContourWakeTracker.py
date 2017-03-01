@@ -7,7 +7,6 @@ from matplotlib._cntr import Cntr
 import pickle
 
 from waketrackers import contourwaketracker
-import contour
 
 class ConstantArea(contourwaketracker):
     """ Identifies a wake as a region with velocity deficit contour

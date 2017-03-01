@@ -9,7 +9,9 @@ import matplotlib.pyplot as plt
 import matplotlib.path as mpath
 import matplotlib.patches as mpatch
 
-import contour
+import contour_functions as contour
+
+#==============================================================================
 
 def track(*args,**kwargs):
     """Returns the specified waketracker object. If no method is
@@ -43,6 +45,8 @@ def track(*args,**kwargs):
         tracker = trackerList[method]
         print 'Selected Tracker:',tracker,'\n'
         return tracker(*args,**kwargs)
+
+#==============================================================================
 
 class waketracker(object):
     """A general class for wake tracking operations.
@@ -626,23 +630,6 @@ class contourwaketracker(waketracker):
         self.xv_wake[itime] = zc
 
         return yc,zc,info
-
-    def _readOutlines(self,pklname=None,prefix='trajectory_contours'):
-        """Read saved paths from a contour collection for the contour
-        level identified as embodying the wake
-        """
-        if not prefix[-1]=='_': prefix += '_'
-        if pklname is None:
-            pklname = os.path.join(self.prefix,prefix+str(self.downD)+'D_paths.pkl')
-        try:
-            import pickle
-            self.paths = pickle.load( open(pklname,'r') )
-            print 'Read wake outlines from',pklname
-        except ImportError: pass
-        except IOError:
-            print 'Wake outline file',pklname,'was not found'
-        except:
-            print pklname,'was not read'
 
     def plotContour(self,itime,outline=True,**kwargs):
         """Plot/update contour and center marker at time ${itime}.
