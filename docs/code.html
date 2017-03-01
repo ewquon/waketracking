@@ -197,6 +197,9 @@ datasize=1 (i.e., scalar field) is assumed. In the scalar
 case, the velocity is assumed normal to the sampling plane;
 in the vector case, the horizontal velocity is calculated
 from the first two components.</li>
+<li><strong>horzRange</strong><strong>,</strong><strong>vertRange</strong> (<em>tuple</em><em>, </em><em>optional</em>) &#8211; Range of points in the horizontal and vertical directions,
+respectively, in the rotor-aligned sampling plane through
+which to search for the wake center</li>
 <li><strong>prefix</strong> (<em>string</em><em>, </em><em>optional</em>) &#8211; Root output directory to save processed data and images.</li>
 <li><strong>verbose</strong> (<em>boolean</em><em>, </em><em>optional</em>) &#8211; Screen output verbosity.</li>
 </ul>
@@ -295,6 +298,12 @@ If Navg &lt; 0, average from end of series only.</li>
 <p>See plotContour for keyword arguments.</p>
 </dd></dl>
 
+<dl class="method">
+<dt id="waketracking.waketrackers.waketracker.trajectoryIn">
+<code class="descname">trajectoryIn</code><span class="sig-paren">(</span><em>frame</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.waketrackers.waketracker.trajectoryIn" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a tuple with the wake trajectory in the specified frame</p>
+</dd></dl>
+
 </dd></dl>
 
 <dl class="function">
@@ -329,8 +338,8 @@ reference area).</p>
 <p>This is the fastest of the contour-based tracking methods.</p>
 <dl class="method">
 <dt id="waketracking.ContourWakeTracker.ConstantArea.findCenters">
-<code class="descname">findCenters</code><span class="sig-paren">(</span><em>refArea</em>, <em>writeTrajectories=None</em>, <em>writePaths=None</em>, <em>weightedCenter=True</em>, <em>frame='rotor-aligned'</em>, <em>Ntest=51</em>, <em>tol=0.01</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.ContourWakeTracker.ConstantArea.findCenters" title="Permalink to this definition">¶</a></dt>
-<dd><p>Uses a binary search algorithm (in findContourCenter) to
+<code class="descname">findCenters</code><span class="sig-paren">(</span><em>refArea</em>, <em>trajectoryFile=None</em>, <em>outlinesFile=None</em>, <em>weightedCenter=True</em>, <em>frame='rotor-aligned'</em>, <em>Ntest=51</em>, <em>tol=0.01</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.ContourWakeTracker.ConstantArea.findCenters" title="Permalink to this definition">¶</a></dt>
+<dd><p>Uses a binary search algorithm (findContourCenter) to
 locate the contour with flux closest to the targetValue.</p>
 <p>Overrides the parent findCenters routine.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -339,15 +348,17 @@ locate the contour with flux closest to the targetValue.</p>
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>refArea</strong> (<em>float</em>) &#8211; Area to attempt to match, e.g., the rotor disk area.</li>
-<li><strong>writeTrajectories</strong> (<em>string</em>) &#8211; Name of trajectory data file to attempt inputting and to
-write out to; set to None to skip I/O.</li>
-<li><strong>writePaths</strong> (<em>string</em>) &#8211; Name of pickle archive file (*.pkl) to write out for future
-reloading or None to skip output.</li>
-<li><strong>weightedCenter</strong> (<em>boolean</em>) &#8211; If True, calculate the velocity-deficit-weighted &#8220;center of
+<li><strong>trajectoryFile</strong> (<em>string</em><em>, </em><em>optional</em>) &#8211; Name of trajectory data file to attempt inputting and to
+write out to; set to None to skip I/O. Data are written out
+in the rotor-aligned frame.</li>
+<li><strong>outlinesFile</strong> (<em>string</em><em>, </em><em>optional</em>) &#8211; Name of pickle archive file (*.pkl) to attempt input and to
+write out detected contour outlines; set to None to skip
+I/O.</li>
+<li><strong>weightedCenter</strong> (<em>boolean</em><em>, </em><em>optional</em>) &#8211; If True, calculate the velocity-deficit-weighted &#8220;center of
 mass&#8221;; if False, calculate the geometric center of the wake.</li>
-<li><strong>frame</strong> (<em>string</em>) &#8211; Reference frame, either &#8216;inertial&#8217; or &#8216;rotor-aligned&#8217;.</li>
-<li><strong>Ntest</strong> (<em>integer</em>) &#8211; The number of initial test contours to calculate.</li>
-<li><strong>tol</strong> (<em>float</em>) &#8211; Minimum spacing to test during the binary search.</li>
+<li><strong>frame</strong> (<em>string</em><em>, </em><em>optional</em>) &#8211; Reference frame, either &#8216;inertial&#8217; or &#8216;rotor-aligned&#8217;.</li>
+<li><strong>Ntest</strong> (<em>integer</em><em>, </em><em>optional</em>) &#8211; The number of initial test contours to calculate.</li>
+<li><strong>tol</strong> (<em>float</em><em>, </em><em>optional</em>) &#8211; Minimum spacing to test during the binary search.</li>
 </ul>
 </td>
 </tr>

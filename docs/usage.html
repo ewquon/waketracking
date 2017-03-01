@@ -92,27 +92,23 @@
 <li><p class="first">Create the wake tracking object. The <code class="docutils literal"><span class="pre">track</span></code> function may be called without a specified method to return a list of available tracking methods.</p>
 <blockquote>
 <div><div class="highlight-python"><div class="highlight"><pre><span></span><span class="c1"># All outputs will go into the $prefix directory</span>
-<span class="n">wake</span> <span class="o">=</span> <span class="n">track</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">,</span><span class="n">z</span><span class="p">,</span><span class="n">u</span><span class="p">,</span><span class="n">prefix</span><span class="o">=</span><span class="s1">&#39;processedWake&#39;</span><span class="p">,</span><span class="n">method</span><span class="o">=</span><span class="s1">&#39;ConstantArea&#39;</span><span class="p">)</span>
+<span class="n">wake</span> <span class="o">=</span> <span class="n">track</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">,</span><span class="n">z</span><span class="p">,</span><span class="n">u</span><span class="p">,</span>
+             <span class="n">horzRange</span><span class="o">=</span><span class="p">(</span><span class="mi">1250</span><span class="p">,</span><span class="mi">1750</span><span class="p">),</span>
+             <span class="n">vertRange</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">250</span><span class="p">),</span>
+             <span class="n">prefix</span><span class="o">=</span><span class="s1">&#39;processedWake&#39;</span><span class="p">,</span>
+             <span class="n">method</span><span class="o">=</span><span class="s1">&#39;ConstantArea&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div></blockquote>
 </li>
-<li><p class="first">Perform the wake tracking.</p>
+<li><p class="first">Perform the wake tracking. Removing the wind shear is an optional step, but typically performed to facilitate the wake identification. One way to do this is to take a simple average of the last <code class="docutils literal"><span class="pre">Navg</span></code> steps, then take a spatial average of the profiles from the fringes of the sampling plane.</p>
+<p>Results are returned in the rotor-aligned sampling plane by default. For a rotor with axis aligned with the x-direction, the rotor-aligned and intertial frames are identical. Note that the &#8216;rotor-aligned&#8217; option returns two arrays xh,xv while the &#8216;inertial&#8217; option returns three arrays corresponding x,y,z.</p>
 <blockquote>
-<div><div class="highlight-python"><div class="highlight"><pre><span></span><span class="c1"># Remove the wind shear (optional)</span>
-<span class="c1"># --------------------------------</span>
-<span class="c1"># Take the time average of the last 300 samples; subtract out the</span>
-<span class="c1">#  average of the left- and right-most time-averaged profiles (i.e. the</span>
-<span class="c1">#  fringes of the sampling plane).</span>
-<span class="n">wake</span><span class="o">.</span><span class="n">removeShear</span><span class="p">(</span><span class="n">Navg</span><span class="o">=-</span><span class="mi">300</span><span class="p">)</span>
-
-<span class="c1"># Extract the wake centers</span>
-<span class="c1"># ------------------------</span>
-<span class="c1"># Results returned in the rotor-aligned sampling plane by default.</span>
-<span class="c1"># For rotor with axis aligned with the x-direction, the rotor-algned</span>
-<span class="c1"># frame and the inertial frames are identical. (Note that the &#39;inertial&#39;</span>
-<span class="c1"># option returns three arrays corresponding to x, y, and z.</span>
-<span class="n">wake</span><span class="o">.</span><span class="n">findCenters</span><span class="p">(</span><span class="mf">12500.</span><span class="p">,</span><span class="n">writeTrajectories</span><span class="o">=</span><span class="s1">&#39;trajectory.dat&#39;</span><span class="p">)</span>
+<div><div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">wake</span><span class="o">.</span><span class="n">removeShear</span><span class="p">(</span><span class="n">Navg</span><span class="o">=-</span><span class="mi">300</span><span class="p">)</span>
+<span class="n">targetValue</span> <span class="o">=</span> <span class="mf">12500.</span> <span class="c1"># approx rotor area for the ConstantArea method</span>
+<span class="n">wake</span><span class="o">.</span><span class="n">findCenters</span><span class="p">(</span><span class="n">targetValue</span><span class="p">,</span>
+                 <span class="n">trajectoryFile</span><span class="o">=</span><span class="s1">&#39;trajectory.dat&#39;</span><span class="p">,</span>
+                 <span class="n">outlinesFile</span><span class="o">=</span><span class="s1">&#39;outlines.pkl&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div></blockquote>

@@ -52,26 +52,23 @@ Wake Processing
     .. code-block:: python
 
         # All outputs will go into the $prefix directory
-        wake = track(x,y,z,u,prefix='processedWake',method='ConstantArea')
+        wake = track(x,y,z,u,
+                     horzRange=(1250,1750),
+                     vertRange=(0,250),
+                     prefix='processedWake',
+                     method='ConstantArea')
 
-#. Perform the wake tracking.
+#. Perform the wake tracking. Removing the wind shear is an optional step, but typically performed to facilitate the wake identification. One way to do this is to take a simple average of the last ``Navg`` steps, then take a spatial average of the profiles from the fringes of the sampling plane. 
+
+   Results are returned in the rotor-aligned sampling plane by default. For a rotor with axis aligned with the x-direction, the rotor-aligned and intertial frames are identical. Note that the 'rotor-aligned' option returns two arrays xh,xv while the 'inertial' option returns three arrays corresponding x,y,z.
 
     .. code-block:: python
 
-        # Remove the wind shear (optional)
-        # --------------------------------
-        # Take the time average of the last 300 samples; subtract out the
-        #  average of the left- and right-most time-averaged profiles (i.e. the
-        #  fringes of the sampling plane).
         wake.removeShear(Navg=-300)
-
-        # Extract the wake centers
-        # ------------------------
-        # Results returned in the rotor-aligned sampling plane by default.
-        # For rotor with axis aligned with the x-direction, the rotor-algned
-        # frame and the inertial frames are identical. (Note that the 'inertial'
-        # option returns three arrays corresponding to x, y, and z.
-        wake.findCenters(12500.,writeTrajectories='trajectory.dat')
+        targetValue = 12500. # approx rotor area for the ConstantArea method
+        wake.findCenters(targetValue,
+                         trajectoryFile='trajectory.dat',
+                         outlinesFile='outlines.pkl')
 
 #. Visualize the results.
 
