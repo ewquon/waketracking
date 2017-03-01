@@ -292,7 +292,9 @@ class waketracker(object):
                 for k,umean in enumerate(self.Uprofile[itime,:]):
                     self.u[itime,:,k] -= umean
 
-    def findCenters(self):
+    def findCenters(self,
+                    writeTrajectories=None,
+                    frame='rotor-aligned'):
         print self.__class__.__name,'needs to override this function!'
         #self.wakeTracked = True
 
@@ -341,22 +343,47 @@ class waketracker(object):
         return yw_fix, zw_fix
 
 
-    def _writeTrajectory(self,fname,data):
+    def _writeData(self,fname,data):
         """Helper function to write out specified data (e.g., trajectory
         and optimization parameters)
         """
         Ndata = len(data)
         fmtlist = ['%d'] + Ndata*['%.18e']
         data = np.vstack((np.arange(self.Ntimes),data)).T
-        np.savetxt( fname, data, fmt=fmtlist )
+        np.savetxt(fname, data, fmt=fmtlist)
 
+    def _readTrajectory(self,fname):
+        """Helper function to read trajectory history"""
+        data = np.loadtxt(fname)
+        assert(len(data) == self.Ntimes)
+        # data[:,0] is just an index
+        self.xh_wake = data[:,1]
+        self.xv_wake = data[:,2]
+        return data
+
+    def _updateInertial(self):
+        """Called after loading/calculating a wake trajectory in the
+        rotor-aligned frame
+        """
+        ang = self.yaw
+        xd = np.mean(self.xd)  # assuming no sampling rotation error, self.xd should be constant
+        self.xwake = np.cos(ang)*xd - np.sin(ang)*self.xh_wake
+        self.ywake = np.sin(ang)*xd + np.cos(ang)*self.xh_wake
+        self.zwake = self.xv_wake
+
+    def _trajectoryIn(self,frame):
+        if frame == 'inertial':
+            return self.xwake, self.ywake, self.zwake
+        elif frame == 'rotor-aligned':
+            return self.xh_wake, self.xv_wake
+        else:
+            print 'output frame not recognized'
 
     def _initPlot(self):
         """Set up figure properties here""" 
         plt.rc('text', usetex=True)
         plt.rc('font', family='serif')
-        #self.fig = plt.figure( figsize=(10,6), dpi=200 )
-        self.fig = plt.figure( figsize=(8,6) )
+        self.fig = plt.figure(figsize=(8,6))
 
         def handle_close(event):
             self.plotInitialized = False
