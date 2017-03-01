@@ -1,4 +1,5 @@
 import os
+import sys
 import importlib
 import inspect
 
@@ -136,10 +137,9 @@ class waketracker(object):
         if self.verbose:
             print '  rotated to rotor-aligned axes (about z):',ang*180./np.pi,'deg'
         self.yaw = ang
-        self.xh = -np.sin(ang)*self.x + np.cos(ang)*self.y  # clockwise rotation (seen from above)
-
-        xd = np.cos(ang)*self.x + np.sin(ang)*self.y  # streamwise coordinate--not used for tracking
-        self.xd = np.mean(xd) # sampling plane downwind position
+        # clockwise rotation (seen from above)
+        self.xd =  np.cos(ang)*self.x + np.sin(ang)*self.y  # downstream coordinate--not used for tracking
+        self.xh = -np.sin(ang)*self.x + np.cos(ang)*self.y
 
         self.xh_range = self.xh[:,0]
         self.xv_range = self.xv[0,:]
@@ -151,7 +151,7 @@ class waketracker(object):
         # check plane yaw
         # note: rotated plane should be in y-z with min(x)==max(x)
         #       and tracking should be performed using the xh-xv coordinates
-        xd_diff = np.max(xd) - np.min(xd)
+        xd_diff = np.max(self.xd) - np.min(self.xd)
         if self.verbose:
             print '  rotation error:',xd_diff
         if np.abs(xd_diff) > 1e-6:
@@ -181,6 +181,12 @@ class waketracker(object):
                         self.u_tot[itime,ih,iv] = udata[itime,ih,iv,:].dot(self.norm)
 
         self.u = self.u_tot  # in case input u already has shear removed
+
+        self.xwake = np.zeros(self.Ntimes)
+        self.ywake = np.zeros(self.Ntimes)
+        self.zwake = np.zeros(self.Ntimes)
+        self.xh_wake = np.zeros(self.Ntimes)
+        self.xv_wake = np.zeros(self.Ntimes)
 
         if self.verbose:
             print 'Number of time frames to process:',self.Ntimes
@@ -285,6 +291,7 @@ class waketracker(object):
 
     def findCenters(self):
         print self.__class__.__name,'needs to override this function!'
+        #self.wakeTracked = True
 
     def fixTrajectoryErrors(self,update=False,istart=0,iend=None):
         """Some wake detection algorithms are not guaranteed to provide
@@ -468,6 +475,11 @@ class contourwaketracker(waketracker):
 
     def __init__(self,*args,**kwargs):
         super(contourwaketracker,self).__init__(*args,**kwargs)
+
+        self.Clevels = np.zeros(self.Ntimes)
+        self.Cfvals = np.zeros(self.Ntimes)
+        self.paths = self.Ntimes*[None]
+
         if self.verbose:
             print '\n...finished initializing contourwaketracker'
 
@@ -492,7 +504,7 @@ class contourwaketracker(waketracker):
         else:
             def Cfn(path):
                 return contour.integrateFunction(
-                        path, self.yg, self.zg,
+                        path, self.xh, self.xv,
                         self.u_tot[itime,:,:], self.u[itime,:,:],
                         fn)
 
@@ -509,7 +521,6 @@ class contourwaketracker(waketracker):
             # BEGIN search loop
             #vvvvvvvvvvvvvvvvvvvvvvvvvvvv
             for it,thresh in enumerate(Crange):
-                if DEBUG: print dbgprefix,'threshold=',thresh
                 for path in C.trace(thresh):
                     NtraceCalls += 1
                     # Returns a list of arrays (floats) and lists (uint8), of the contour
@@ -536,8 +547,8 @@ class contourwaketracker(waketracker):
                 curOptLevel = level[idx]
             else:
                 # no closed contours within our range?
-                yc = self.y_fail
-                zc = self.z_fail
+                yc = self.xh_fail
+                zc = self.xv_fail
                 success = False
                 break
             #^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -562,10 +573,13 @@ class contourwaketracker(waketracker):
             self.Cfvals[itime] = Clist[idx]
 
             if weightedCenter:
-                yc,zc = calcWeightedCenter(paths[idx],self.yg,self.zg,self.u[itime,:,:])
+                yc,zc = contour.calcWeightedCenter(paths[idx],
+                                                   self.xh,
+                                                   self.xv,
+                                                   self.u[itime,:,:])
             else:
-                yc = np.mean( paths[idx][:,0] )
-                zc = np.mean( paths[idx][:,1] )
+                yc = np.mean(paths[idx][:,0])
+                zc = np.mean(paths[idx][:,1])
 
         else:
             # tracking failed!
@@ -573,11 +587,11 @@ class contourwaketracker(waketracker):
             self.Clevels[itime] = 0
             self.Cfvals[itime] = 0
 
-            yc = self.y_fail
-            zc = self.z_fail
+            yc = self.xh_fail
+            zc = self.xv_fail
 
-        self.ywake[itime] = yc
-        self.zwake[itime] = zc
+        self.xh_wake[itime] = yc
+        self.xv_wake[itime] = zc
 
         return yc,zc,info
 
