@@ -41,9 +41,9 @@ Wake Processing
 
     .. code-block:: python
 
-        # Returns a planar coordinates (x,y,z) and time-varying velocities (u)
-        #   on a plane with size (Nh,Nv), Nh and Nv are the number of
-        #   horizontal and vertical points respectively.
+        # Returns planar coordinates (x,y,z) and time-varying velocities
+        #   (u) on a plane with size (Nh,Nv), Nh and Nv are the number
+        #   of horizontal and vertical points respectively.
         x,y,z,u = arraydata.sliceI(0)         # slice by index
         x,y,z,u = arraydata.slice_at(x=1000.) # slice at location
 
@@ -65,7 +65,7 @@ Wake Processing
     .. code-block:: python
 
         wake.removeShear(Navg=-300)
-        targetValue = 12500. # approx rotor area for the ConstantArea method
+        targetValue = 12500. # method-dependent value
         wake.findCenters(targetValue,
                          trajectoryFile='trajectory.dat',
                          outlinesFile='outlines.pkl')
@@ -74,6 +74,7 @@ Wake Processing
 
     .. code-block:: python
 
-        # writes out 'processedWake/snapshots/wakeVelocityDeficit_{:d}.png'
-        wake.saveSnapshots(outdir='snapshots',seriesname='wakeVelocityDeficit')
+        # writes out 'processedWake/snapshots/wakeVelocityDeficit_*.png'
+        wake.saveSnapshots(outdir='snapshots',
+                           seriesname='wakeVelocityDeficit')
 

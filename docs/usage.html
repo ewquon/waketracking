@@ -80,9 +80,9 @@
 </li>
 <li><p class="first">Since the input data may be three-dimensional, extract a slice of the data (if necessary).</p>
 <blockquote>
-<div><div class="highlight-python"><div class="highlight"><pre><span></span><span class="c1"># Returns a planar coordinates (x,y,z) and time-varying velocities (u)</span>
-<span class="c1">#   on a plane with size (Nh,Nv), Nh and Nv are the number of</span>
-<span class="c1">#   horizontal and vertical points respectively.</span>
+<div><div class="highlight-python"><div class="highlight"><pre><span></span><span class="c1"># Returns planar coordinates (x,y,z) and time-varying velocities</span>
+<span class="c1">#   (u) on a plane with size (Nh,Nv), Nh and Nv are the number</span>
+<span class="c1">#   of horizontal and vertical points respectively.</span>
 <span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">,</span><span class="n">z</span><span class="p">,</span><span class="n">u</span> <span class="o">=</span> <span class="n">arraydata</span><span class="o">.</span><span class="n">sliceI</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>         <span class="c1"># slice by index</span>
 <span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">,</span><span class="n">z</span><span class="p">,</span><span class="n">u</span> <span class="o">=</span> <span class="n">arraydata</span><span class="o">.</span><span class="n">slice_at</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="mf">1000.</span><span class="p">)</span> <span class="c1"># slice at location</span>
 </pre></div>
@@ -105,7 +105,7 @@
 <p>Results are returned in the rotor-aligned sampling plane by default. For a rotor with axis aligned with the x-direction, the rotor-aligned and intertial frames are identical. Note that the &#8216;rotor-aligned&#8217; option returns two arrays xh,xv while the &#8216;inertial&#8217; option returns three arrays corresponding x,y,z.</p>
 <blockquote>
 <div><div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">wake</span><span class="o">.</span><span class="n">removeShear</span><span class="p">(</span><span class="n">Navg</span><span class="o">=-</span><span class="mi">300</span><span class="p">)</span>
-<span class="n">targetValue</span> <span class="o">=</span> <span class="mf">12500.</span> <span class="c1"># approx rotor area for the ConstantArea method</span>
+<span class="n">targetValue</span> <span class="o">=</span> <span class="mf">12500.</span> <span class="c1"># method-dependent value</span>
 <span class="n">wake</span><span class="o">.</span><span class="n">findCenters</span><span class="p">(</span><span class="n">targetValue</span><span class="p">,</span>
                  <span class="n">trajectoryFile</span><span class="o">=</span><span class="s1">&#39;trajectory.dat&#39;</span><span class="p">,</span>
                  <span class="n">outlinesFile</span><span class="o">=</span><span class="s1">&#39;outlines.pkl&#39;</span><span class="p">)</span>
@@ -115,8 +115,9 @@
 </li>
 <li><p class="first">Visualize the results.</p>
 <blockquote>
-<div><div class="highlight-python"><div class="highlight"><pre><span></span><span class="c1"># writes out &#39;processedWake/snapshots/wakeVelocityDeficit_{:d}.png&#39;</span>
-<span class="n">wake</span><span class="o">.</span><span class="n">saveSnapshots</span><span class="p">(</span><span class="n">outdir</span><span class="o">=</span><span class="s1">&#39;snapshots&#39;</span><span class="p">,</span><span class="n">seriesname</span><span class="o">=</span><span class="s1">&#39;wakeVelocityDeficit&#39;</span><span class="p">)</span>
+<div><div class="highlight-python"><div class="highlight"><pre><span></span><span class="c1"># writes out &#39;processedWake/snapshots/wakeVelocityDeficit_*.png&#39;</span>
+<span class="n">wake</span><span class="o">.</span><span class="n">saveSnapshots</span><span class="p">(</span><span class="n">outdir</span><span class="o">=</span><span class="s1">&#39;snapshots&#39;</span><span class="p">,</span>
+                   <span class="n">seriesname</span><span class="o">=</span><span class="s1">&#39;wakeVelocityDeficit&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div></blockquote>
