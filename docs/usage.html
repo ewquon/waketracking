@@ -83,9 +83,34 @@
 </pre></div>
 </div>
 <ol class="arabic simple">
-<li>Perform the wake analysis. The <code class="docutils literal"><span class="pre">track</span></code> function may be called without a specified method to return a list of available tracking methods.</li>
+<li>Create the wake tracking object. The <code class="docutils literal"><span class="pre">track</span></code> function may be called without a specified method to return a list of available tracking methods.</li>
 </ol>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">wake</span> <span class="o">=</span> <span class="n">track</span><span class="p">(</span>\<span class="o">*</span><span class="n">args</span><span class="p">,</span>\<span class="o">*</span>\<span class="o">*</span><span class="n">kwargs</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;ConstantArea&#39;</span><span class="p">)</span>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">wake</span> <span class="o">=</span> <span class="n">track</span><span class="p">(</span>\<span class="o">*</span><span class="n">args</span><span class="p">,</span>\<span class="o">*</span>\<span class="o">*</span><span class="n">kwargs</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="s1">&#39;processedWake&#39;</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;ConstantArea&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<ol class="arabic simple">
+<li>Perform the wake tracking.</li>
+</ol>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="c1"># Remove the wind shear (optional)</span>
+<span class="c1"># --------------------------------</span>
+<span class="c1"># Take the time average of the last 300 samples; subtract out the average of the left- and</span>
+<span class="c1">#   right-most time-averaged profiles (i.e. the fringes of the sampling plane).</span>
+<span class="n">wake</span><span class="o">.</span><span class="n">removeShear</span><span class="p">(</span><span class="n">Navg</span><span class="o">=-</span><span class="mi">300</span><span class="p">)</span>
+
+<span class="c1"># Extract the wake centers</span>
+<span class="c1"># ------------------------</span>
+<span class="c1"># Results returned in the rotor-aligned sampling plane by default.</span>
+<span class="c1"># For rotor with axis aligned with the x-direction, the rotor-algned frame and the inertial</span>
+<span class="c1">#   frames are identical. (Note that the &#39;inertial&#39; option returns three arrays corresponding to</span>
+<span class="c1">#   x, y, and z.</span>
+<span class="n">wake</span><span class="o">.</span><span class="n">findCenters</span><span class="p">(</span><span class="mf">12500.</span><span class="p">,</span><span class="n">writeTrajectories</span><span class="o">=</span><span class="s1">&#39;trajectory.dat&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<ol class="arabic simple">
+<li>Visualize the results.</li>
+</ol>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="c1"># writes out &#39;processedWake/snapshots/wakeVelocityDeficit_{:d}.png&#39;</span>
+<span class="n">wake</span><span class="o">.</span><span class="n">saveSnapshots</span><span class="p">(</span><span class="n">outdir</span><span class="o">=</span><span class="s1">&#39;snapshots&#39;</span><span class="p">,</span><span class="n">seriesname</span><span class="o">=</span><span class="s1">&#39;wakeVelocityDeficit&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>

@@ -139,15 +139,29 @@ the Cartesian reference frame.</li>
 <p>Inherits superclass WakeTracker</p>
 <dl class="method">
 <dt id="waketracking.waketrackers.contourwaketracker.plotContour">
-<code class="descname">plotContour</code><span class="sig-paren">(</span><em>itime</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.waketrackers.contourwaketracker.plotContour" title="Permalink to this definition">¶</a></dt>
-<dd><p>Overridden plotContour function to include the calculated
+<code class="descname">plotContour</code><span class="sig-paren">(</span><em>itime</em>, <em>plotpath=True</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.waketrackers.contourwaketracker.plotContour" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plot/update contour and center marker at time ${itime}.</p>
+<p>Overridden waketracker.plotContour function to include the calculated
 wake contour outline.</p>
-<p>See waketracker.plotContour for more information</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>plotpath</strong> (<em>boolean</em><em>, </em><em>optional</em>) &#8211; Plot the wake contour path.</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>itime</strong> (<em>integer</em>) &#8211; Index of the wake snapshot to plot.</li>
+<li><strong>cmin</strong><strong>,</strong><strong>cmax</strong> (<em>float</em><em>, </em><em>optional</em>) &#8211; Range of contour values to plot.</li>
+<li><strong>cmap</strong> (<em>string</em><em>, </em><em>optional</em>) &#8211; Colormap for the contour plot.</li>
+<li><strong>markercolor</strong> (<em>any matplotlib color</em><em>, </em><em>optional</em>) &#8211; To plot the detected wake center, otherwise set to None.</li>
+<li><strong>writepng</strong> (<em>boolean</em><em>, </em><em>optional</em>) &#8211; If True, save image to
+${outdir}/${seriesname}_&lt;timeName&gt;.png</li>
+<li><strong>outdir</strong> (<em>string</em><em>, </em><em>optional</em>) &#8211; Output subdirectory.</li>
+<li><strong>seriesname</strong> (<em>string</em><em>, </em><em>optional</em>) &#8211; Prefix for image series (if writepng==True).</li>
+<li><strong>Parameters</strong> (<em>Additional</em>) &#8211; </li>
+<li><strong>---------------------</strong> &#8211; </li>
+<li><strong>plotpath</strong> (<em>boolean</em><em>, </em><em>optional</em>) &#8211; Plot the wake contour path. If False, operates the same as
+waketracker.plotContour.</li>
+</ul>
+</td>
 </tr>
 </tbody>
 </table>
@@ -183,12 +197,7 @@ datasize=1 (i.e., scalar field) is assumed. In the scalar
 case, the velocity is assumed normal to the sampling plane;
 in the vector case, the horizontal velocity is calculated
 from the first two components.</li>
-<li><strong>shearRemoval</strong> (<em>string</em><em>, </em><em>optional</em>) &#8211; Specify method to remove wind shear, or None to use data as
-is; some methods may require additional keyword arguments</li>
-<li><strong>Navg</strong> (<em>integer</em><em>, </em><em>optional</em>) &#8211; Number of snapshots to average over to obtain an
-instaneous average (when shearRemoval==&#8217;default&#8217;).
-If Navg &lt; 0, average from end of series only.</li>
-<li><strong>outputDir</strong> (<em>string</em><em>, </em><em>optional</em>) &#8211; Output directory to save processed data and images.</li>
+<li><strong>prefix</strong> (<em>string</em><em>, </em><em>optional</em>) &#8211; Root output directory to save processed data and images.</li>
 <li><strong>verbose</strong> (<em>boolean</em><em>, </em><em>optional</em>) &#8211; Screen output verbosity.</li>
 </ul>
 </td>
@@ -200,16 +209,16 @@ If Navg &lt; 0, average from end of series only.</li>
 <code class="descname">fixTrajectoryErrors</code><span class="sig-paren">(</span><em>update=False</em>, <em>istart=0</em>, <em>iend=None</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.waketrackers.waketracker.fixTrajectoryErrors" title="Permalink to this definition">¶</a></dt>
 <dd><p>Some wake detection algorithms are not guaranteed to provide
 a valid trajectory. By default, the coordinates of failed
-detection points is set to be (${y_start},${z_start}). This
-routine locates points believed to be problem points and
-interpolates between surrounding points. Piecewise linear
-interpolation (np.interp) is used.</p>
+detection points is set to be (min(y),min(z)). This routine
+locates points believed to be problem points and interpolates
+between surrounding points. Piecewise linear interpolation
+(np.interp) is used.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>update</strong> (<em>boolean</em><em>, </em><em>optional</em>) &#8211; Set to True to udpate the ywake and zwake in place.</li>
+<li><strong>update</strong> (<em>boolean</em><em>, </em><em>optional</em>) &#8211; Set to True to update the ywake and zwake in place.</li>
 <li><strong>istart</strong><strong>,</strong><strong>iend</strong> (<em>integer</em><em>, </em><em>optional</em>) &#8211; The range of values to correct.</li>
 </ul>
 </td>
@@ -226,7 +235,7 @@ interpolation (np.interp) is used.</p>
 
 <dl class="method">
 <dt id="waketracking.waketrackers.waketracker.plotContour">
-<code class="descname">plotContour</code><span class="sig-paren">(</span><em>itime</em>, <em>cmin=-5.0</em>, <em>cmax=5.0</em>, <em>cmap='jet'</em>, <em>markercolor='w'</em>, <em>writepng=False</em>, <em>name=''</em>, <em>dpi=100</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.waketrackers.waketracker.plotContour" title="Permalink to this definition">¶</a></dt>
+<code class="descname">plotContour</code><span class="sig-paren">(</span><em>itime</em>, <em>cmin=-5.0</em>, <em>cmax=5.0</em>, <em>cmap='jet'</em>, <em>markercolor='w'</em>, <em>writepng=False</em>, <em>outdir='.'</em>, <em>seriesname='U'</em>, <em>dpi=100</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.waketrackers.waketracker.plotContour" title="Permalink to this definition">¶</a></dt>
 <dd><p>Plot/update contour and center marker at time ${itime}.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -238,7 +247,9 @@ interpolation (np.interp) is used.</p>
 <li><strong>cmap</strong> (<em>string</em><em>, </em><em>optional</em>) &#8211; Colormap for the contour plot.</li>
 <li><strong>markercolor</strong> (<em>any matplotlib color</em><em>, </em><em>optional</em>) &#8211; To plot the detected wake center, otherwise set to None.</li>
 <li><strong>writepng</strong> (<em>boolean</em><em>, </em><em>optional</em>) &#8211; If True, save image to
-${outdir}/&lt;timeName&gt;_${name}${downD}D_U.png</li>
+${outdir}/${seriesname}_&lt;timeName&gt;.png</li>
+<li><strong>outdir</strong> (<em>string</em><em>, </em><em>optional</em>) &#8211; Output subdirectory.</li>
+<li><strong>seriesname</strong> (<em>string</em><em>, </em><em>optional</em>) &#8211; Prefix for image series (if writepng==True).</li>
 </ul>
 </td>
 </tr>
@@ -247,21 +258,41 @@ ${outdir}/&lt;timeName&gt;_${name}${downD}D_U.png</li>
 </dd></dl>
 
 <dl class="method">
-<dt id="waketracking.waketrackers.waketracker.printSnapshots">
-<code class="descname">printSnapshots</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.waketrackers.waketracker.printSnapshots" title="Permalink to this definition">¶</a></dt>
-<dd><p>Write out all snapshots to ${outdir}.</p>
-<p>See plotContour for keyword arguments.</p>
+<dt id="waketracking.waketrackers.waketracker.removeShear">
+<code class="descname">removeShear</code><span class="sig-paren">(</span><em>method='default'</em>, <em>Navg=-300</em>, <em>windProfile=None</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.waketrackers.waketracker.removeShear" title="Permalink to this definition">¶</a></dt>
+<dd><p>Removes wind shear from data.</p>
+<p>Calculates self.u from self.u_tot.</p>
+<p>Current supported methods:</p>
+<ul class="simple">
+<li>&#8220;default&#8221;: Estimate from fringes</li>
+<li><dl class="first docutils">
+<dt>&#8220;specified&#8221;: Wind profile specified as either a function or an</dt>
+<dd>array of heights vs horizontal velocity</dd>
+</dl>
+</li>
+</ul>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>method</strong> (<em>string</em><em>, </em><em>optional</em>) &#8211; Specify method to remove wind shear, or None to use data as
+is; some methods may require additional keyword arguments</li>
+<li><strong>Navg</strong> (<em>integer</em><em>, </em><em>optional</em>) &#8211; Number of snapshots to average over to obtain an
+instaneous average (when shearRemoval==&#8217;default&#8217;).
+If Navg &lt; 0, average from end of series only.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="method">
-<dt id="waketracking.waketrackers.waketracker.removeShear">
-<code class="descname">removeShear</code><span class="sig-paren">(</span><em>removalMethod='default'</em>, <em>Navg=1</em>, <em>windProfile=None</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.waketrackers.waketracker.removeShear" title="Permalink to this definition">¶</a></dt>
-<dd><p>Removes wind shear from data.</p>
-<p>Calculates self.u from self.utot.</p>
-<p>Current supported methods:
-* &#8220;default&#8221;: Estimate from fringes
-* &#8220;specified&#8221;: Wind profile specified as either a function or
-an array of heights vs horizontal velocity</p>
+<dt id="waketracking.waketrackers.waketracker.saveSnapshots">
+<code class="descname">saveSnapshots</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.waketrackers.waketracker.saveSnapshots" title="Permalink to this definition">¶</a></dt>
+<dd><p>Write out all snapshots to ${outdir}.</p>
+<p>See plotContour for keyword arguments.</p>
 </dd></dl>
 
 </dd></dl>
@@ -290,11 +321,47 @@ object.</p>
 <span class="target" id="module-waketracking.ContourWakeTracker"></span><dl class="class">
 <dt id="waketracking.ContourWakeTracker.ConstantArea">
 <em class="property">class </em><code class="descclassname">waketracking.ContourWakeTracker.</code><code class="descname">ConstantArea</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.ContourWakeTracker.ConstantArea" title="Permalink to this definition">¶</a></dt>
-<dd><p>Identifies a wake as a region with velocity contour enclosing an
-area closest to the rotor (or another specified reference area).</p>
+<dd><p>Identifies a wake as a region with velocity deficit contour
+enclosing an area closest to the rotor (or another specified
+reference area).</p>
 <p>The wake center is identified as the velocity-deficit-weighted
 &#8220;center of mass&#8221; of all points within the enclosed region.</p>
 <p>This is the fastest of the contour-based tracking methods.</p>
+<dl class="method">
+<dt id="waketracking.ContourWakeTracker.ConstantArea.findCenters">
+<code class="descname">findCenters</code><span class="sig-paren">(</span><em>refArea</em>, <em>writeTrajectories=None</em>, <em>writePaths=None</em>, <em>weightedCenter=True</em>, <em>frame='rotor-aligned'</em>, <em>Ntest=51</em>, <em>tol=0.01</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.ContourWakeTracker.ConstantArea.findCenters" title="Permalink to this definition">¶</a></dt>
+<dd><p>Uses a binary search algorithm (in findContourCenter) to
+locate the contour with flux closest to the targetValue.</p>
+<p>Overrides the parent findCenters routine.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>refArea</strong> (<em>float</em>) &#8211; Area to attempt to match, e.g., the rotor disk area.</li>
+<li><strong>writeTrajectories</strong> (<em>string</em>) &#8211; Name of trajectory data file to attempt inputting and to
+write out to; set to None to skip I/O.</li>
+<li><strong>writePaths</strong> (<em>string</em>) &#8211; Name of pickle archive file (*.pkl) to write out for future
+reloading or None to skip output.</li>
+<li><strong>weightedCenter</strong> (<em>boolean</em>) &#8211; If True, calculate the velocity-deficit-weighted &#8220;center of
+mass&#8221;; if False, calculate the geometric center of the wake.</li>
+<li><strong>frame</strong> (<em>string</em>) &#8211; Reference frame, either &#8216;inertial&#8217; or &#8216;rotor-aligned&#8217;.</li>
+<li><strong>Ntest</strong> (<em>integer</em>) &#8211; The number of initial test contours to calculate.</li>
+<li><strong>tol</strong> (<em>float</em>) &#8211; Minimum spacing to test during the binary search.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
+<li><strong>x_wake,y_wake,z_wake</strong> (<em>ndarray</em>) &#8211; Wake trajectory if frame is &#8216;inertial&#8217;</li>
+<li><strong>xh_wake,xv_wake</strong> (<em>ndarray</em>) &#8211; Wake trajectory if frame is &#8216;rotor-aligned&#8217;</li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
 </dd></dl>
 
 </div>

@@ -42,7 +42,7 @@ class ConstantArea(contourwaketracker):
             Name of trajectory data file to attempt inputting and to
             write out to; set to None to skip I/O.
         writePaths : string
-            Name of pickle archive file (*.pkl) to write out for future
+            Name of pickle archive file (\*.pkl) to write out for future
             reloading or None to skip output.
         weightedCenter : boolean
             If True, calculate the velocity-deficit-weighted "center of

@@ -225,10 +225,13 @@ class waketracker(object):
         Calculates self.u from self.u_tot.
 
         Current supported methods:
-        * "default": Estimate from fringes 
-        * "specified": Wind profile specified as either a function or
-        an array of heights vs horizontal velocity
 
+        * "default": Estimate from fringes 
+        * "specified": Wind profile specified as either a function or an
+            array of heights vs horizontal velocity
+
+        Parameters
+        ----------
         method : string, optional
             Specify method to remove wind shear, or None to use data as
             is; some methods may require additional keyword arguments
@@ -409,8 +412,9 @@ class waketracker(object):
             self._initPlot()  # first time
 
             self.plot_clevels = np.linspace(cmin, cmax, 100)
-            self.plotobj_cf = self.ax.contourf(self.xh, self.xv, self.u[itime,:,:],
-                                               self.plot_clevels, cmap=cmap, extend='both')
+            self.plotobj_filledContours = self.ax.contourf(self.xh, self.xv, self.u[itime,:,:],
+                                                           self.plot_clevels, cmap=cmap,
+                                                           extend='both')
 
             # add marker for detected wake center
             if self.wakeTracked and markercolor is not None:
@@ -426,7 +430,8 @@ class waketracker(object):
 
             # add colorbar
             cb_ticks = np.linspace(cmin, cmax, 11)
-            cb = self.fig.colorbar( self.plotobj_cf, ticks=cb_ticks, label=r'$U \ (m/s)$' )
+            cb = self.fig.colorbar(self.plotobj_filledContours,
+                                   ticks=cb_ticks, label=r'$U \ (m/s)$')
 
             # add time annotation
             #self.plotobj_txt = self.ax.text(0.98, 0.97,'t={:.1f}'.format(self.t[itime]),
@@ -437,9 +442,9 @@ class waketracker(object):
 
         else:
             # update plot
-            for i in range( len(self.plotobj_cf.collections) ):
-                self.plotobj_cf.collections[i].remove()
-            self.plotobj_cf = self.ax.contourf(
+            for i in range( len(self.plotobj_filledContours.collections) ):
+                self.plotobj_filledContours.collections[i].remove()
+            self.plotobj_filledContours = self.ax.contourf(
                     self.xh, self.xv, self.u[itime,:,:],
                     self.plot_clevels, cmap=cmap, extend='both')
 
@@ -612,7 +617,7 @@ class contourwaketracker(waketracker):
         except:
             print pklname,'was not read'
 
-    def plotContour(self,itime,plotpath=True,**kwargs):
+    def plotContour(self,itime,outline=True,**kwargs):
         """Plot/update contour and center marker at time ${itime}.
         
         Overridden waketracker.plotContour function to include the calculated 
@@ -638,9 +643,9 @@ class contourwaketracker(waketracker):
 
         Additional Parameters
         ---------------------
-        plotpath : boolean, optional
-            Plot the wake contour path. If False, operates the same as
-            waketracker.plotContour.
+        outline : boolean, optional
+            Plot the wake contour outline (a path object). If False,
+            operates the same as waketracker.plotContour.
         """
         writepng = kwargs.get('writepng',False)
         outdir = os.path.join(self.prefix,kwargs.get('outdir','.'))
@@ -651,23 +656,19 @@ class contourwaketracker(waketracker):
             if self.verbose: print 'Creating output subdirectory:', outdir
             os.makedirs(outdir)
 
-        plotpath = plotpath and self.wakeTracked
+        plotOutline = outline and self.wakeTracked
 
-        if self.plotInitialized and plotpath:
-#        try:
-            self.plotobj_pth.remove()
-#        except: pass
+        if self.plotInitialized and plotOutline:
+            self.plotobj_wakeOutline.remove()
 
         kwargs['writepng'] = False
         super(contourwaketracker,self).plotContour(itime,**kwargs)
 
-        if plotpath:
-#        try:
-            # wake ouline
+        if plotOutline:
             path = mpath.Path(self.paths[itime])
-            self.plotobj_pth = mpatch.PathPatch(path,edgecolor='w',facecolor='none',ls='-')
-            self.ax.add_patch(self.plotobj_pth)
-#        except: pass
+            self.plotobj_wakeOutline = mpatch.PathPatch(path,facecolor='none',
+                                                        edgecolor='w',ls='-')
+            self.ax.add_patch(self.plotobj_wakeOutline)
 #            if hasattr(self,'plotobj_linecontours'):
 #                for i in range(len(self.plotobj_linecontours.collections)):
 #                    self.plotobj_linecontours.collections[i].remove()

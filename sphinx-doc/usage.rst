@@ -44,10 +44,34 @@ Wake Processing
     y,z,u = arraydata.sliceI(0)         # slice by index
     y,z,u = arraydata.slice_at(x=1000.) # slice at location
 
-#. Perform the wake analysis. The ``track`` function may be called without a specified method to return a list of available tracking methods.
+#. Create the wake tracking object. The ``track`` function may be called without a specified method to return a list of available tracking methods.
 
 .. code-block:: python
 
-    wake = track(\*args,\*\*kwargs, method='ConstantArea')
+    wake = track(\*args,\*\*kwargs, prefix='processedWake', method='ConstantArea')
 
+#. Perform the wake tracking.
+
+.. code-block:: python
+
+    # Remove the wind shear (optional)
+    # --------------------------------
+    # Take the time average of the last 300 samples; subtract out the average of the left- and
+    #   right-most time-averaged profiles (i.e. the fringes of the sampling plane).
+    wake.removeShear(Navg=-300)
+
+    # Extract the wake centers
+    # ------------------------
+    # Results returned in the rotor-aligned sampling plane by default.
+    # For rotor with axis aligned with the x-direction, the rotor-algned frame and the inertial 
+    #   frames are identical. (Note that the 'inertial' option returns three arrays corresponding to
+    #   x, y, and z.
+    wake.findCenters(12500.,writeTrajectories='trajectory.dat')
+
+#. Visualize the results.
+
+.. code-block:: python
+
+    # writes out 'processedWake/snapshots/wakeVelocityDeficit_{:d}.png'
+    wake.saveSnapshots(outdir='snapshots',seriesname='wakeVelocityDeficit')
 
