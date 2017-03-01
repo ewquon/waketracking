@@ -4,10 +4,12 @@ import importlib
 import inspect
 
 import numpy as np
-from scipy.ndimage import uniform_filter1d
+from scipy.ndimage import uniform_filter1d  # to perform moving average
+from matplotlib._cntr import Cntr  # to process contour data
 import matplotlib.pyplot as plt
 import matplotlib.path as mpath
 import matplotlib.patches as mpatch
+import pickle  # to archive path objects containing wake outlines
 
 import contour_functions as contour
 
@@ -297,7 +299,7 @@ class waketracker(object):
                     self.u[itime,:,k] -= umean
 
     def findCenters(self,
-                    writeTrajectories=None,
+                    trajectoryFile=None,
                     frame='rotor-aligned'):
         print self.__class__.__name,'needs to override this function!'
         #self.wakeTracked = True
@@ -358,12 +360,25 @@ class waketracker(object):
 
     def _readTrajectory(self,fname):
         """Helper function to read trajectory history"""
+        if not fname.startswith(self.prefix):
+            fname = os.path.join(self.prefix,fname)
+        if not os.path.isfile(fname):
+            return None
+
         data = np.loadtxt(fname)
         assert(len(data) == self.Ntimes)
         # data[:,0] is just an index
         self.xh_wake = data[:,1]
         self.xv_wake = data[:,2]
+
         return data
+
+    def _writeTrajectory(self,fname):
+        """Helper function to write trajectory history"""
+        if not fname.startswith(self.prefix):
+            fname = os.path.join(self.prefix,fname)
+        self._writeData(trajectoryfile,
+                (self.xh_wake, self.xv_wake))
 
     def _updateInertial(self):
         """Called after loading/calculating a wake trajectory in the
@@ -375,7 +390,8 @@ class waketracker(object):
         self.ywake = np.sin(ang)*xd + np.cos(ang)*self.xh_wake
         self.zwake = self.xv_wake
 
-    def _trajectoryIn(self,frame):
+    def trajectoryIn(self,frame):
+        """Returns a tuple with the wake trajectory in the specified frame"""
         if frame == 'inertial':
             return self.xwake, self.ywake, self.zwake
         elif frame == 'rotor-aligned':
@@ -405,7 +421,6 @@ class waketracker(object):
 
         self.ax.set_xlabel(r'$y (m)$', fontsize=14)
         self.ax.set_ylabel(r'$z (m)$', fontsize=14)
-
 
     def plotContour(self,
                     itime,
@@ -521,16 +536,18 @@ class contourwaketracker(waketracker):
 
     def _findContourCenter(self,
                            itime,
-                           C,
-                           Crange,
                            targetValue,
                            weightedCenter,
+                           Ntest=11,
                            tol=0.01,
                            fn=None):
         """Helper function that returns the coordinates of the detected
         wake center. Iteration continues in a binary search fashion
         until the difference in contour values is < 'tol'
         """
+        C = Cntr(self.xh, self.xv, self.u[itime,:,:])  # contour data object
+        Crange = np.linspace(np.min(self.u[itime,:,:]), 0, Ntest+1)[1:]
+
         interval = Crange[1]-Crange[0]
 
         if fn is None:
@@ -630,6 +647,48 @@ class contourwaketracker(waketracker):
         self.xv_wake[itime] = zc
 
         return yc,zc,info
+
+    def _readTrajectory(self,fname):
+        """Helper function to read trajectory history"""
+        if not fname.startswith(self.prefix):
+            fname = os.path.join(self.prefix,fname)
+        if not os.path.isfile(fname):
+            return None
+
+        data = np.loadtxt(fname)
+        assert(len(data) == self.Ntimes)
+        # data[:,0] is just an index
+        self.xh_wake = data[:,1]
+        self.xv_wake = data[:,2]
+        self.Clevels = data[:,3]
+        self.Cfvals = data[:,4]
+
+        return data
+
+    def _writeTrajectory(self,fname):
+        """Helper function to write trajectory history"""
+        if not fname.startswith(self.prefix):
+            fname = os.path.join(self.prefix,fname)
+        self._writeData(trajectoryfile,
+                (self.xh_wake, self.xv_wake, self.Clevels, self.Cfvals))
+
+
+    def _readOutlines(self,fname):
+        """Helper function to read compressed (pickled) outlines"""
+        if not fname.startswith(self.prefix):
+            fname = os.path.join(self.prefix,fname)
+        if not fname.endswith('.pkl'):
+            fname += '.pkl'
+        self.paths = pickle.load(open(fname,'r'))
+
+    def _writeOutlines(self,fname):
+        """Helper function to write compressed (pickled) outlines"""
+        if not fname.startswith(self.prefix):
+            fname = os.path.join(self.prefix,fname)
+        if not fname.endswith('.pkl'):
+            fname += '.pkl'
+        pickle.dump(self.paths,open(pklname,'w'))
+
 
     def plotContour(self,itime,outline=True,**kwargs):
         """Plot/update contour and center marker at time ${itime}.

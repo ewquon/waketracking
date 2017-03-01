@@ -3,8 +3,6 @@ import sys
 import importlib
 
 import numpy as np
-from matplotlib._cntr import Cntr
-import pickle
 
 from waketrackers import contourwaketracker
 
@@ -25,7 +23,7 @@ class ConstantArea(contourwaketracker):
             print '\n...finished initializing',self.__class__.__name__
 
     def findCenters(self,refArea,
-                    writeTrajectories=None,writeOutlines=None,
+                    trajectoryFile=None,outlinesFile=None,
                     weightedCenter=True,frame='rotor-aligned',
                     Ntest=51,tol=0.01):
         """Uses a binary search algorithm (findContourCenter) to
@@ -37,22 +35,22 @@ class ConstantArea(contourwaketracker):
         ----------
         refArea : float
             Area to attempt to match, e.g., the rotor disk area.
-        writeTrajectories : string
+        trajectoryFile : string, optional
             Name of trajectory data file to attempt inputting and to
             write out to; set to None to skip I/O. Data are written out
             in the rotor-aligned frame.
-        writeOutlines : string
-            Name of pickle archive file (\*.pkl) to attempt inputting
-            and to write out detected contour outlines; set to None to
-            skip I/O.
-        weightedCenter : boolean
+        outlinesFile : string, optional
+            Name of pickle archive file (\*.pkl) to attempt input and to
+            write out detected contour outlines; set to None to skip
+            I/O.
+        weightedCenter : boolean, optional
             If True, calculate the velocity-deficit-weighted "center of
             mass"; if False, calculate the geometric center of the wake.
-        frame : string
+        frame : string, optional
             Reference frame, either 'inertial' or 'rotor-aligned'.
-        Ntest : integer
+        Ntest : integer, optional
             The number of initial test contours to calculate.
-        tol : float
+        tol : float, optional
             Minimum spacing to test during the binary search.
 
         Returns
@@ -63,45 +61,38 @@ class ConstantArea(contourwaketracker):
             Wake trajectory if frame is 'rotor-aligned'
         """
         # try to read trajectories
-        if writeTrajectories is not None:
-            trajectoryfile = os.path.join(self.prefix,writeTrajectories)
+        if trajectoryFile is not None:
             try:
-                data = self._readTrajectory(trajectoryfile)
-                self.Clevels = data[:,3]
-                self.Cfvals = data[:,4]
-                if self.verbose:
-                    print 'Trajectory loaded from',trajectoryfile
-                self._updateInertial()
-                self.wakeTracked = True
-
+                data = self._readTrajectory(trajectoryFile)
+                if not data is None:
+                    if self.verbose:
+                        print 'Trajectory loaded from',trajectoryFile
+                    self._updateInertial()
+                    self.wakeTracked = True
             except AssertionError:
-                print 'Incorrect number of time steps in',trajectoryfile
-
+                print 'Incorrect number of time steps in',trajectoryFile
             except IOError:
-                print 'Failed to read',trajectoryfile
+                print 'Failed to read',trajectoryFile
 
         # try to read wake outlines (optional)
-        if writeOutlines is not None:
-            pklname = os.path.join(self.prefix,writeOutlines)
-            if not pklname.endswith('.pkl'):
-                pklname += '.pkl'
-            self.paths = pickle.load(open(pklname,'r'))
-            if self.verbose:
-                print 'Read pickled paths from',pklname
-            
+        if self.wakeTracked and outlinesFile is not None:
+            try:
+                self._readOutlines(outlinesFile)
+                if self.verbose:
+                    print 'Read pickled outlines from',outlinesFile
+            except IOError:
+                print 'Failed to read',outlinesFile
+
+        # done if read was successful
         if self.wakeTracked:
-            return self._trajectoryIn(frame)
+            return self.trajectoryIn(frame)
 
         # calculate trajectories for each time step
         for itime in range(self.Ntimes):
-            contourData = Cntr(self.xh, self.xv, self.u[itime,:,:])
-            Crange = np.linspace(np.min(self.u[itime,:,:]), 0, Ntest+1)[1:]
-
             yc,zc,info = self._findContourCenter(itime,
-                                                 contourData,
-                                                 Crange,
                                                  refArea,
                                                  weightedCenter=weightedCenter,
+                                                 Ntest=Ntest,
                                                  tol=tol,
                                                  fn=None)
             if not info['success']:
@@ -111,26 +102,20 @@ class ConstantArea(contourwaketracker):
                 sys.stderr.write('\rProcessed frame {:d}'.format(itime))
                 sys.stderr.flush()
         if self.verbose: print ''
-
         self._updateInertial()
+        self.wakeTracked = True
 
         # write out trajectories
-        if writeTrajectories is not None:
-            self._writeData(trajectoryfile,
-                    (self.xh_wake, self.xv_wake, self.Clevels, self.Cfvals))
+        if trajectoryFile is not None:
+            self._writeTrajectory(trajectoryFile)
             if self.verbose:
-                print 'Wrote out trajectory to',trajectoryfile
+                print 'Wrote out trajectory to',trajectoryFile
 
         # write out wake outlines
-        if writeOutlines is not None:
-            pklname = os.path.join(self.prefix,writeOutlines)
-            if not pklname.endswith('.pkl'):
-                pklname += '.pkl'
-            pickle.dump(self.paths,open(pklname,'w'))
+        if outlinesFile is not None:
+            self._writeOutlines(outlinesFile)
             if self.verbose:
-                print 'Wrote out pickled paths to',pklname
-
-        self.wakeTracked = True
+                print 'Wrote out pickled outlines to',outlinesFile
     
-        return self._trajectoryIn(frame)
+        return self.trajectoryIn(frame)
 
