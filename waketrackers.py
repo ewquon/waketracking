@@ -198,7 +198,6 @@ class waketracker(object):
             print 'Number of time frames to process:',self.Ntimes
             print '\n...finished initializing waketracker'
 
-
     def __repr__(self):
         s = 'Tracking '+str(self.Ntimes)+' sampled planes of '
         if self.datasize==1:
@@ -348,7 +347,6 @@ class waketracker(object):
         
         return yw_fix, zw_fix
 
-
     def _writeData(self,fname,data):
         """Helper function to write out specified data (e.g., trajectory
         and optimization parameters)
@@ -377,7 +375,7 @@ class waketracker(object):
         """Helper function to write trajectory history"""
         if not fname.startswith(self.prefix):
             fname = os.path.join(self.prefix,fname)
-        self._writeData(trajectoryfile,
+        self._writeData(fname,
                 (self.xh_wake, self.xv_wake))
 
     def _updateInertial(self):
@@ -669,9 +667,8 @@ class contourwaketracker(waketracker):
         """Helper function to write trajectory history"""
         if not fname.startswith(self.prefix):
             fname = os.path.join(self.prefix,fname)
-        self._writeData(trajectoryfile,
+        self._writeData(fname,
                 (self.xh_wake, self.xv_wake, self.Clevels, self.Cfvals))
-
 
     def _readOutlines(self,fname):
         """Helper function to read compressed (pickled) outlines"""
@@ -687,8 +684,7 @@ class contourwaketracker(waketracker):
             fname = os.path.join(self.prefix,fname)
         if not fname.endswith('.pkl'):
             fname += '.pkl'
-        pickle.dump(self.paths,open(pklname,'w'))
-
+        pickle.dump(self.paths,open(fname,'w'))
 
     def plotContour(self,itime,outline=True,**kwargs):
         """Plot/update contour and center marker at time ${itime}.
