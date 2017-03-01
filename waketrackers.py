@@ -81,6 +81,10 @@ class waketracker(object):
             case, the velocity is assumed normal to the sampling plane;
             in the vector case, the horizontal velocity is calculated
             from the first two components.
+        horzRange,vertRange : tuple, optional
+            Range of points in the horizontal and vertical directions,
+            respectively, in the rotor-aligned sampling plane through
+            which to search for the wake center
         prefix : string, optional
             Root output directory to save processed data and images.
         verbose : boolean, optional
@@ -150,10 +154,6 @@ class waketracker(object):
         self.xh_range = self.xh[:,0]
         self.xv_range = self.xv[0,:]
 
-        # set dummy values in case wake tracking algorithm breaks down
-        self.xh_fail = self.xh_range[0]
-        self.xv_fail = self.xv_range[0]
-
         # check plane yaw
         # note: rotated plane should be in y-z with min(x)==max(x)
         #       and tracking should be performed using the xh-xv coordinates
@@ -163,6 +163,25 @@ class waketracker(object):
         if np.abs(xd_diff) > 1e-6:
             print 'WARNING: problem with rotation to rotor-aligned frame?'
         
+        # set dummy values in case wake tracking algorithm breaks down
+        self.xh_fail = self.xh_range[0]
+        self.xv_fail = self.xv_range[0]
+
+        # set up search range
+        self.hRange = kwargs.get('horzRange',(-1e9,1e9))
+        self.vRange = kwargs.get('vertRange',(-1e9,1e9))
+        self.jmin = np.argmin(np.abs(self.hRange[0]-self.xh_range))
+        self.kmin = np.argmin(np.abs(self.vRange[0]-self.xv_range))
+        self.jmax = np.argmin(np.abs(self.hRange[1]-self.xh_range))
+        self.kmax = np.argmin(np.abs(self.vRange[1]-self.xv_range))
+        self.xh_min = self.xh_range[self.jmin]
+        self.xv_min = self.xv_range[self.kmin]
+        self.xh_max = self.xh_range[self.jmax]
+        self.xv_max = self.xv_range[self.kmax]
+        if self.verbose:
+            print '  horizontal search range:',self.xh_min,self.xh_max
+            print '  vertical search range:',self.xv_min,self.xv_max
+
         # check and calculate instantaneous velocities including shear,
         # u_tot
         assert(len(udata.shape) in (3,4)) 
@@ -543,15 +562,25 @@ class contourwaketracker(waketracker):
         wake center. Iteration continues in a binary search fashion
         until the difference in contour values is < 'tol'
         """
-        C = Cntr(self.xh, self.xv, self.u[itime,:,:])  # contour data object
-        Crange = np.linspace(np.min(self.u[itime,:,:]), 0, Ntest+1)[1:]
+        j0,j1 = self.jmin,self.jmax
+        k0,k1 = self.kmin,self.kmax
+        usearch = self.u[itime,j0:j1,k0:k1]
+        Cdata = Cntr(self.xh[j0:j1,k0:k1],
+                     self.xv[j0:j1,k0:k1],
+                     usearch)  # contour data object
+        Crange = np.linspace(np.min(usearch), 0, Ntest+1)[1:]
+        interval = Crange[1] - Crange[0]
 
-        interval = Crange[1]-Crange[0]
+        # debug information:
+        NtraceCalls = 0
+        NfnEvals = 0
+        Nrefine = 0
 
+        # setup contour function
         if fn is None:
-            # Note: This is MUCH faster, since we don't have to search
-            #       for interior pts!
-            def Cfn(path): return contour.calcArea(path)
+            # Note: This is MUCH faster, since we don't have to search for interior pts!
+            def Cfn(path):
+                return contour.calcArea(path)
         else:
             def Cfn(path):
                 return contour.integrateFunction(
@@ -559,42 +588,43 @@ class contourwaketracker(waketracker):
                         self.u_tot[itime,:,:], self.u[itime,:,:],
                         fn)
 
-        converged = False
-        NtraceCalls = 0
-        NfnEvals = 0
-        Nref = 0
-
-        Clist,paths,level = [],[],[]
+        Flist = []  # list of evaluated function values
+        level = []  # list of candidate contour values
+        paths = []  # list of candidate contour paths
         success = True
-        while Nref==0 or interval > tol:  # go through search at least once
-            Nref += 1
+        converged = False
+        while Nrefine == 0 or interval > tol:  # go through search at least once
+            Nrefine += 1
 
             # BEGIN search loop
             #vvvvvvvvvvvvvvvvvvvvvvvvvvvv
-            for it,thresh in enumerate(Crange):
-                for path in C.trace(thresh):
+            for it,Cval in enumerate(Crange):
+                for path in Cdata.trace(Cval):
                     NtraceCalls += 1
                     # Returns a list of arrays (floats) and lists (uint8), of the contour
                     # coordinates and segment descriptors, respectively
                     if path.dtype=='uint8': break  # don't need the segment info
+
+                    # TODO: handle open contours?
                     if np.all(path[-1] == path[0]):  # found a closed path
                         if fn is None:
                             # area contours
-                            Clist.append(Cfn(path))
-                            level.append(thresh)
+                            Flist.append(Cfn(path))
+                            level.append(Cval)
                             paths.append(path)
                         else:
                             # flux contours
                             fval, avgDeficit, corr = Cfn(path)
                             if fval is not None and avgDeficit < 0:
-                                Clist.append(fval)
-                                level.append(thresh)
+                                Flist.append(fval)
+                                level.append(Cval)
                                 paths.append(path)
                         NfnEvals += 1
 
-            if len(Clist) > 0:
-                Cerr = np.abs( np.array(Clist) - targetValue )
-                idx = np.argmin(Cerr)
+            if len(Flist) > 0:
+                # found at least one candidate contour
+                Ferr = np.abs( np.array(Flist) - targetValue )
+                idx = np.argmin(Ferr)
                 curOptLevel = level[idx]
             else:
                 # no closed contours within our range?
@@ -612,16 +642,16 @@ class contourwaketracker(waketracker):
         # end of refinement loop
         info = {
                 'tolerance': tol,
-                'Nrefine': Nref,
+                'Nrefine': Nrefine,
                 'NtraceCalls': NtraceCalls,
                 'NfnEvals': NfnEvals,
                 'success': success
-        }
+               }
 
         if success:
             self.paths[itime] = paths[idx]  # save paths for plotting
             self.Clevels[itime] = level[idx]  # save time-varying contour levels as reference data
-            self.Cfvals[itime] = Clist[idx]
+            self.Cfvals[itime] = Flist[idx]
 
             if weightedCenter:
                 yc,zc = contour.calcWeightedCenter(paths[idx],
@@ -629,6 +659,7 @@ class contourwaketracker(waketracker):
                                                    self.xv,
                                                    self.u[itime,:,:])
             else:
+                # geometric center
                 yc = np.mean(paths[idx][:,0])
                 zc = np.mean(paths[idx][:,1])
 
@@ -637,7 +668,6 @@ class contourwaketracker(waketracker):
             self.paths[itime] = []
             self.Clevels[itime] = 0
             self.Cfvals[itime] = 0
-
             yc = self.xh_fail
             zc = self.xv_fail
 
