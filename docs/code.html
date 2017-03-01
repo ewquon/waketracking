@@ -139,7 +139,7 @@ the Cartesian reference frame.</li>
 <p>Inherits superclass WakeTracker</p>
 <dl class="method">
 <dt id="waketracking.waketrackers.contourwaketracker.plotContour">
-<code class="descname">plotContour</code><span class="sig-paren">(</span><em>itime</em>, <em>plotpath=True</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.waketrackers.contourwaketracker.plotContour" title="Permalink to this definition">¶</a></dt>
+<code class="descname">plotContour</code><span class="sig-paren">(</span><em>itime</em>, <em>outline=True</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.waketrackers.contourwaketracker.plotContour" title="Permalink to this definition">¶</a></dt>
 <dd><p>Plot/update contour and center marker at time ${itime}.</p>
 <p>Overridden waketracker.plotContour function to include the calculated
 wake contour outline.</p>
@@ -158,8 +158,8 @@ ${outdir}/${seriesname}_&lt;timeName&gt;.png</li>
 <li><strong>seriesname</strong> (<em>string</em><em>, </em><em>optional</em>) &#8211; Prefix for image series (if writepng==True).</li>
 <li><strong>Parameters</strong> (<em>Additional</em>) &#8211; </li>
 <li><strong>---------------------</strong> &#8211; </li>
-<li><strong>plotpath</strong> (<em>boolean</em><em>, </em><em>optional</em>) &#8211; Plot the wake contour path. If False, operates the same as
-waketracker.plotContour.</li>
+<li><strong>outline</strong> (<em>boolean</em><em>, </em><em>optional</em>) &#8211; Plot the wake contour outline (a path object). If False,
+operates the same as waketracker.plotContour.</li>
 </ul>
 </td>
 </tr>
