@@ -90,34 +90,43 @@ class sampled_data(object):
                  through the computational domain. The regularly
                  sampled data should be properly rotated to the rotor-
                  aligned frame.
-         """
+        """
         if i0 is not None and i0==i1:
             print 'Slicing data at i=',i0, \
                   ' x ~=',np.mean(self.x[i0,:,:])
             x0 = self.x[i0,j0:j1,k0:k1]
             x1 = self.y[i0,j0:j1,k0:k1]
             x2 = self.z[i0,j0:j1,k0:k1]
-            u = self.data[:,i0,:,:,:]
+            if self.datasize==1:
+                u = self.data[:,i0,:,:,0]
+            else:
+                u = self.data[:,i0,:,:,:]
         elif j0 is not None and j0==j1:
             print 'Slicing data at j=',j0, \
                   ' y ~=',np.mean(self.y[:,j0,:])
             x0 = self.x[i0:i1,j0,k0:k1]
             x1 = self.y[i0:i1,j0,k0:k1]
             x2 = self.z[i0:i1,j0,k0:k1]
-            u = self.data[:,:,j0,:,:]
+            if self.datasize==1:
+                u = self.data[:,:,j0,:,0]
+            else:
+                u = self.data[:,:,j0,:,:]
         elif k0 is not None and k0==k1:
             print 'Slicing data at k=',k0, \
                   ' z ~=',np.mean(self.z[:,:,k0])
             x0 = self.x[i0:i1,j0:j1,k0]
             x1 = self.y[i0:i1,j0:j1,k0]
             x2 = self.z[i0:i1,j0:j1,k0]
-            u = self.data[:,:,:,k0,:]
+            if self.datasize==1:
+                u = self.data[:,:,:,k0,0]
+            else:
+                u = self.data[:,:,:,k0,:]
         else:
             print 'Slicing ranges ambiguous:',i0,i1,j0,j1,k0,k1
             return None
         return x0,x1,x2,u
 
-    def sliceI(self,i):
+    def sliceI(self,i=0):
         """Return slice through the dimension 0
 
         This is probably the only slicing that makes sense...
@@ -128,7 +137,7 @@ class sampled_data(object):
             print 'I=',i,'outside of range [ 0,',self.NX,']'
             return None
 
-    def sliceJ(self,j):
+    def sliceJ(self,j=0):
         """Return slice through the dimension 1
 
         Warning: Depending on the data sampling set up, this slicing
@@ -140,7 +149,7 @@ class sampled_data(object):
             print 'J=',j,'outside of range [ 0,',self.NY,']'
             return None
 
-    def sliceK(self,k):
+    def sliceK(self,k=0):
         """Return slice through the dimension 2
 
         Warning: Depending on the data sampling set up, this slicing
@@ -207,6 +216,52 @@ class _template_sampled_data_format(sampled_data):
         # read data
         self.data = None
         self.dataReadFrom = None
+
+
+class rawdata(sampled_data):
+    """Raw data, e.g., in csv format.
+
+    Inherits superclass sampled_data.
+    """
+    def __init__(self,fname,NY,NZ=None,
+                 skiprows=1,delimiter=','):
+        """Reads a single snapshot from the specified file
+
+        Parameters
+        ----------
+        fname : string
+            Path to file.
+        NY : integer
+            Number of horizontal points.
+        NZ : integer, optional
+            Number of vertical points; if omitted, assumed equal to NY.
+        skiprows : integer, optional
+            Number of rows to skip when calling np.loadtxt.
+        delimiter : string, optional
+            String to use as delimiter when calling np.loadtxt.
+        """
+        #super(self.__class__,self).__init__(*args,**kwargs)
+        if NZ is None:
+            NZ = NY
+        self.NX = 1  # single plane
+        self.NY = NY
+        self.NZ = NZ
+        self.datasize = 1  # scalar
+
+        self.ts = None # not a time series
+        self.Ntimes = 0
+
+        data = np.loadtxt(fname,skiprows=skiprows,delimiter=delimiter)
+        y = data[:,0]
+        z = data[:,1]
+        u = data[:,2]
+
+        order = np.lexsort((z,y))
+
+        self.x = np.zeros((1,NY,NZ))
+        self.y = y[order].reshape((1,NY,NZ))
+        self.z = z[order].reshape((1,NY,NZ))
+        self.data = u[order].reshape((1,1,NY,NZ,1))  # shape == (Ntimes,NX,NY,NZ,datasize)
 
 
 class foam_ensight_array(sampled_data):

@@ -103,7 +103,6 @@ class ConstantArea(contourwaketracker):
                 sys.stderr.flush()
         if self.verbose: print ''
         self._updateInertial()
-        self.wakeTracked = True
 
         # write out trajectories
         if trajectoryFile is not None:

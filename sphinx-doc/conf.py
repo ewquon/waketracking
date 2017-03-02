@@ -24,7 +24,7 @@ import imp
 try:
     imp.find_module('waketracking')
 except ImportError:
-    print 'Note: waketracking module not found in path'
+    print 'Note: waketracking module not found in path; adding $HOME'
     # TODO: specify module path here
     sys.path.insert(0, os.environ['HOME'])
 

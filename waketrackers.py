@@ -45,7 +45,8 @@ def track(*args,**kwargs):
         return None
     else:
         tracker = trackerList[method]
-        print 'Selected Tracker:',tracker,'\n'
+        if kwargs.get('verbose',True):
+            print 'Selected Tracker:',tracker,'\n'
         return tracker(*args,**kwargs)
 
 #==============================================================================
@@ -440,8 +441,8 @@ class waketracker(object):
         self.ax.set_ylabel(r'$z (m)$', fontsize=14)
 
     def plotContour(self,
-                    itime,
-                    cmin=-5.0,cmax=5.0,
+                    itime=0,
+                    cmin=None,cmax=None,
                     cmap='jet',
                     markercolor='w',
                     writepng=False,outdir='.',seriesname='U',
@@ -453,7 +454,8 @@ class waketracker(object):
         itime : integer
             Index of the wake snapshot to plot.
         cmin,cmax : float, optional
-            Range of contour values to plot.
+            Range of contour values to plot; if None, then set to min
+            and max field values.
         cmap : string, optional
             Colormap for the contour plot.
         markercolor : any matplotlib color, optional
@@ -473,6 +475,11 @@ class waketracker(object):
 
         if not self.plotInitialized:
             self._initPlot()  # first time
+
+            if cmin is None:
+                cmin = np.min(self.u[itime,:,:])
+            if cmax is None:
+                cmax = np.max(self.u[itime,:,:])
 
             self.plot_clevels = np.linspace(cmin, cmax, 100)
             self.plotobj_filledContours = self.ax.contourf(self.xh, self.xv, self.u[itime,:,:],
@@ -716,7 +723,7 @@ class contourwaketracker(waketracker):
             fname += '.pkl'
         pickle.dump(self.paths,open(fname,'w'))
 
-    def plotContour(self,itime,outline=True,**kwargs):
+    def plotContour(self,itime=0,outline=True,**kwargs):
         """Plot/update contour and center marker at time ${itime}.
         
         Overridden waketracker.plotContour function to include the calculated 
@@ -727,7 +734,8 @@ class contourwaketracker(waketracker):
         itime : integer
             Index of the wake snapshot to plot.
         cmin,cmax : float, optional
-            Range of contour values to plot.
+            Range of contour values to plot; if None, then set to min
+            and max field values.
         cmap : string, optional
             Colormap for the contour plot.
         markercolor : any matplotlib color, optional
@@ -755,7 +763,8 @@ class contourwaketracker(waketracker):
             if self.verbose: print 'Creating output subdirectory:', outdir
             os.makedirs(outdir)
 
-        plotOutline = outline and self.wakeTracked
+        plotOutline = outline and self.wakeTracked \
+                and hasattr(self,'plotobj_wakeOutline')
 
         if self.plotInitialized and plotOutline:
             self.plotobj_wakeOutline.remove()
