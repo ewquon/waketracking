@@ -12,9 +12,7 @@ class sampled_data(object):
             NX=1, NY=None, NZ=None, datasize=3,
             npzdata='arrayData.npz'
             ):
-        """Attempts to read data with shape (Ntimes,NX,NY,NZ,datasize)
-        The ${npzdata} keyword indicates the compressed npz file to load
-        from and save to.
+        """Attempts to read data with shape (Ntimes,NX,NY,NZ,datasize).
 
         All inherited readers should call this generic data reader for
         consistency. The object should contain:
@@ -26,6 +24,20 @@ class sampled_data(object):
         * datasize: Dimension of the data (scalar=1, vector=3)
         * x,y,z: Arrays with shape (NX,NY,NZ)
         * data: Array with shape (Ntimes,NX,NY,NZ,datasize)
+
+        Parameters
+        ----------
+        outputDir : string
+            Path to directory containing time subdirectories.
+        prefix : string, optional
+            Data file prefix.
+        NX,NY,NZ : integer
+            Dimensions of data, which depending on the reader may be 
+            detected or read from the data file.
+        datasize : integer
+            Describes the type of data (scalar=1, vector=3).
+        npzdata : string
+            The compressed numpy data file to load from and save to.
         """
         self.outputDir = outputDir
         self.prefix = prefix
@@ -44,12 +56,15 @@ class sampled_data(object):
         self.npzdata = npzdata
         self.dataReadFrom = None
 
-        # attempt to load previously processed data
         savepath = os.path.join(outputDir,npzdata)
+        if not os.path.isfile(savepath):
+            return
+        # attempt to load previously processed data
         try:
             savedarrays = np.load(savepath)
         except IOError:
             savedarrays = dict()
+        # attempt to process loaded data
         try:
             self.x = savedarrays['x']
             self.y = savedarrays['y']
@@ -70,7 +85,7 @@ class sampled_data(object):
             except ValueError:
                 print 'Mismatched data'
         except KeyError:
-            print savepath,'was not read'
+            print 'Could not read',savepath
 
     def __repr__(self):
         if self.datasize==1:

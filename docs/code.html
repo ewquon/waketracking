@@ -63,12 +63,33 @@ once from the first directory)</p>
 </dd></dl>
 
 <dl class="class">
+<dt id="waketracking.dataloaders.rawdata">
+<em class="property">class </em><code class="descclassname">waketracking.dataloaders.</code><code class="descname">rawdata</code><span class="sig-paren">(</span><em>fname</em>, <em>NY</em>, <em>NZ=None</em>, <em>skiprows=1</em>, <em>delimiter='</em>, <em>'</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.dataloaders.rawdata" title="Permalink to this definition">¶</a></dt>
+<dd><p>Raw data, e.g., in csv format.</p>
+<p>Inherits superclass sampled_data.</p>
+<p>Reads a single snapshot from the specified file</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>fname</strong> (<em>string</em>) &#8211; Path to file.</li>
+<li><strong>NY</strong> (<em>integer</em>) &#8211; Number of horizontal points.</li>
+<li><strong>NZ</strong> (<em>integer</em><em>, </em><em>optional</em>) &#8211; Number of vertical points; if omitted, assumed equal to NY.</li>
+<li><strong>skiprows</strong> (<em>integer</em><em>, </em><em>optional</em>) &#8211; Number of rows to skip when calling np.loadtxt.</li>
+<li><strong>delimiter</strong> (<em>string</em><em>, </em><em>optional</em>) &#8211; String to use as delimiter when calling np.loadtxt.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="class">
 <dt id="waketracking.dataloaders.sampled_data">
 <em class="property">class </em><code class="descclassname">waketracking.dataloaders.</code><code class="descname">sampled_data</code><span class="sig-paren">(</span><em>outputDir='.'</em>, <em>prefix=None</em>, <em>NX=1</em>, <em>NY=None</em>, <em>NZ=None</em>, <em>datasize=3</em>, <em>npzdata='arrayData.npz'</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.dataloaders.sampled_data" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generic regularly sampled data object</p>
-<p>Attempts to read data with shape (Ntimes,NX,NY,NZ,datasize)
-The ${npzdata} keyword indicates the compressed npz file to load
-from and save to.</p>
+<p>Attempts to read data with shape (Ntimes,NX,NY,NZ,datasize).</p>
 <p>All inherited readers should call this generic data reader for
 consistency. The object should contain:</p>
 <ul class="simple">
@@ -83,16 +104,32 @@ consistency. The object should contain:</p>
 <li>x,y,z: Arrays with shape (NX,NY,NZ)</li>
 <li>data: Array with shape (Ntimes,NX,NY,NZ,datasize)</li>
 </ul>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>outputDir</strong> (<em>string</em>) &#8211; Path to directory containing time subdirectories.</li>
+<li><strong>prefix</strong> (<em>string</em><em>, </em><em>optional</em>) &#8211; Data file prefix.</li>
+<li><strong>NX</strong><strong>,</strong><strong>NY</strong><strong>,</strong><strong>NZ</strong> (<em>integer</em>) &#8211; Dimensions of data, which depending on the reader may be
+detected or read from the data file.</li>
+<li><strong>datasize</strong> (<em>integer</em>) &#8211; Describes the type of data (scalar=1, vector=3).</li>
+<li><strong>npzdata</strong> (<em>string</em>) &#8211; The compressed numpy data file to load from and save to.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
 <dl class="method">
 <dt id="waketracking.dataloaders.sampled_data.sliceI">
-<code class="descname">sliceI</code><span class="sig-paren">(</span><em>i</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.dataloaders.sampled_data.sliceI" title="Permalink to this definition">¶</a></dt>
+<code class="descname">sliceI</code><span class="sig-paren">(</span><em>i=0</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.dataloaders.sampled_data.sliceI" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return slice through the dimension 0</p>
 <p>This is probably the only slicing that makes sense...</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="waketracking.dataloaders.sampled_data.sliceJ">
-<code class="descname">sliceJ</code><span class="sig-paren">(</span><em>j</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.dataloaders.sampled_data.sliceJ" title="Permalink to this definition">¶</a></dt>
+<code class="descname">sliceJ</code><span class="sig-paren">(</span><em>j=0</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.dataloaders.sampled_data.sliceJ" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return slice through the dimension 1</p>
 <p>Warning: Depending on the data sampling set up, this slicing
 probably does not make sense.</p>
@@ -100,7 +137,7 @@ probably does not make sense.</p>
 
 <dl class="method">
 <dt id="waketracking.dataloaders.sampled_data.sliceK">
-<code class="descname">sliceK</code><span class="sig-paren">(</span><em>k</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.dataloaders.sampled_data.sliceK" title="Permalink to this definition">¶</a></dt>
+<code class="descname">sliceK</code><span class="sig-paren">(</span><em>k=0</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.dataloaders.sampled_data.sliceK" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return slice through the dimension 2</p>
 <p>Warning: Depending on the data sampling set up, this slicing
 probably does not make sense.</p>
@@ -139,7 +176,7 @@ the Cartesian reference frame.</li>
 <p>Inherits superclass WakeTracker</p>
 <dl class="method">
 <dt id="waketracking.waketrackers.contourwaketracker.plotContour">
-<code class="descname">plotContour</code><span class="sig-paren">(</span><em>itime</em>, <em>outline=True</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.waketrackers.contourwaketracker.plotContour" title="Permalink to this definition">¶</a></dt>
+<code class="descname">plotContour</code><span class="sig-paren">(</span><em>itime=0</em>, <em>outline=True</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.waketrackers.contourwaketracker.plotContour" title="Permalink to this definition">¶</a></dt>
 <dd><p>Plot/update contour and center marker at time ${itime}.</p>
 <p>Overridden waketracker.plotContour function to include the calculated
 wake contour outline.</p>
@@ -149,7 +186,8 @@ wake contour outline.</p>
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
 <li><strong>itime</strong> (<em>integer</em>) &#8211; Index of the wake snapshot to plot.</li>
-<li><strong>cmin</strong><strong>,</strong><strong>cmax</strong> (<em>float</em><em>, </em><em>optional</em>) &#8211; Range of contour values to plot.</li>
+<li><strong>cmin</strong><strong>,</strong><strong>cmax</strong> (<em>float</em><em>, </em><em>optional</em>) &#8211; Range of contour values to plot; if None, then set to min
+and max field values.</li>
 <li><strong>cmap</strong> (<em>string</em><em>, </em><em>optional</em>) &#8211; Colormap for the contour plot.</li>
 <li><strong>markercolor</strong> (<em>any matplotlib color</em><em>, </em><em>optional</em>) &#8211; To plot the detected wake center, otherwise set to None.</li>
 <li><strong>writepng</strong> (<em>boolean</em><em>, </em><em>optional</em>) &#8211; If True, save image to
@@ -238,7 +276,7 @@ between surrounding points. Piecewise linear interpolation
 
 <dl class="method">
 <dt id="waketracking.waketrackers.waketracker.plotContour">
-<code class="descname">plotContour</code><span class="sig-paren">(</span><em>itime</em>, <em>cmin=-5.0</em>, <em>cmax=5.0</em>, <em>cmap='jet'</em>, <em>markercolor='w'</em>, <em>writepng=False</em>, <em>outdir='.'</em>, <em>seriesname='U'</em>, <em>dpi=100</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.waketrackers.waketracker.plotContour" title="Permalink to this definition">¶</a></dt>
+<code class="descname">plotContour</code><span class="sig-paren">(</span><em>itime=0</em>, <em>cmin=None</em>, <em>cmax=None</em>, <em>cmap='jet'</em>, <em>markercolor='w'</em>, <em>writepng=False</em>, <em>outdir='.'</em>, <em>seriesname='U'</em>, <em>dpi=100</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.waketrackers.waketracker.plotContour" title="Permalink to this definition">¶</a></dt>
 <dd><p>Plot/update contour and center marker at time ${itime}.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -246,7 +284,8 @@ between surrounding points. Piecewise linear interpolation
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
 <li><strong>itime</strong> (<em>integer</em>) &#8211; Index of the wake snapshot to plot.</li>
-<li><strong>cmin</strong><strong>,</strong><strong>cmax</strong> (<em>float</em><em>, </em><em>optional</em>) &#8211; Range of contour values to plot.</li>
+<li><strong>cmin</strong><strong>,</strong><strong>cmax</strong> (<em>float</em><em>, </em><em>optional</em>) &#8211; Range of contour values to plot; if None, then set to min
+and max field values.</li>
 <li><strong>cmap</strong> (<em>string</em><em>, </em><em>optional</em>) &#8211; Colormap for the contour plot.</li>
 <li><strong>markercolor</strong> (<em>any matplotlib color</em><em>, </em><em>optional</em>) &#8211; To plot the detected wake center, otherwise set to None.</li>
 <li><strong>writepng</strong> (<em>boolean</em><em>, </em><em>optional</em>) &#8211; If True, save image to
