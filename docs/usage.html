@@ -48,14 +48,16 @@
 <h1>Usage<a class="headerlink" href="#usage" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="data-formats">
 <h2>Data Formats<a class="headerlink" href="#data-formats" title="Permalink to this headline">¶</a></h2>
-<p>talk about data loaders class here</p>
-<p>regular data</p>
-<p>template, etc</p>
+<p>The waketracking module includes the <code class="docutils literal"><span class="pre">dataloaders</span></code> module for processing differently formatted data into a general form for use with the <code class="docutils literal"><span class="pre">waketrackers</span></code> module. The data are assumed to be regularly sampled (i.e., on a structured grid), otherwise some interpolation will be needed within a custom dataloader.</p>
 <div class="section" id="raw-data">
 <h3>Raw Data<a class="headerlink" href="#raw-data" title="Permalink to this headline">¶</a></h3>
+<p>This dataloader assumes that the data is of the form (y,z,u) stored in a CSV file, one time step per file. The sampled points are then sorted and arranged into a regular grid. The shape of the sampled grid is needed as input.</p>
+<p>There is no support for simultaneously reading in multiple time steps (i.e., reading in a time series) at this point.</p>
 </div>
 <div class="section" id="openfoam-array-data">
 <h3>OpenFOAM array data<a class="headerlink" href="#openfoam-array-data" title="Permalink to this headline">¶</a></h3>
+<p>This dataloader loads a time series wherein the data are saved in time subdirectories, with one time step per subdirectory. Within each subdirectory, there is a solution file and a .mesh file in the Ensight format.</p>
+<p>The mesh is assumed to be identical for all time steps. Dimensions may be specified or guessed from the data.</p>
 </div>
 </div>
 <div class="section" id="wake-processing">

@@ -5,18 +5,19 @@ Usage
 Data Formats
 ============
 
-talk about data loaders class here
-
-regular data
-
-template, etc
-
+The waketracking module includes the ``dataloaders`` module for processing differently formatted data into a general form for use with the ``waketrackers`` module. The data are assumed to be regularly sampled (i.e., on a structured grid), otherwise some interpolation will be needed within a custom dataloader. 
 
 Raw Data
 --------
+This dataloader assumes that the data is of the form (y,z,u) stored in a CSV file, one time step per file. The sampled points are then sorted and arranged into a regular grid. The shape of the sampled grid is needed as input.
+
+There is no support for simultaneously reading in multiple time steps (i.e., reading in a time series) at this point.
 
 OpenFOAM array data
 -------------------
+This dataloader loads a time series wherein the data are saved in time subdirectories, with one time step per subdirectory. Within each subdirectory, there is a solution file and a .mesh file in the Ensight format.
+
+The mesh is assumed to be identical for all time steps. Dimensions may be specified or guessed from the data.
 
 
 Wake Processing

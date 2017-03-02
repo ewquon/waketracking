@@ -330,6 +330,15 @@ class waketracker(object):
         print self.__class__.__name,'needs to override this function!'
         #self.wakeTracked = True
 
+    def trajectoryIn(self,frame):
+        """Returns a tuple with the wake trajectory in the specified frame"""
+        if frame == 'inertial':
+            return self.xwake, self.ywake, self.zwake
+        elif frame == 'rotor-aligned':
+            return self.xh_wake, self.xv_wake
+        else:
+            print 'output frame not recognized'
+
     def fixTrajectoryErrors(self,update=False,istart=0,iend=None):
         """Some wake detection algorithms are not guaranteed to provide
         a valid trajectory. By default, the coordinates of failed
@@ -337,6 +346,8 @@ class waketracker(object):
         locates points believed to be problem points and interpolates
         between surrounding points. Piecewise linear interpolation
         (np.interp) is used.
+
+        NOT TESTED IN THIS VERSION
         
         Parameters
         ----------
@@ -414,15 +425,6 @@ class waketracker(object):
         self.xwake = self.x0 + np.cos(ang)*xd - np.sin(ang)*self.xh_wake
         self.ywake = self.y0 + np.sin(ang)*xd + np.cos(ang)*self.xh_wake
         self.zwake = self.xv_wake
-
-    def trajectoryIn(self,frame):
-        """Returns a tuple with the wake trajectory in the specified frame"""
-        if frame == 'inertial':
-            return self.xwake, self.ywake, self.zwake
-        elif frame == 'rotor-aligned':
-            return self.xh_wake, self.xv_wake
-        else:
-            print 'output frame not recognized'
 
     def _initPlot(self):
         """Set up figure properties here""" 
