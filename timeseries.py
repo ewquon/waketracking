@@ -14,26 +14,27 @@ class TimeSeries(object):
         self.outputTimes = []
         self.dirList = []
         self.fileList = []
-        self.lastFile = -1 # for iterator
+        self.lastFile = -1  # for iterator
 
         # process all subdirectories
-        dirs = [x[0] for x in os.walk(self.dataDir)]
-        for path in dirs:
-            if path == self.dataDir: continue
-            d = os.path.split(path)[-1]
+        subdirs = [ os.path.join(self.dataDir,d)
+                    for d in os.listdir(self.dataDir)
+                    if os.path.isdir(os.path.join(self.dataDir,d)) ]
+        for path in subdirs:
+            dname = os.path.split(path)[-1]
             try:
-                tval = float(d)
+                tval = float(dname)
             except ValueError:
                 continue
             if filename:
                 fpath = os.path.join(path,filename)
-                if not os.path.isfile(fpath):
-                    continue
-                self.fileList.append(fpath)
+                if os.path.isfile(fpath):
+                    self.fileList.append(fpath)
             self.outputTimes.append(tval)
             self.dirList.append(path)
-            self.Ntimes = len(self.dirList)
+        self.Ntimes = len(self.dirList)
         if filename:
+            assert(len(self.fileList) > 0)
             assert(self.Ntimes == len(self.fileList))
     
         # sort by output time

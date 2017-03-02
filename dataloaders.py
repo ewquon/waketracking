@@ -1,3 +1,4 @@
+import sys
 import os
 
 import numpy as np
@@ -355,11 +356,13 @@ class foam_ensight_array(sampled_data):
         # read data
         data = np.zeros((self.Ntimes,NX,NY,NZ,self.datasize))
         for itime,fname in enumerate(self.ts):
-            print 'Processing frame',itime
+            sys.stderr.write('\rProcessing frame {:d}'.format(itime))
+            sys.stderr.flush()
             u = np.loadtxt(fname,skiprows=4).reshape((self.datasize,N))
             data[itime,:,:,:,0] = u[0,:].reshape((NX,NY,NZ),order='F')
             data[itime,:,:,:,1] = u[1,:].reshape((NX,NY,NZ),order='F')
             data[itime,:,:,:,2] = u[2,:].reshape((NX,NY,NZ),order='F')
+        sys.stderr.write('\n')
         self.data = data
         self.dataReadFrom = os.path.join(self.outputDir,'*',datafile)
 

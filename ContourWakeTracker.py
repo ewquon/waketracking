@@ -101,7 +101,7 @@ class ConstantArea(contourwaketracker):
             if self.verbose:
                 sys.stderr.write('\rProcessed frame {:d}'.format(itime))
                 sys.stderr.flush()
-        if self.verbose: print ''
+        if self.verbose: sys.stderr.write('\n')
         self._updateInertial()
 
         # write out trajectories
