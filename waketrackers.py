@@ -145,12 +145,19 @@ class waketracker(object):
         #self.xh = y  # rotor axis aligned with Cartesian axes
         self.xv = self.z
         ang = np.arctan2(self.norm[1],self.norm[0])  # ang>0: rotating from x-dir to y-dir
+        self.yaw = ang
+
+        # clockwise rotation (seen from above)
+        self.x0 = (np.max(self.x) + np.min(self.x))/2
+        self.y0 = (np.max(self.y) + np.min(self.y))/2
+        self.z0 = (np.max(self.z) + np.min(self.z))/2  # not used (rotation about z only)
+        if self.verbose:
+            print '  identified plane center at:',self.x0,self.y0,self.z0
+        # note: downstream coord, xd, not used for tracking
+        self.xd =  np.cos(ang)*(self.x-self.x0) + np.sin(ang)*(self.y-self.y0)
+        self.xh = -np.sin(ang)*(self.x-self.x0) + np.cos(ang)*(self.y-self.y0)
         if self.verbose:
             print '  rotated to rotor-aligned axes (about z):',ang*180./np.pi,'deg'
-        self.yaw = ang
-        # clockwise rotation (seen from above)
-        self.xd =  np.cos(ang)*self.x + np.sin(ang)*self.y  # downstream coordinate--not used for tracking
-        self.xh = -np.sin(ang)*self.x + np.cos(ang)*self.y
 
         self.xh_range = self.xh[:,0]
         self.xv_range = self.xv[0,:]
@@ -404,8 +411,8 @@ class waketracker(object):
         """
         ang = self.yaw
         xd = np.mean(self.xd)  # assuming no sampling rotation error, self.xd should be constant
-        self.xwake = np.cos(ang)*xd - np.sin(ang)*self.xh_wake
-        self.ywake = np.sin(ang)*xd + np.cos(ang)*self.xh_wake
+        self.xwake = self.x0 + np.cos(ang)*xd - np.sin(ang)*self.xh_wake
+        self.ywake = self.y0 + np.sin(ang)*xd + np.cos(ang)*self.xh_wake
         self.zwake = self.xv_wake
 
     def trajectoryIn(self,frame):
