@@ -35,10 +35,6 @@ def integrateFunction(contourPts,
     This correction is expected to be negligible if there are "enough"
     cells in the contour region.
 
-    For the mass flux, func = lambda u: u
-    For the momentum flux, func = lambda u: u**2
-    The contour area can be referenced as func = lambda u,A: ...
-
     Parameters
     ----------
     contourPts : path 
@@ -110,6 +106,8 @@ def calcWeightedCenter(contourPts,
     velocity). The weighting function should have relatively large
     values in the enclosed wake region.
 
+    Parameters
+    ----------
     contourPts : path 
         Output from matplotlib._cntr.Cntr object's trace function
     xg,yg : ndarray

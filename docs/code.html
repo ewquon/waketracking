@@ -439,9 +439,15 @@ value, given a flux function.</p>
 <p>Inherits class contourwaketracker.</p>
 <dl class="method">
 <dt id="waketracking.ContourWakeTracker.ConstantFlux.findCenters">
-<code class="descname">findCenters</code><span class="sig-paren">(</span><em>refFlux</em>, <em>fluxFunction</em>, <em>trajectoryFile=None</em>, <em>outlinesFile=None</em>, <em>weightedCenter=True</em>, <em>frame='rotor-aligned'</em>, <em>Ntest=51</em>, <em>tol=0.01</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.ContourWakeTracker.ConstantFlux.findCenters" title="Permalink to this definition">¶</a></dt>
+<code class="descname">findCenters</code><span class="sig-paren">(</span><em>refFlux</em>, <em>fluxFunction</em>, <em>fluxField='u_tot'</em>, <em>trajectoryFile=None</em>, <em>outlinesFile=None</em>, <em>weightedCenter=True</em>, <em>frame='rotor-aligned'</em>, <em>Ntest=51</em>, <em>tol=0.01</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.ContourWakeTracker.ConstantFlux.findCenters" title="Permalink to this definition">¶</a></dt>
 <dd><p>Uses a binary search algorithm (findContourCenter) to
 locate the contour with flux closest to the targetValue.</p>
+<p>Some candidate functions:</p>
+<ul class="simple">
+<li>mass flow, func = lambda u: u</li>
+<li>momentum flux, func = lambda u: u**2</li>
+</ul>
+<p>The contour area can be referenced as func = lambda u,A: ...</p>
 <p>Overrides the parent findCenters routine.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -451,6 +457,8 @@ locate the contour with flux closest to the targetValue.</p>
 <li><strong>refFlux</strong> (<em>float</em>) &#8211; Flux to attempt to match, e.g., the massflow rate.</li>
 <li><strong>fluxFunction</strong> (<em>function</em>) &#8211; A specified function of two variables, the velocity deficit
 and the instantaneous velocity (with shear removed).</li>
+<li><strong>fluxField</strong> (<em>string</em><em>, </em><em>optional</em>) &#8211; Name of the field to use as input to the fluxFunction; use
+the instantaneous velocity, &#8216;u_tot&#8217;, by default.</li>
 <li><strong>trajectoryFile</strong> (<em>string</em>) &#8211; Name of trajectory data file to attempt inputting and to
 write out to; set to None to skip I/O. Data are written out
 in the rotor-aligned frame.</li>
@@ -476,6 +484,88 @@ mass&#8221;; if False, calculate the geometric center of the wake.</li>
 </table>
 </dd></dl>
 
+</dd></dl>
+
+</div>
+<div class="section" id="contour-functions-module">
+<h2><code class="docutils literal"><span class="pre">contour_functions</span></code> module<a class="headerlink" href="#contour-functions-module" title="Permalink to this headline">¶</a></h2>
+<p>This is a helper module for processing contour paths identified by <code class="docutils literal"><span class="pre">matplotlib._cntr.Cntr</span></code>.</p>
+<span class="target" id="module-waketracking.contour_functions"></span><dl class="function">
+<dt id="waketracking.contour_functions.calcArea">
+<code class="descclassname">waketracking.contour_functions.</code><code class="descname">calcArea</code><span class="sig-paren">(</span><em>path</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.contour_functions.calcArea" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the area enclosed by an arbitrary path using Green&#8217;s
+Theorem, assuming that the path is closed.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="waketracking.contour_functions.integrateFunction">
+<code class="descclassname">waketracking.contour_functions.</code><code class="descname">integrateFunction</code><span class="sig-paren">(</span><em>contourPts</em>, <em>func</em>, <em>xg</em>, <em>yg</em>, <em>fg</em>, <em>vd=None</em>, <em>Nmin=50</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.contour_functions.integrateFunction" title="Permalink to this definition">¶</a></dt>
+<dd><p>Integrate a specified function within an arbitrary region.</p>
+<p>The area of the enclosed cells is compared to the integrated area
+calculated using Green&#8217;s Theorem to obtain a correction for the
+discretization error. The resulting integrated quantity is scaled
+by the ratio of the actual area divided by the enclosed cell areas.
+This correction is expected to be negligible if there are &#8220;enough&#8221;
+cells in the contour region.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>contourPts</strong> (<em>path</em>) &#8211; Output from matplotlib._cntr.Cntr object&#8217;s trace function</li>
+<li><strong>xg</strong><strong>,</strong><strong>yg</strong> (<em>ndarray</em>) &#8211; Sampling plane coordinates, in the rotor-aligned frame.</li>
+<li><strong>fg</strong> (<em>ndarray</em>) &#8211; Instantaneous velocity, including shear, used as the
+independent variable in the specificed function.</li>
+<li><strong>vd</strong> (<em>ndarray</em><em>, </em><em>optional</em>) &#8211; Velocity deficit; if not None, returns average deficit in the
+enclosed region.</li>
+<li><strong>func</strong> (<em></em><em>(</em><em>lambda</em><em>) </em><em>function</em>) &#8211; Function over which to integrate.</li>
+<li><strong>Nmin</strong> (<em>integer</em><em>, </em><em>optional</em>) &#8211; Minimum number of interior cells to compute; if the contour
+region is too small, skip the contour for efficiency.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
+<li><strong>fval</strong> (<em>float</em>) &#8211; Summation of the specified function values in the enclosed
+region, with correction applied.</li>
+<li><strong>corr</strong> (<em>float</em>) &#8211; Scaling factor to correct for discrete integration error.</li>
+<li><strong>vdavg</strong> (<em>float</em>) &#8211; Average velocity deficit in the contour region.</li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="waketracking.contour_functions.calcWeightedCenter">
+<code class="descclassname">waketracking.contour_functions.</code><code class="descname">calcWeightedCenter</code><span class="sig-paren">(</span><em>contourPts</em>, <em>xg</em>, <em>yg</em>, <em>fg</em>, <em>weightingFunc=&lt;ufunc 'absolute'&gt;</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.contour_functions.calcWeightedCenter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculated the velocity-weighted center given an arbitrary path.
+The center is weighted by a specified weighting function (the abs
+function by default) applied to specified field values (e.g.
+velocity). The weighting function should have relatively large
+values in the enclosed wake region.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>contourPts</strong> (<em>path</em>) &#8211; Output from matplotlib._cntr.Cntr object&#8217;s trace function</li>
+<li><strong>xg</strong><strong>,</strong><strong>yg</strong> (<em>ndarray</em>) &#8211; Sampling plane coordinates, in the rotor-aligned frame.</li>
+<li><strong>fg</strong> (<em>ndarray</em>) &#8211; Field function to use for weighting.</li>
+<li><strong>weightingFunc</strong> (<em></em><em>(</em><em>lambda</em><em>) </em><em>function</em>) &#8211; Univariate weighting function.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>xc,yc</strong> &#8211; Coordinates of the weighted wake center in the rotor-aligned
+frame.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">ndarray</p>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 </div>
@@ -514,6 +604,7 @@ mass&#8221;; if False, calculate the geometric center of the wake.</li>
 <li class="toctree-l2"><a class="reference internal" href="#dataloaders-module"><code class="docutils literal"><span class="pre">dataloaders</span></code> module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#waketrackers-module"><code class="docutils literal"><span class="pre">waketrackers</span></code> module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#tracker-modules"><code class="docutils literal"><span class="pre">Tracker</span></code> modules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#contour-functions-module"><code class="docutils literal"><span class="pre">contour_functions</span></code> module</a></li>
 </ul>
 </li>
 </ul>

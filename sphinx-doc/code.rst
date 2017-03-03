@@ -26,3 +26,11 @@ These modules (that have the \*WakeTracker suffix) implement the actual wake tra
 .. automodule:: waketracking.ContourWakeTracker
     :members:
 
+``contour_functions`` module
+============================
+
+This is a helper module for processing contour paths identified by ``matplotlib._cntr.Cntr``.
+
+.. automodule:: waketracking.contour_functions
+    :members:
+

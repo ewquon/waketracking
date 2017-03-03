@@ -115,6 +115,13 @@ class ConstantFlux(contourwaketracker):
         """Uses a binary search algorithm (findContourCenter) to
         locate the contour with flux closest to the targetValue.
         
+        Some candidate functions:
+
+        * mass flow, func = lambda u: u
+        * momentum flux, func = lambda u: u**2
+
+        The contour area can be referenced as func = lambda u,A: ...
+
         Overrides the parent findCenters routine.
         
         Parameters
