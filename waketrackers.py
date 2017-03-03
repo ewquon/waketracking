@@ -554,7 +554,7 @@ class waketracker(object):
 class contourwaketracker(waketracker):
     """Class for wake tracking based on (velocity) contours
     
-    Inherits superclass WakeTracker
+    Inherits superclass waketracker
     """
 
     def __init__(self,*args,**kwargs):
@@ -756,12 +756,10 @@ class contourwaketracker(waketracker):
             Output subdirectory.
         seriesname : string, optional
             Prefix for image series (if writepng==True).
-
-        Additional Parameters
-        ---------------------
         outline : boolean, optional
-            Plot the wake contour outline (a path object). If False,
-            operates the same as waketracker.plotContour.
+            (contourwaketracker only) Plot the wake contour outline (a
+            path object). If False, operates the same as
+            waketracker.plotContour.
         """
         writepng = kwargs.get('writepng',False)
         outdir = os.path.join(self.prefix,kwargs.get('outdir','.'))

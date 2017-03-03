@@ -49,43 +49,6 @@
 <h2><code class="docutils literal"><span class="pre">dataloaders</span></code> module<a class="headerlink" href="#dataloaders-module" title="Permalink to this headline">¶</a></h2>
 <p>This module includes all data processing routines to arbitrary scalar or vector data into a standard form.</p>
 <span class="target" id="module-waketracking.dataloaders"></span><dl class="class">
-<dt id="waketracking.dataloaders.foam_ensight_array">
-<em class="property">class </em><code class="descclassname">waketracking.dataloaders.</code><code class="descname">foam_ensight_array</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.dataloaders.foam_ensight_array" title="Permalink to this definition">¶</a></dt>
-<dd><p>OpenFOAM array sampling data in Ensight format</p>
-<p>Inherits superclass sampled_data.</p>
-<p>Reads time series data from subdirectories in ${outputDir}.
-Each time subdirectory should contain a file named
-&#8216;${prefix}.000.U&#8217;.</p>
-<p>If NY or NZ are set to None, then the array dimensions
-will be guessed from the data.</p>
-<p>The .mesh files are assumed identical (the mesh is only read
-once from the first directory)</p>
-</dd></dl>
-
-<dl class="class">
-<dt id="waketracking.dataloaders.rawdata">
-<em class="property">class </em><code class="descclassname">waketracking.dataloaders.</code><code class="descname">rawdata</code><span class="sig-paren">(</span><em>fname</em>, <em>NY</em>, <em>NZ=None</em>, <em>skiprows=1</em>, <em>delimiter='</em>, <em>'</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.dataloaders.rawdata" title="Permalink to this definition">¶</a></dt>
-<dd><p>Raw data, e.g., in csv format.</p>
-<p>Inherits superclass sampled_data.</p>
-<p>Reads a single snapshot from the specified file</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>fname</strong> (<em>string</em>) &#8211; Path to file.</li>
-<li><strong>NY</strong> (<em>integer</em>) &#8211; Number of horizontal points.</li>
-<li><strong>NZ</strong> (<em>integer</em><em>, </em><em>optional</em>) &#8211; Number of vertical points; if omitted, assumed equal to NY.</li>
-<li><strong>skiprows</strong> (<em>integer</em><em>, </em><em>optional</em>) &#8211; Number of rows to skip when calling np.loadtxt.</li>
-<li><strong>delimiter</strong> (<em>string</em><em>, </em><em>optional</em>) &#8211; String to use as delimiter when calling np.loadtxt.</li>
-</ul>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="class">
 <dt id="waketracking.dataloaders.sampled_data">
 <em class="property">class </em><code class="descclassname">waketracking.dataloaders.</code><code class="descname">sampled_data</code><span class="sig-paren">(</span><em>outputDir='.'</em>, <em>prefix=None</em>, <em>NX=1</em>, <em>NY=None</em>, <em>NZ=None</em>, <em>datasize=3</em>, <em>npzdata='arrayData.npz'</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.dataloaders.sampled_data" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generic regularly sampled data object</p>
@@ -165,39 +128,22 @@ the Cartesian reference frame.</li>
 
 </dd></dl>
 
-</div>
-<div class="section" id="waketrackers-module">
-<h2><code class="docutils literal"><span class="pre">waketrackers</span></code> module<a class="headerlink" href="#waketrackers-module" title="Permalink to this headline">¶</a></h2>
-<p>This module defines generic wake-tracking objects with general helper routines. To access the Tracker objects, the <code class="docutils literal"><span class="pre">track</span></code> function should be used. The classes here provide common functionality but should not be used directly.</p>
-<span class="target" id="module-waketracking.waketrackers"></span><dl class="class">
-<dt id="waketracking.waketrackers.contourwaketracker">
-<em class="property">class </em><code class="descclassname">waketracking.waketrackers.</code><code class="descname">contourwaketracker</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.waketrackers.contourwaketracker" title="Permalink to this definition">¶</a></dt>
-<dd><p>Class for wake tracking based on (velocity) contours</p>
-<p>Inherits superclass WakeTracker</p>
-<dl class="method">
-<dt id="waketracking.waketrackers.contourwaketracker.plotContour">
-<code class="descname">plotContour</code><span class="sig-paren">(</span><em>itime=0</em>, <em>outline=True</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.waketrackers.contourwaketracker.plotContour" title="Permalink to this definition">¶</a></dt>
-<dd><p>Plot/update contour and center marker at time ${itime}.</p>
-<p>Overridden waketracker.plotContour function to include the calculated
-wake contour outline.</p>
+<dl class="class">
+<dt id="waketracking.dataloaders.rawdata">
+<em class="property">class </em><code class="descclassname">waketracking.dataloaders.</code><code class="descname">rawdata</code><span class="sig-paren">(</span><em>fname</em>, <em>NY</em>, <em>NZ=None</em>, <em>skiprows=1</em>, <em>delimiter='</em>, <em>'</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.dataloaders.rawdata" title="Permalink to this definition">¶</a></dt>
+<dd><p>Raw data, e.g., in csv format.</p>
+<p>Inherits superclass sampled_data.</p>
+<p>Reads a single snapshot from the specified file</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>itime</strong> (<em>integer</em>) &#8211; Index of the wake snapshot to plot.</li>
-<li><strong>cmin</strong><strong>,</strong><strong>cmax</strong> (<em>float</em><em>, </em><em>optional</em>) &#8211; Range of contour values to plot; if None, then set to min
-and max field values.</li>
-<li><strong>cmap</strong> (<em>string</em><em>, </em><em>optional</em>) &#8211; Colormap for the contour plot.</li>
-<li><strong>markercolor</strong> (<em>any matplotlib color</em><em>, </em><em>optional</em>) &#8211; To plot the detected wake center, otherwise set to None.</li>
-<li><strong>writepng</strong> (<em>boolean</em><em>, </em><em>optional</em>) &#8211; If True, save image to
-${outdir}/${seriesname}_&lt;timeName&gt;.png</li>
-<li><strong>outdir</strong> (<em>string</em><em>, </em><em>optional</em>) &#8211; Output subdirectory.</li>
-<li><strong>seriesname</strong> (<em>string</em><em>, </em><em>optional</em>) &#8211; Prefix for image series (if writepng==True).</li>
-<li><strong>Parameters</strong> (<em>Additional</em>) &#8211; </li>
-<li><strong>---------------------</strong> &#8211; </li>
-<li><strong>outline</strong> (<em>boolean</em><em>, </em><em>optional</em>) &#8211; Plot the wake contour outline (a path object). If False,
-operates the same as waketracker.plotContour.</li>
+<li><strong>fname</strong> (<em>string</em>) &#8211; Path to file.</li>
+<li><strong>NY</strong> (<em>integer</em>) &#8211; Number of horizontal points.</li>
+<li><strong>NZ</strong> (<em>integer</em><em>, </em><em>optional</em>) &#8211; Number of vertical points; if omitted, assumed equal to NY.</li>
+<li><strong>skiprows</strong> (<em>integer</em><em>, </em><em>optional</em>) &#8211; Number of rows to skip when calling np.loadtxt.</li>
+<li><strong>delimiter</strong> (<em>string</em><em>, </em><em>optional</em>) &#8211; String to use as delimiter when calling np.loadtxt.</li>
 </ul>
 </td>
 </tr>
@@ -205,6 +151,39 @@ operates the same as waketracker.plotContour.</li>
 </table>
 </dd></dl>
 
+<dl class="class">
+<dt id="waketracking.dataloaders.foam_ensight_array">
+<em class="property">class </em><code class="descclassname">waketracking.dataloaders.</code><code class="descname">foam_ensight_array</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.dataloaders.foam_ensight_array" title="Permalink to this definition">¶</a></dt>
+<dd><p>OpenFOAM array sampling data in Ensight format</p>
+<p>Inherits superclass sampled_data.</p>
+<p>Reads time series data from subdirectories in ${outputDir}.
+Each time subdirectory should contain a file named
+&#8216;${prefix}.000.U&#8217;.</p>
+<p>If NY or NZ are set to None, then the array dimensions
+will be guessed from the data.</p>
+<p>The .mesh files are assumed identical (the mesh is only read
+once from the first directory)</p>
+</dd></dl>
+
+</div>
+<div class="section" id="waketrackers-module">
+<h2><code class="docutils literal"><span class="pre">waketrackers</span></code> module<a class="headerlink" href="#waketrackers-module" title="Permalink to this headline">¶</a></h2>
+<p>This module defines generic wake-tracking objects with general helper routines. To access the Tracker objects, <strong>the</strong> <code class="docutils literal"><span class="pre">track</span></code> <strong>function should be used</strong>. The classes here provide common functionality but should not be used directly.</p>
+<span class="target" id="module-waketracking.waketrackers"></span><dl class="function">
+<dt id="waketracking.waketrackers.track">
+<code class="descclassname">waketracking.waketrackers.</code><code class="descname">track</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.waketrackers.track" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the specified waketracker object. If no method is
+specified, then a list of available Tracker objects is printed.</p>
+<p>All arguments and keyword arguments are passed to the resultant
+object.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>method</strong> (<em>string</em>) &#8211; Should correspond to a Tracker class object.</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="class">
@@ -245,6 +224,43 @@ which to search for the wake center</li>
 </tr>
 </tbody>
 </table>
+<dl class="method">
+<dt id="waketracking.waketrackers.waketracker.removeShear">
+<code class="descname">removeShear</code><span class="sig-paren">(</span><em>method='default'</em>, <em>Navg=-300</em>, <em>windProfile=None</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.waketrackers.waketracker.removeShear" title="Permalink to this definition">¶</a></dt>
+<dd><p>Removes wind shear from data.</p>
+<p>Calculates self.u from self.u_tot.</p>
+<p>Current supported methods:</p>
+<ul class="simple">
+<li>&#8220;default&#8221;: Estimate from fringes</li>
+<li><dl class="first docutils">
+<dt>&#8220;specified&#8221;: Wind profile specified as either a function or an</dt>
+<dd>array of heights vs horizontal velocity</dd>
+</dl>
+</li>
+</ul>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>method</strong> (<em>string</em><em>, </em><em>optional</em>) &#8211; Specify method to remove wind shear, or None to use data as
+is; some methods may require additional keyword arguments</li>
+<li><strong>Navg</strong> (<em>integer</em><em>, </em><em>optional</em>) &#8211; Number of snapshots to average over to obtain an
+instaneous average (when shearRemoval==&#8217;default&#8217;).
+If Navg &lt; 0, average from end of series only.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="waketracking.waketrackers.waketracker.trajectoryIn">
+<code class="descname">trajectoryIn</code><span class="sig-paren">(</span><em>frame</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.waketrackers.waketracker.trajectoryIn" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a tuple with the wake trajectory in the specified frame</p>
+</dd></dl>
+
 <dl class="method">
 <dt id="waketracking.waketrackers.waketracker.fixTrajectoryErrors">
 <code class="descname">fixTrajectoryErrors</code><span class="sig-paren">(</span><em>update=False</em>, <em>istart=0</em>, <em>iend=None</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.waketrackers.waketracker.fixTrajectoryErrors" title="Permalink to this definition">¶</a></dt>
@@ -301,29 +317,42 @@ ${outdir}/${seriesname}_&lt;timeName&gt;.png</li>
 </dd></dl>
 
 <dl class="method">
-<dt id="waketracking.waketrackers.waketracker.removeShear">
-<code class="descname">removeShear</code><span class="sig-paren">(</span><em>method='default'</em>, <em>Navg=-300</em>, <em>windProfile=None</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.waketrackers.waketracker.removeShear" title="Permalink to this definition">¶</a></dt>
-<dd><p>Removes wind shear from data.</p>
-<p>Calculates self.u from self.u_tot.</p>
-<p>Current supported methods:</p>
-<ul class="simple">
-<li>&#8220;default&#8221;: Estimate from fringes</li>
-<li><dl class="first docutils">
-<dt>&#8220;specified&#8221;: Wind profile specified as either a function or an</dt>
-<dd>array of heights vs horizontal velocity</dd>
-</dl>
-</li>
-</ul>
+<dt id="waketracking.waketrackers.waketracker.saveSnapshots">
+<code class="descname">saveSnapshots</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.waketrackers.waketracker.saveSnapshots" title="Permalink to this definition">¶</a></dt>
+<dd><p>Write out all snapshots to ${outdir}.</p>
+<p>See plotContour for keyword arguments.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="waketracking.waketrackers.contourwaketracker">
+<em class="property">class </em><code class="descclassname">waketracking.waketrackers.</code><code class="descname">contourwaketracker</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.waketrackers.contourwaketracker" title="Permalink to this definition">¶</a></dt>
+<dd><p>Class for wake tracking based on (velocity) contours</p>
+<p>Inherits superclass waketracker</p>
+<dl class="method">
+<dt id="waketracking.waketrackers.contourwaketracker.plotContour">
+<code class="descname">plotContour</code><span class="sig-paren">(</span><em>itime=0</em>, <em>outline=True</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.waketrackers.contourwaketracker.plotContour" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plot/update contour and center marker at time ${itime}.</p>
+<p>Overridden waketracker.plotContour function to include the calculated
+wake contour outline.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>method</strong> (<em>string</em><em>, </em><em>optional</em>) &#8211; Specify method to remove wind shear, or None to use data as
-is; some methods may require additional keyword arguments</li>
-<li><strong>Navg</strong> (<em>integer</em><em>, </em><em>optional</em>) &#8211; Number of snapshots to average over to obtain an
-instaneous average (when shearRemoval==&#8217;default&#8217;).
-If Navg &lt; 0, average from end of series only.</li>
+<li><strong>itime</strong> (<em>integer</em>) &#8211; Index of the wake snapshot to plot.</li>
+<li><strong>cmin</strong><strong>,</strong><strong>cmax</strong> (<em>float</em><em>, </em><em>optional</em>) &#8211; Range of contour values to plot; if None, then set to min
+and max field values.</li>
+<li><strong>cmap</strong> (<em>string</em><em>, </em><em>optional</em>) &#8211; Colormap for the contour plot.</li>
+<li><strong>markercolor</strong> (<em>any matplotlib color</em><em>, </em><em>optional</em>) &#8211; To plot the detected wake center, otherwise set to None.</li>
+<li><strong>writepng</strong> (<em>boolean</em><em>, </em><em>optional</em>) &#8211; If True, save image to
+${outdir}/${seriesname}_&lt;timeName&gt;.png</li>
+<li><strong>outdir</strong> (<em>string</em><em>, </em><em>optional</em>) &#8211; Output subdirectory.</li>
+<li><strong>seriesname</strong> (<em>string</em><em>, </em><em>optional</em>) &#8211; Prefix for image series (if writepng==True).</li>
+<li><strong>outline</strong> (<em>boolean</em><em>, </em><em>optional</em>) &#8211; (contourwaketracker only) Plot the wake contour outline (a
+path object). If False, operates the same as
+waketracker.plotContour.</li>
 </ul>
 </td>
 </tr>
@@ -331,36 +360,6 @@ If Navg &lt; 0, average from end of series only.</li>
 </table>
 </dd></dl>
 
-<dl class="method">
-<dt id="waketracking.waketrackers.waketracker.saveSnapshots">
-<code class="descname">saveSnapshots</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.waketrackers.waketracker.saveSnapshots" title="Permalink to this definition">¶</a></dt>
-<dd><p>Write out all snapshots to ${outdir}.</p>
-<p>See plotContour for keyword arguments.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="waketracking.waketrackers.waketracker.trajectoryIn">
-<code class="descname">trajectoryIn</code><span class="sig-paren">(</span><em>frame</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.waketrackers.waketracker.trajectoryIn" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns a tuple with the wake trajectory in the specified frame</p>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="function">
-<dt id="waketracking.waketrackers.track">
-<code class="descclassname">waketracking.waketrackers.</code><code class="descname">track</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.waketrackers.track" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns the specified waketracker object. If no method is
-specified, then a list of available Tracker objects is printed.</p>
-<p>All arguments and keyword arguments are passed to the resultant
-object.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>method</strong> (<em>string</em>) &#8211; Should correspond to a Tracker class object.</td>
-</tr>
-</tbody>
-</table>
 </dd></dl>
 
 </div>
@@ -373,9 +372,8 @@ object.</p>
 <dd><p>Identifies a wake as a region with velocity deficit contour
 enclosing an area closest to the rotor (or another specified
 reference area).</p>
-<p>The wake center is identified as the velocity-deficit-weighted
-&#8220;center of mass&#8221; of all points within the enclosed region.</p>
 <p>This is the fastest of the contour-based tracking methods.</p>
+<p>Inherits class contourwaketracker.</p>
 <dl class="method">
 <dt id="waketracking.ContourWakeTracker.ConstantArea.findCenters">
 <code class="descname">findCenters</code><span class="sig-paren">(</span><em>refArea</em>, <em>trajectoryFile=None</em>, <em>outlinesFile=None</em>, <em>weightedCenter=True</em>, <em>frame='rotor-aligned'</em>, <em>Ntest=51</em>, <em>tol=0.01</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.ContourWakeTracker.ConstantArea.findCenters" title="Permalink to this definition">¶</a></dt>

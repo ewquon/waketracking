@@ -194,7 +194,8 @@ texinfo_documents = [
 autoclass_content = 'both'
 
 # default order is 'alphabetical'
-autodoc_member_order = 'groupwise'
+#autodoc_member_order = 'groupwise'
+autodoc_member_order = 'bysource'
 
 # -- Options for napoleon (autodoc preprocessor) --------------------------
 # This is needed to handle numpy-style docstrings...

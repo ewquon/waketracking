@@ -13,7 +13,7 @@ This module includes all data processing routines to arbitrary scalar or vector 
 ``waketrackers`` module
 =======================
 
-This module defines generic wake-tracking objects with general helper routines. To access the Tracker objects, the ``track`` function should be used. The classes here provide common functionality but should not be used directly.
+This module defines generic wake-tracking objects with general helper routines. To access the Tracker objects, **the** ``track`` **function should be used**. The classes here provide common functionality but should not be used directly.
 
 .. automodule:: waketracking.waketrackers
     :members:
