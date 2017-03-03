@@ -3,9 +3,9 @@ import matplotlib.path as mpath
 
 def calcArea(path):
     """Calculate the area enclosed by an arbitrary path using Green's
-    Theorem
+    Theorem, assuming that the path is closed.
     """
-    if isinstance( path, np.ndarray ) and len(path.shape)==2:
+    if isinstance(path, np.ndarray) and len(path.shape)==2:
         # we have a 2D array
         xp = path[:,0]
         yp = path[:,1]
@@ -21,27 +21,60 @@ def calcArea(path):
     dy = np.diff(yp)
     return 0.5*np.abs(np.sum(yp[:-1]*dx - xp[:-1]*dy))
 
-def integrateFunction(contourPts,xg,yg,Ug,vd,fn):
-    """Integrate a specified function within an arbitrary region defined
-    by contourPts.
-    'vd' is the velocity deficit array
+def integrateFunction(contourPts,
+                      xg,yg,Ug,vd,
+                      func,
+                      Nmin=50):
+    """Integrate a specified function within an arbitrary region.
 
-    For the mass flux, fn = lambda u: u
-    For the momentum flux, fn = lambda u: u**2
-    The contour area can be referenced as fn = lambda u,A: ...
+    The area of the enclosed cells is compared to the integrated area
+    calculated using Green's Theorem to obtain a correction for the
+    discretization error. The resulting integrated quantity is scaled
+    by the ratio of the actual area divided by the enclosed cell areas.
+    This correction is expected to be negligible if there are "enough"
+    cells in the contour region.
+
+    For the mass flux, func = lambda u: u
+    For the momentum flux, func = lambda u: u**2
+    The contour area can be referenced as func = lambda u,A: ...
+
+    Parameters
+    ----------
+    contourPts : path 
+        Output from matplotlib._cntr.Cntr object's trace function
+    xg,yg : ndarray
+        Sampling plane coordinates, in the rotor-aligned frame.
+    Ug : ndarray
+        Instantaneous velocity, including shear, used as the
+        independent variable in the specificed function.
+    vd : ndarray
+        Velocity deficit, i.e., Ug with shear removed
+    func : (lambda) function
+        Function over which to integrate.
+    Nmin : integer, optional
+        Minimum number of interior cells to compute; if the contour
+        region is too small, skip the contour for efficiency.
+
+    Returns
+    -------
+    integ : float
+        Summation of the specified function values in the enclosed
+        region, with correction applied.
+    vdavg : float
+        Average velocity deficit in the contour region.
+    corr : float
+        Scaling factor to correct for discrete integration error.
     """
     x = xg.ravel()
     y = yg.ravel()
     gridPts = np.vstack((x,y)).transpose()
-
+    path = mpath.Path(contourPts)
     A = calcContourArea(contourPts)
 
-    path = mpath.Path(contourPts)
     inner = path.contains_points(gridPts)  # <-- most of the processing time is here!
-
     Uinner = Ug.ravel()[inner]
     Ninner = len(Uinner)
-    if Ninner < 50:  # minimum number of interior cells; skip if too few for efficiency
+    if Ninner < Nmin:
         return None,None,None
 
     # evaluate specified function
@@ -50,45 +83,56 @@ def integrateFunction(contourPts,xg,yg,Ug,vd,fn):
     elif fn.func_code.co_argcount==2: # assume second argument is A
         fvals = fn(Uinner, A)
     else:
-        print 'Problem with lambda function formulation!'
+        print 'Problem with function formulation!'
         return None,None,None
 
-    vd_avg = np.mean(vd.ravel()[inner])
+    vdavg = np.mean(vd.ravel()[inner])
 
+    # correct for errors in area
     cellFaceArea = (xg[1,0]-xg[0,0])*(yg[0,1]-yg[0,0])
-
-    # correct for errors in area... should be negligible for areas that span more than a few cells
     corr = A / (Ninner*cellFaceArea)
-    
-    return corr * np.sum( fvals )*cellFaceArea, vd_avg, corr
 
-def calcWeightedCenter(contourPts,xg,yg,fg,wfn=None):
-    """Calculated the velocity-weighted center given an arbitrary path
-    defined by contourPts. Using the function values fg and the
-    weighting function wfn, the center is determined from values in grid
-    (xg,yg).
+    integ = corr * np.sum(fvals)*cellFaceArea
     
-    By default, the absolute value of the field is used for weighting
-    assuming that the function has relatively large (negative) values in
-    the enclosed wake region; however, an arbitrary lambda function may
-    be specified.
-    """# {{{
+    return integ, vdavg, corr
+
+def calcWeightedCenter(contourPts,
+                       xg,yg,fg,
+                       weightingFunc=np.abs):
+    """Calculated the velocity-weighted center given an arbitrary path.
+    The center is weighted by a specified weighting function (the abs
+    function by default) applied to specified field values (e.g.
+    velocity). The weighting function should have relatively large
+    values in the enclosed wake region.
+
+    contourPts : path 
+        Output from matplotlib._cntr.Cntr object's trace function
+    xg,yg : ndarray
+        Sampling plane coordinates, in the rotor-aligned frame.
+    fg : ndarray
+        Field function to use for weighting.
+    weightingFunc : (lambda) function
+        Univariate weighting function.
+
+    Returns
+    -------
+    xc,yc : ndarray
+        Coordinates of the weighted wake center in the rotor-aligned
+        frame.
+    """
     x = xg.ravel()
     y = yg.ravel()
     gridPts = np.vstack((x,y)).transpose()
+    path = mpath.Path(contourPts)
 
-    p = mpath.Path(contourPts)
-    inner = p.contains_points(gridPts)
+    inner = path.contains_points(gridPts)
     xin = x[inner]
     yin = y[inner]
-    if wfn is None:
-        weights = np.abs( fg.ravel()[inner] ) # default
-    else:
-        weights = wfn( fg.ravel()[inner] )
-
+    weights = weightingFunc(fg.ravel()[inner])
     denom = np.sum(weights)
+
     xc = weights.dot(xin) / denom
     yc = weights.dot(yin) / denom
-    # }}}
+    
     return xc,yc
 

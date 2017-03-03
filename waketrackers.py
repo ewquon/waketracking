@@ -603,7 +603,7 @@ class contourwaketracker(waketracker):
                            weightedCenter,
                            Ntest=11,
                            tol=0.01,
-                           fn=None):
+                           func=None):
         """Helper function that returns the coordinates of the detected
         wake center. Iteration continues in a binary search fashion
         until the difference in contour values is < 'tol'
@@ -623,7 +623,7 @@ class contourwaketracker(waketracker):
         Nrefine = 0
 
         # setup contour function
-        if fn is None:
+        if func is None:
             # Note: This is MUCH faster, since we don't have to search for interior pts!
             def Cfn(path):
                 return contour.calcArea(path)
@@ -632,7 +632,7 @@ class contourwaketracker(waketracker):
                 return contour.integrateFunction(path,
                         self.xh, self.xv,
                         self.u_tot[itime,:,:], self.u[itime,:,:],
-                        fn)
+                        func)
 
         Flist = []  # list of evaluated function values
         level = []  # list of candidate contour values
@@ -653,7 +653,7 @@ class contourwaketracker(waketracker):
 
                     # TODO: handle open contours?
                     if np.all(path[-1] == path[0]):  # found a closed path
-                        if fn is None:
+                        if func is None:
                             # area contours
                             Flist.append(Cfn(path))
                             level.append(Cval)

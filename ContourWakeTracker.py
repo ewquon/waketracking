@@ -74,7 +74,7 @@ class ConstantArea(contourwaketracker):
                                                weightedCenter=weightedCenter,
                                                Ntest=Ntest,
                                                tol=tol,
-                                               fn=None)
+                                               func=None)
             if not info['success']:
                 print 'WARNING: findContourCenter was unsuccessful.'
 
@@ -162,7 +162,7 @@ class ConstantFlux(contourwaketracker):
                                                weightedCenter=weightedCenter,
                                                Ntest=Ntest,
                                                tol=tol,
-                                               fn=fluxFunction)
+                                               func=fluxFunction)
             if not info['success']:
                 print 'WARNING: findContourCenter was unsuccessful.'
 
