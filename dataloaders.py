@@ -143,9 +143,17 @@ class sampled_data(object):
         return x0,x1,x2,u
 
     def sliceI(self,i=0):
-        """Return slice through the dimension 0
+        """Return slice through the dimension 0.
 
         This is probably the only slicing that makes sense...
+
+        Returns
+        -------
+        xh,xv : ndarray
+            Planar coordinaates--horizontal and vertical--with the
+            dimensions (Nh,Nv).
+        u : ndarray
+            Velocity array with dimensions (Ntimes,Nh,Nv,datasize).
         """
         if i >= 0 and i < self.NX:
             return self._slice(i0=i,i1=i)
@@ -178,8 +186,7 @@ class sampled_data(object):
             return None
 
     def slice_at(self,x=None,y=None,z=None):
-        """Create a set of 2D data (x0,x1,x2,u) near/at the specified
-        slice location.
+        """Create a set of 2D data near/at the specified slice location.
 
         Returns
         -------

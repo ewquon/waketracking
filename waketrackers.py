@@ -62,11 +62,14 @@ class waketracker(object):
         """Process structured data in rotor-aligned frames of reference.
         Arguments may be in the form:
         
-            waketracker(xh, xv, u, ...)
+            waketracker(x, y, z, u, ...)
         
         or
 
-            waketracker((xh,xv,u), ...)
+            waketracker((x,y,z,u), ...)
+
+        The latter form is useful if the datatracker object's slice
+        function is called inline.
 
         Parameters
         ----------
@@ -80,8 +83,9 @@ class waketracker(object):
             (Ntimes,Nh,Nv,datasize) or (Ntimes,Nh,Nv) for which
             datasize=1 (i.e., scalar field) is assumed. In the scalar
             case, the velocity is assumed normal to the sampling plane;
-            in the vector case, the horizontal velocity is calculated
-            from the first two components.
+            in the vector case, the planar normal velocity is
+            calculated assuming that the sampling plane is only yawed
+            (and not tilted).
         horzRange,vertRange : tuple, optional
             Range of points in the horizontal and vertical directions,
             respectively, in the rotor-aligned sampling plane through
@@ -147,12 +151,14 @@ class waketracker(object):
         ang = np.arctan2(self.norm[1],self.norm[0])  # ang>0: rotating from x-dir to y-dir
         self.yaw = ang
 
-        # clockwise rotation (seen from above)
+        # get wake centers
         self.x0 = (np.max(self.x) + np.min(self.x))/2
         self.y0 = (np.max(self.y) + np.min(self.y))/2
         self.z0 = (np.max(self.z) + np.min(self.z))/2  # not used (rotation about z only)
         if self.verbose:
             print '  identified plane center at:',self.x0,self.y0,self.z0
+
+        # clockwise rotation (seen from above)
         # note: downstream coord, xd, not used for tracking
         self.xd =  np.cos(ang)*(self.x-self.x0) + np.sin(ang)*(self.y-self.y0)
         self.xh = -np.sin(ang)*(self.x-self.x0) + np.cos(ang)*(self.y-self.y0)
@@ -178,9 +184,9 @@ class waketracker(object):
         # set up search range
         self.hRange = kwargs.get('horzRange',(-1e9,1e9))
         self.vRange = kwargs.get('vertRange',(-1e9,1e9))
-        self.jmin = np.argmin(np.abs(self.hRange[0]-self.xh_range))
+        self.jmin = np.argmin(np.abs(self.hRange[0]-self.xh_range-self.y0))
         self.kmin = np.argmin(np.abs(self.vRange[0]-self.xv_range))
-        self.jmax = np.argmin(np.abs(self.hRange[1]-self.xh_range))
+        self.jmax = np.argmin(np.abs(self.hRange[1]-self.xh_range-self.y0))
         self.kmax = np.argmin(np.abs(self.vRange[1]-self.xv_range))
         self.xh_min = self.xh_range[self.jmin]
         self.xv_min = self.xv_range[self.kmin]
@@ -428,6 +434,8 @@ class waketracker(object):
 
     def _initPlot(self):
         """Set up figure properties here""" 
+        print 'Initializing plot'
+
         plt.rc('text', usetex=True)
         plt.rc('font', family='serif')
         self.fig = plt.figure(figsize=(8,6))
@@ -456,7 +464,8 @@ class waketracker(object):
                     markercolor='w',
                     writepng=False,outdir='.',seriesname='U',
                     dpi=100):
-        """Plot/update contour and center marker at time ${itime}.
+        """Plot/update contour and center marker in the rotor-aligned
+        frame at time ${itime}.
         
         Parameters
         ----------
@@ -497,11 +506,11 @@ class waketracker(object):
 
             # add marker for detected wake center
             if self.wakeTracked and markercolor is not None:
-                self.plotobj_ctr, = self.ax.plot(self.ywake[itime], self.zwake[itime], '+',
+                self.plotobj_ctr, = self.ax.plot(self.xh_wake[itime], self.xv_wake[itime], '+',
                                                  color=markercolor, alpha=0.5,
                                                  markersize=10,
                                                  markeredgewidth=1.)
-                self.plotobj_crc, = self.ax.plot(self.ywake[itime], self.zwake[itime], 'o',
+                self.plotobj_crc, = self.ax.plot(self.xh_wake[itime], self.xv_wake[itime], 'o',
                                                  color=markercolor, alpha=0.5,
                                                  markersize=10,
                                                  markeredgewidth=1.,
@@ -528,8 +537,9 @@ class waketracker(object):
                     self.plot_clevels, cmap=cmap, extend='both')
 
             if self.wakeTracked and markercolor is not None:
-                self.plotobj_ctr.set_data(self.ywake[itime], self.zwake[itime])
-                self.plotobj_crc.set_data(self.ywake[itime], self.zwake[itime])
+                #print '  marker at',self.xh_wake[itime],self.xv_wake[itime]
+                self.plotobj_ctr.set_data(self.xh_wake[itime], self.xv_wake[itime])
+                self.plotobj_crc.set_data(self.xh_wake[itime], self.xv_wake[itime])
 
         if writepng:
             fname = os.path.join(
@@ -599,8 +609,8 @@ class contourwaketracker(waketracker):
                 return contour.calcArea(path)
         else:
             def Cfn(path):
-                return contour.integrateFunction(
-                        path, self.xh, self.xv,
+                return contour.integrateFunction(path,
+                        self.xh, self.xv,
                         self.u_tot[itime,:,:], self.u[itime,:,:],
                         fn)
 
@@ -733,7 +743,8 @@ class contourwaketracker(waketracker):
         pickle.dump(self.paths,open(fname,'w'))
 
     def plotContour(self,itime=0,outline=True,**kwargs):
-        """Plot/update contour and center marker at time ${itime}.
+        """Plot/update contour and center marker in the rotor-aligned
+        frame at time ${itime}.
         
         Overridden waketracker.plotContour function to include the calculated 
         wake contour outline.
@@ -770,10 +781,10 @@ class contourwaketracker(waketracker):
             if self.verbose: print 'Creating output subdirectory:', outdir
             os.makedirs(outdir)
 
-        plotOutline = outline and self.wakeTracked \
-                and hasattr(self,'plotobj_wakeOutline')
+        plotOutline = outline and self.wakeTracked
 
-        if self.plotInitialized and plotOutline:
+        if self.plotInitialized and plotOutline \
+                and hasattr(self,'plotobj_wakeOutline'):
             self.plotobj_wakeOutline.remove()
 
         kwargs['writepng'] = False

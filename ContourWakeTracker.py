@@ -19,7 +19,7 @@ class ConstantArea(contourwaketracker):
     def __init__(self,*args,**kwargs):
         super(self.__class__,self).__init__(*args,**kwargs)
         if self.verbose:
-            print '\n...finished initializing',self.__class__.__name__
+            print '\n...finished initializing',self.__class__.__name__,'\n'
 
     def findCenters(self,refArea,
                     trajectoryFile=None,outlinesFile=None,
@@ -88,7 +88,7 @@ class ConstantArea(contourwaketracker):
 
         # calculate trajectories for each time step
         for itime in range(self.Ntimes):
-            yc,zc,info = self._findContourCenter(itime,
+            _,_,info = self._findContourCenter(itime,
                                                  refArea,
                                                  weightedCenter=weightedCenter,
                                                  Ntest=Ntest,
