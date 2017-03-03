@@ -401,26 +401,46 @@ class waketracker(object):
         np.savetxt(fname, data, fmt=fmtlist)
 
     def _readTrajectory(self,fname):
-        """Helper function to read trajectory history"""
+        """Helper function to read trajectory history typically called
+        at the beginning of findCenters
+        """
+        if fname is None:
+            return None
+
         if not fname.startswith(self.prefix):
             fname = os.path.join(self.prefix,fname)
         if not os.path.isfile(fname):
+            # tracking probably hasn't been performed before
             return None
 
-        data = np.loadtxt(fname)
-        assert(len(data) == self.Ntimes)
+        try:
+            data = np.loadtxt(fname)
+        except IOError:
+            print 'Failed to read',fname
+            return None
+
+        if not len(data) == self.Ntimes:
+            print 'Incorrect number of time steps in',fname
+            return None
+
         # data[:,0] is just an index
         self.xh_wake = data[:,1]
         self.xv_wake = data[:,2]
+        self._updateInertial()
+        self.wakeTracked = True
+        if self.verbose:
+            print 'Trajectory loaded from',fname
 
         return data
 
     def _writeTrajectory(self,fname):
         """Helper function to write trajectory history"""
+        if fname is None: return
         if not fname.startswith(self.prefix):
             fname = os.path.join(self.prefix,fname)
-        self._writeData(fname,
-                (self.xh_wake, self.xv_wake))
+        self._writeData(fname,(self.xh_wake, self.xv_wake))
+        if self.verbose:
+            print 'Wrote out trajectory to',fname
 
     def _updateInertial(self):
         """Called after loading/calculating a wake trajectory in the
@@ -703,44 +723,57 @@ class contourwaketracker(waketracker):
         return yc,zc,info
 
     def _readTrajectory(self,fname):
-        """Helper function to read trajectory history"""
-        if not fname.startswith(self.prefix):
-            fname = os.path.join(self.prefix,fname)
-        if not os.path.isfile(fname):
-            return None
-
-        data = np.loadtxt(fname)
-        assert(len(data) == self.Ntimes)
-        # data[:,0] is just an index
-        self.xh_wake = data[:,1]
-        self.xv_wake = data[:,2]
-        self.Clevels = data[:,3]
-        self.Cfvals = data[:,4]
-
+        """Helper function to read trajectory history typically called
+        at the beginning of findCenters
+        """
+        data = super(contourwaketracker,self)._readTrajectory(fname)
+        if data is not None:
+            # assume load was successful
+            self.Clevels = data[:,3]
+            self.Cfvals = data[:,4]
         return data
 
     def _writeTrajectory(self,fname):
         """Helper function to write trajectory history"""
+        if fname is None: return
         if not fname.startswith(self.prefix):
             fname = os.path.join(self.prefix,fname)
         self._writeData(fname,
                 (self.xh_wake, self.xv_wake, self.Clevels, self.Cfvals))
+        if self.verbose:
+            print 'Wrote out trajectory to',fname
 
     def _readOutlines(self,fname):
         """Helper function to read compressed (pickled) outlines"""
+        if (fname is None) or (not self.wakeTracked):
+            return None
+
         if not fname.startswith(self.prefix):
             fname = os.path.join(self.prefix,fname)
         if not fname.endswith('.pkl'):
             fname += '.pkl'
-        self.paths = pickle.load(open(fname,'r'))
+
+        try:
+            self.paths = pickle.load(open(fname,'r'))
+        except IOError:
+            print 'Failed to read',fname
+            return None
+
+        if self.verbose:
+            print 'Read pickled outlines from',fname
+
+        return self.paths
 
     def _writeOutlines(self,fname):
         """Helper function to write compressed (pickled) outlines"""
+        if fname is None: return
         if not fname.startswith(self.prefix):
             fname = os.path.join(self.prefix,fname)
         if not fname.endswith('.pkl'):
             fname += '.pkl'
         pickle.dump(self.paths,open(fname,'w'))
+        if self.verbose:
+            print 'Wrote out pickled outlines to',fname
 
     def plotContour(self,itime=0,outline=True,**kwargs):
         """Plot/update contour and center marker in the rotor-aligned
