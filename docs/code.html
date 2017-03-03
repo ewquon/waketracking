@@ -86,8 +86,21 @@ detected or read from the data file.</li>
 <dl class="method">
 <dt id="waketracking.dataloaders.sampled_data.sliceI">
 <code class="descname">sliceI</code><span class="sig-paren">(</span><em>i=0</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.dataloaders.sampled_data.sliceI" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return slice through the dimension 0</p>
+<dd><p>Return slice through the dimension 0.</p>
 <p>This is probably the only slicing that makes sense...</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><ul class="simple">
+<li><strong>xh,xv</strong> (<em>ndarray</em>) &#8211; Planar coordinaates&#8211;horizontal and vertical&#8211;with the
+dimensions (Nh,Nv).</li>
+<li><strong>u</strong> (<em>ndarray</em>) &#8211; Velocity array with dimensions (Ntimes,Nh,Nv,datasize).</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="method">
@@ -109,8 +122,7 @@ probably does not make sense.</p>
 <dl class="method">
 <dt id="waketracking.dataloaders.sampled_data.slice_at">
 <code class="descname">slice_at</code><span class="sig-paren">(</span><em>x=None</em>, <em>y=None</em>, <em>z=None</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.dataloaders.sampled_data.slice_at" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create a set of 2D data (x0,x1,x2,u) near/at the specified
-slice location.</p>
+<dd><p>Create a set of 2D data near/at the specified slice location.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -195,10 +207,12 @@ this class.</p>
 <p>Process structured data in rotor-aligned frames of reference.
 Arguments may be in the form:</p>
 <blockquote>
-<div>waketracker(xh, xv, u, ...)</div></blockquote>
+<div>waketracker(x, y, z, u, ...)</div></blockquote>
 <p>or</p>
 <blockquote>
-<div>waketracker((xh,xv,u), ...)</div></blockquote>
+<div>waketracker((x,y,z,u), ...)</div></blockquote>
+<p>The latter form is useful if the datatracker object&#8217;s slice
+function is called inline.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -212,8 +226,9 @@ aligned frame.</li>
 (Ntimes,Nh,Nv,datasize) or (Ntimes,Nh,Nv) for which
 datasize=1 (i.e., scalar field) is assumed. In the scalar
 case, the velocity is assumed normal to the sampling plane;
-in the vector case, the horizontal velocity is calculated
-from the first two components.</li>
+in the vector case, the planar normal velocity is
+calculated assuming that the sampling plane is only yawed
+(and not tilted).</li>
 <li><strong>horzRange</strong><strong>,</strong><strong>vertRange</strong> (<em>tuple</em><em>, </em><em>optional</em>) &#8211; Range of points in the horizontal and vertical directions,
 respectively, in the rotor-aligned sampling plane through
 which to search for the wake center</li>
@@ -294,7 +309,8 @@ between surrounding points. Piecewise linear interpolation
 <dl class="method">
 <dt id="waketracking.waketrackers.waketracker.plotContour">
 <code class="descname">plotContour</code><span class="sig-paren">(</span><em>itime=0</em>, <em>cmin=None</em>, <em>cmax=None</em>, <em>cmap='jet'</em>, <em>markercolor='w'</em>, <em>writepng=False</em>, <em>outdir='.'</em>, <em>seriesname='U'</em>, <em>dpi=100</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.waketrackers.waketracker.plotContour" title="Permalink to this definition">¶</a></dt>
-<dd><p>Plot/update contour and center marker at time ${itime}.</p>
+<dd><p>Plot/update contour and center marker in the rotor-aligned
+frame at time ${itime}.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -333,7 +349,8 @@ ${outdir}/${seriesname}_&lt;timeName&gt;.png</li>
 <dl class="method">
 <dt id="waketracking.waketrackers.contourwaketracker.plotContour">
 <code class="descname">plotContour</code><span class="sig-paren">(</span><em>itime=0</em>, <em>outline=True</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.waketrackers.contourwaketracker.plotContour" title="Permalink to this definition">¶</a></dt>
-<dd><p>Plot/update contour and center marker at time ${itime}.</p>
+<dd><p>Plot/update contour and center marker in the rotor-aligned
+frame at time ${itime}.</p>
 <p>Overridden waketracker.plotContour function to include the calculated
 wake contour outline.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -390,6 +407,54 @@ locate the contour with flux closest to the targetValue.</p>
 write out to; set to None to skip I/O. Data are written out
 in the rotor-aligned frame.</li>
 <li><strong>outlinesFile</strong> (<em>string</em><em>, </em><em>optional</em>) &#8211; Name of pickle archive file (*.pkl) to attempt input and to
+write out detected contour outlines; set to None to skip
+I/O.</li>
+<li><strong>weightedCenter</strong> (<em>boolean</em><em>, </em><em>optional</em>) &#8211; If True, calculate the velocity-deficit-weighted &#8220;center of
+mass&#8221;; if False, calculate the geometric center of the wake.</li>
+<li><strong>frame</strong> (<em>string</em><em>, </em><em>optional</em>) &#8211; Reference frame, either &#8216;inertial&#8217; or &#8216;rotor-aligned&#8217;.</li>
+<li><strong>Ntest</strong> (<em>integer</em><em>, </em><em>optional</em>) &#8211; The number of initial test contours to calculate.</li>
+<li><strong>tol</strong> (<em>float</em><em>, </em><em>optional</em>) &#8211; Minimum spacing to test during the binary search.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
+<li><strong>x_wake,y_wake,z_wake</strong> (<em>ndarray</em>) &#8211; Wake trajectory if frame is &#8216;inertial&#8217;</li>
+<li><strong>xh_wake,xv_wake</strong> (<em>ndarray</em>) &#8211; Wake trajectory if frame is &#8216;rotor-aligned&#8217;</li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="waketracking.ContourWakeTracker.ConstantFlux">
+<em class="property">class </em><code class="descclassname">waketracking.ContourWakeTracker.</code><code class="descname">ConstantFlux</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.ContourWakeTracker.ConstantFlux" title="Permalink to this definition">¶</a></dt>
+<dd><p>Identifies a wake as a region outlined by a velocity deficit
+contour over which the integrated flux matches a specified target
+value, given a flux function.</p>
+<p>Inherits class contourwaketracker.</p>
+<dl class="method">
+<dt id="waketracking.ContourWakeTracker.ConstantFlux.findCenters">
+<code class="descname">findCenters</code><span class="sig-paren">(</span><em>refFlux</em>, <em>fluxFunction</em>, <em>trajectoryFile=None</em>, <em>outlinesFile=None</em>, <em>weightedCenter=True</em>, <em>frame='rotor-aligned'</em>, <em>Ntest=51</em>, <em>tol=0.01</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.ContourWakeTracker.ConstantFlux.findCenters" title="Permalink to this definition">¶</a></dt>
+<dd><p>Uses a binary search algorithm (findContourCenter) to
+locate the contour with flux closest to the targetValue.</p>
+<p>Overrides the parent findCenters routine.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>refFlux</strong> (<em>float</em>) &#8211; Flux to attempt to match, e.g., the massflow rate.</li>
+<li><strong>fluxFunction</strong> (<em>function</em>) &#8211; A specified function of two variables, the velocity deficit
+and the instantaneous velocity (with shear removed).</li>
+<li><strong>trajectoryFile</strong> (<em>string</em>) &#8211; Name of trajectory data file to attempt inputting and to
+write out to; set to None to skip I/O. Data are written out
+in the rotor-aligned frame.</li>
+<li><strong>outlinesFile</strong> (<em>string</em>) &#8211; Name of pickle archive file (*.pkl) to attempt input and to
 write out detected contour outlines; set to None to skip
 I/O.</li>
 <li><strong>weightedCenter</strong> (<em>boolean</em><em>, </em><em>optional</em>) &#8211; If True, calculate the velocity-deficit-weighted &#8220;center of
