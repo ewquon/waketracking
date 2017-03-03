@@ -59,6 +59,8 @@ class ConstantArea(contourwaketracker):
         xh_wake,xv_wake : ndarray
             Wake trajectory if frame is 'rotor-aligned'
         """
+        self.plotInitialized = False
+
         # try to read trajectories (required) and outlines (optional)
         self._readTrajectory(trajectoryFile)
         self._readOutlines(outlinesFile)
@@ -106,7 +108,7 @@ class ConstantFlux(contourwaketracker):
             print '\n...finished initializing',self.__class__.__name__,'\n'
 
     def findCenters(self,refFlux,
-                    fluxFunction,
+                    fluxFunction,fluxField='u_tot',
                     trajectoryFile=None,outlinesFile=None,
                     weightedCenter=True,frame='rotor-aligned',
                     Ntest=51,tol=0.01):
@@ -122,6 +124,9 @@ class ConstantFlux(contourwaketracker):
         fluxFunction : function
             A specified function of two variables, the velocity deficit
             and the instantaneous velocity (with shear removed).
+        fluxField : string, optional
+            Name of the field to use as input to the fluxFunction; use
+            the instantaneous velocity, 'u_tot', by default.
         trajectoryFile : string
             Name of trajectory data file to attempt inputting and to
             write out to; set to None to skip I/O. Data are written out
@@ -147,6 +152,8 @@ class ConstantFlux(contourwaketracker):
         xh_wake,xv_wake : ndarray
             Wake trajectory if frame is 'rotor-aligned'
         """
+        self.plotInitialized = False
+
         # try to read trajectories (required) and outlines (optional)
         self._readTrajectory(trajectoryFile)
         self._readOutlines(outlinesFile)
@@ -155,6 +162,19 @@ class ConstantFlux(contourwaketracker):
         if self.wakeTracked:
             return self.trajectoryIn(frame)
 
+        try:
+            testField = getattr(self,fluxField)
+        except AttributeError:
+            print 'Warning: flux field',fluxField,'not available,', \
+                    'using \'u_tot\' by default'
+            fluxField = 'u_tot'
+
+        # some sanity checks if needed
+        if self.verbose:
+            Umean = np.mean(testField[-1,self.jmin:self.jmax,self.kmin:self.kmax])
+            print 'Sample function evaluation:',fluxFunction(Umean)
+            print ' ~= targetValue / area =',refFlux,'/ A'
+
         # calculate trajectories for each time step
         for itime in range(self.Ntimes):
             _,_,info = self._findContourCenter(itime,
@@ -162,7 +182,8 @@ class ConstantFlux(contourwaketracker):
                                                weightedCenter=weightedCenter,
                                                Ntest=Ntest,
                                                tol=tol,
-                                               func=fluxFunction)
+                                               func=fluxFunction,
+                                               field=fluxField)
             if not info['success']:
                 print 'WARNING: findContourCenter was unsuccessful.'
 

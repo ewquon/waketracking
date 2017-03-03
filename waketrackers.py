@@ -333,6 +333,7 @@ class waketracker(object):
     def findCenters(self,
                     trajectoryFile=None,
                     frame='rotor-aligned'):
+        self.plotInitialized = False
         print self.__class__.__name,'needs to override this function!'
         #self.wakeTracked = True
 
@@ -603,14 +604,15 @@ class contourwaketracker(waketracker):
                            weightedCenter,
                            Ntest=11,
                            tol=0.01,
-                           func=None):
+                           func=None,
+                           field='u_tot'):
         """Helper function that returns the coordinates of the detected
         wake center. Iteration continues in a binary search fashion
         until the difference in contour values is < 'tol'
         """
         j0,j1 = self.jmin,self.jmax
         k0,k1 = self.kmin,self.kmax
-        usearch = self.u[itime,j0:j1,k0:k1]
+        usearch = self.u[itime,j0:j1,k0:k1] # velocity deficit contours
         Cdata = Cntr(self.xh[j0:j1,k0:k1],
                      self.xv[j0:j1,k0:k1],
                      usearch)  # contour data object
@@ -628,11 +630,13 @@ class contourwaketracker(waketracker):
             def Cfn(path):
                 return contour.calcArea(path)
         else:
+            testField = getattr(self,field)
             def Cfn(path):
                 return contour.integrateFunction(path,
+                        func,
                         self.xh, self.xv,
-                        self.u_tot[itime,:,:], self.u[itime,:,:],
-                        func)
+                        testField[itime,:,:],
+                        vd=self.u[itime,:,:])
 
         Flist = []  # list of evaluated function values
         level = []  # list of candidate contour values
@@ -660,7 +664,7 @@ class contourwaketracker(waketracker):
                             paths.append(path)
                         else:
                             # flux contours
-                            fval, avgDeficit, corr = Cfn(path)
+                            fval, corr, avgDeficit = Cfn(path)
                             if fval is not None and avgDeficit < 0:
                                 Flist.append(fval)
                                 level.append(Cval)

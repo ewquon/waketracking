@@ -22,8 +22,9 @@ def calcArea(path):
     return 0.5*np.abs(np.sum(yp[:-1]*dx - xp[:-1]*dy))
 
 def integrateFunction(contourPts,
-                      xg,yg,Ug,vd,
                       func,
+                      xg,yg,fg,
+                      vd=None,
                       Nmin=50):
     """Integrate a specified function within an arbitrary region.
 
@@ -44,11 +45,12 @@ def integrateFunction(contourPts,
         Output from matplotlib._cntr.Cntr object's trace function
     xg,yg : ndarray
         Sampling plane coordinates, in the rotor-aligned frame.
-    Ug : ndarray
+    fg : ndarray
         Instantaneous velocity, including shear, used as the
         independent variable in the specificed function.
-    vd : ndarray
-        Velocity deficit, i.e., Ug with shear removed
+    vd : ndarray, optional
+        Velocity deficit; if not None, returns average deficit in the
+        enclosed region.
     func : (lambda) function
         Function over which to integrate.
     Nmin : integer, optional
@@ -57,44 +59,47 @@ def integrateFunction(contourPts,
 
     Returns
     -------
-    integ : float
+    fval : float
         Summation of the specified function values in the enclosed
         region, with correction applied.
-    vdavg : float
-        Average velocity deficit in the contour region.
     corr : float
         Scaling factor to correct for discrete integration error.
+    vdavg : float
+        Average velocity deficit in the contour region.
     """
     x = xg.ravel()
     y = yg.ravel()
     gridPts = np.vstack((x,y)).transpose()
     path = mpath.Path(contourPts)
-    A = calcContourArea(contourPts)
+    A = calcArea(contourPts)
 
     inner = path.contains_points(gridPts)  # <-- most of the processing time is here!
-    Uinner = Ug.ravel()[inner]
+    Uinner = fg.ravel()[inner]
     Ninner = len(Uinner)
     if Ninner < Nmin:
         return None,None,None
 
     # evaluate specified function
-    if fn.func_code.co_argcount==1:
-        fvals = fn(Uinner)
-    elif fn.func_code.co_argcount==2: # assume second argument is A
-        fvals = fn(Uinner, A)
+    if func.func_code.co_argcount==1:
+        fvals = func(Uinner)
+    elif func.func_code.co_argcount==2: # assume second argument is A
+        fvals = func(Uinner, A)
     else:
         print 'Problem with function formulation!'
         return None,None,None
 
-    vdavg = np.mean(vd.ravel()[inner])
+    if vd is not None:
+        vdavg = np.mean(vd.ravel()[inner])
+    else:
+        vdavg = None
 
     # correct for errors in area
     cellFaceArea = (xg[1,0]-xg[0,0])*(yg[0,1]-yg[0,0])
     corr = A / (Ninner*cellFaceArea)
 
-    integ = corr * np.sum(fvals)*cellFaceArea
+    fval = corr * np.sum(fvals)*cellFaceArea
     
-    return integ, vdavg, corr
+    return fval, corr, vdavg
 
 def calcWeightedCenter(contourPts,
                        xg,yg,fg,
