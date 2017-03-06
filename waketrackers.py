@@ -888,8 +888,8 @@ class contourwaketracker(waketracker):
         """
         if not self.wakeTracked:
             print 'Need to perform wake tracking first'
-        if self.verbose:
-            print 'Plotting',self.__class__.__name__,'wake outline'
+        #if self.verbose:
+        #    print 'Plotting',self.__class__.__name__,'wake outline'
         lw = kwargs.get('linewidth',lw)
         ls = kwargs.get('linestyle',ls)
 

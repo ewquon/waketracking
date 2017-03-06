@@ -24,7 +24,7 @@ class ConstantArea(contourwaketracker):
     def findCenters(self,refArea,
                     trajectoryFile=None,outlinesFile=None,
                     weightedCenter=True,frame='rotor-aligned',
-                    Ntest=11,tol=0.01,
+                    Ntest=21,tol=0.01,
                     checkdeficit=True,
                     debug=False):
         """Uses a binary search algorithm (findContourCenter) to
@@ -127,7 +127,7 @@ class ConstantFlux(contourwaketracker):
                     fluxFunction,fluxField='u_tot',
                     trajectoryFile=None,outlinesFile=None,
                     weightedCenter=True,frame='rotor-aligned',
-                    Ntest=11,tol=0.01,
+                    Ntest=21,tol=0.01,
                     checkdeficit=True,
                     debug=False):
         """Uses a binary search algorithm (findContourCenter) to
