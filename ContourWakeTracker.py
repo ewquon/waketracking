@@ -70,6 +70,8 @@ class ConstantArea(contourwaketracker):
             return self.trajectoryIn(frame)
 
         # calculate trajectories for each time step
+        if self.verbose:
+            print 'Attempting to match area:',refArea,'m^2'
         for itime in range(self.Ntimes):
             _,_,info = self._findContourCenter(itime,
                                                refArea,
@@ -79,6 +81,7 @@ class ConstantArea(contourwaketracker):
                                                func=None)
             if not info['success']:
                 print 'WARNING: findContourCenter was unsuccessful.'
+                print info
 
             if self.verbose:
                 sys.stderr.write('\rProcessed frame {:d}'.format(itime))

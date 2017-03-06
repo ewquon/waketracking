@@ -340,8 +340,8 @@ class pandas_dataframe(sampled_data):
         ydata = [ df.y.as_matrix() for df in frames ]
         zdata = [ df.z.as_matrix() for df in frames ]
         udata = [ df.u.as_matrix() for df in frames ]
-        self.y = np.zeros((self.NX,self.NX,NY,NZ))
-        self.z = np.zeros((self.NX,self.NX,NY,NZ))
+        self.y = np.zeros((self.NX,NY,NZ))
+        self.z = np.zeros((self.NX,NY,NZ))
         self.data = np.zeros((1,self.NX,NY,NZ,1))  # shape == (Ntimes,NX,NY,NZ,datasize)
         for i in range(self.NX):
             order = np.lexsort((zdata[i],ydata[i]))

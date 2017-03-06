@@ -604,7 +604,8 @@ class contourwaketracker(waketracker):
                            Ntest=11,
                            tol=0.01,
                            func=None,
-                           field='u_tot'):
+                           field='u_tot',
+                           DEBUG=True):
         """Helper function that returns the coordinates of the detected
         wake center. Iteration continues in a binary search fashion
         until the difference in contour values is < 'tol'. This *should*
@@ -622,13 +623,13 @@ class contourwaketracker(waketracker):
         Crange = np.linspace(np.min(usearch), 0, Ntest+1)[1:]
         interval = Crange[1] - Crange[0]
 
-        # debug information:
+        # search statistics:
         #NtraceCalls = 0
         #NfnEvals = 0
         Nrefine = 0
 
         if func is None:
-            testfield = None
+            testField = None
         else:
             testField = getattr(self,field)[itime,:,:]
 
@@ -639,14 +640,18 @@ class contourwaketracker(waketracker):
         converged = False
         while Nrefine == 0 or interval > tol:  # go through search at least once
             Nrefine += 1
+            if DEBUG: print 'refinement cycle',Nrefine
 
             # BEGIN search loop
             #vvvvvvvvvvvvvvvvvvvvvvvvvvvv
-            #for it,Cval in enumerate(Crange):
-            for Cval in Crange:
-                curPathList = contour.getPaths(Cdata,Cval,closePaths=False)
+            for Clevel in Crange:
+                if DEBUG: print '  testing contour level',Clevel
+
+                curPathList = contour.getPaths(Cdata,Clevel,closePaths=False)
+                if DEBUG: print '  contour paths found:',len(curPathList)
                 paths += curPathList
-                level += len(curPathList)*[Cval]
+                level += len(curPathList)*[Clevel]
+
                 if func is None:
                     # area contours
                     # Note: This is MUCH faster, since we don't have to search for interior pts!
