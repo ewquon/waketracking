@@ -24,7 +24,8 @@ class ConstantArea(contourwaketracker):
     def findCenters(self,refArea,
                     trajectoryFile=None,outlinesFile=None,
                     weightedCenter=True,frame='rotor-aligned',
-                    Ntest=51,tol=0.01):
+                    Ntest=11,tol=0.01,
+                    debug=False):
         """Uses a binary search algorithm (findContourCenter) to
         locate the contour with flux closest to the targetValue.
         
@@ -51,6 +52,9 @@ class ConstantArea(contourwaketracker):
             The number of initial test contours to calculate.
         tol : float, optional
             Minimum spacing to test during the binary search.
+        debug : boolean, optional
+            Print out debugging information about the contour search
+            routine.
 
         Returns
         -------
@@ -78,7 +82,8 @@ class ConstantArea(contourwaketracker):
                                                weightedCenter=weightedCenter,
                                                Ntest=Ntest,
                                                tol=tol,
-                                               func=None)
+                                               func=None,
+                                               debug=debug)
             if not info['success']:
                 print 'WARNING: findContourCenter was unsuccessful.'
                 print info
@@ -89,6 +94,8 @@ class ConstantArea(contourwaketracker):
         if self.verbose: sys.stderr.write('\n')
 
         self._updateInertial()
+
+        self.wakeTracked = True
 
         # write out everything
         self._writeTrajectory(trajectoryFile)
@@ -114,7 +121,8 @@ class ConstantFlux(contourwaketracker):
                     fluxFunction,fluxField='u_tot',
                     trajectoryFile=None,outlinesFile=None,
                     weightedCenter=True,frame='rotor-aligned',
-                    Ntest=51,tol=0.01):
+                    Ntest=51,tol=0.01,
+                    debug=False):
         """Uses a binary search algorithm (findContourCenter) to
         locate the contour with flux closest to the targetValue.
         
@@ -154,6 +162,9 @@ class ConstantFlux(contourwaketracker):
             The number of initial test contours to calculate.
         tol : float, optional
             Minimum spacing to test during the binary search.
+        debug : boolean, optional
+            Print out debugging information about the contour search
+            routine.
 
         Returns
         -------
@@ -193,7 +204,8 @@ class ConstantFlux(contourwaketracker):
                                                Ntest=Ntest,
                                                tol=tol,
                                                func=fluxFunction,
-                                               field=fluxField)
+                                               field=fluxField,
+                                               debug=debug)
             if not info['success']:
                 print 'WARNING: findContourCenter was unsuccessful.'
 
@@ -203,6 +215,8 @@ class ConstantFlux(contourwaketracker):
         if self.verbose: sys.stderr.write('\n')
 
         self._updateInertial()
+
+        self.wakeTracked = True
 
         # write out everything
         self._writeTrajectory(trajectoryFile)

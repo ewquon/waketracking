@@ -477,6 +477,15 @@ class waketracker(object):
         self.ax.set_xlabel(r'$y (m)$', fontsize=14)
         self.ax.set_ylabel(r'$z (m)$', fontsize=14)
 
+    def clearPlot(self):
+        """Resets all saved plot handles and requires reinitialization
+        the next time plotContour is called.
+        """
+        #plt.close(self.fig)
+        self.fig = None
+        self.ax = None
+        self.plotInitialized = False
+
     def plotContour(self,
                     itime=0,
                     cmin=None,cmax=None,
@@ -605,7 +614,7 @@ class contourwaketracker(waketracker):
                            tol=0.01,
                            func=None,
                            field='u_tot',
-                           DEBUG=True):
+                           debug=True):
         """Helper function that returns the coordinates of the detected
         wake center. Iteration continues in a binary search fashion
         until the difference in contour values is < 'tol'. This *should*
@@ -613,6 +622,13 @@ class contourwaketracker(waketracker):
 
         If closeLoops is True, then process open contours with ends
         closed along boundaries.
+
+        Sets the following attributes:
+        * self.xh_wake[itime]
+        * self.xv_wake[itime]
+        * self.paths[itime]
+        * self.Clevels[itime]
+        * self.Cfvals[itime]
         """
         j0,j1 = self.jmin,self.jmax
         k0,k1 = self.kmin,self.kmax
@@ -640,15 +656,15 @@ class contourwaketracker(waketracker):
         converged = False
         while Nrefine == 0 or interval > tol:  # go through search at least once
             Nrefine += 1
-            if DEBUG: print 'refinement cycle',Nrefine
+            if debug: print 'refinement cycle',Nrefine
 
             # BEGIN search loop
             #vvvvvvvvvvvvvvvvvvvvvvvvvvvv
             for Clevel in Crange:
-                if DEBUG: print '  testing contour level',Clevel
+                if debug: print '  testing contour level',Clevel
 
                 curPathList = contour.getPaths(Cdata,Clevel,closePaths=False)
-                if DEBUG: print '  contour paths found:',len(curPathList)
+                if debug: print '  contour paths found:',len(curPathList)
                 paths += curPathList
                 level += len(curPathList)*[Clevel]
 
@@ -675,6 +691,9 @@ class contourwaketracker(waketracker):
                 Ferr = np.abs( np.array(Flist) - targetValue )
                 idx = np.argmin(Ferr)
                 curOptLevel = level[idx]
+                if debug:
+                    print 'target values:',Flist
+                    print 'current optimum level:',level[idx]
             else:
                 # no closed contours within our range?
                 yc = self.xh_fail
@@ -686,7 +705,11 @@ class contourwaketracker(waketracker):
 
             # update the contour search range
             interval /= 2.
-            Crange = [curOptLevel-interval,curOptLevel+interval]
+            Crange = np.linspace(curOptLevel-interval,curOptLevel+interval,Ntest)
+
+            if debug:
+                print 'new interval:',interval
+                print 'new Crange:',Crange
 
         # end of refinement loop
         info = {
@@ -817,20 +840,17 @@ class contourwaketracker(waketracker):
             if self.verbose: print 'Creating output subdirectory:', outdir
             os.makedirs(outdir)
 
-        plotOutline = outline and self.wakeTracked
+        outline = outline and self.wakeTracked
 
-        if self.plotInitialized and plotOutline \
+        if self.plotInitialized and outline \
                 and hasattr(self,'plotobj_wakeOutline'):
             self.plotobj_wakeOutline.remove()
 
         kwargs['writepng'] = False
         super(contourwaketracker,self).plotContour(itime,**kwargs)
 
-        if plotOutline:
-            path = mpath.Path(self.paths[itime])
-            self.plotobj_wakeOutline = mpatch.PathPatch(path,facecolor='none',
-                                                        edgecolor='w',ls='-')
-            self.ax.add_patch(self.plotobj_wakeOutline)
+        if outline:
+            self.plotOutline(itime)
 #            if hasattr(self,'plotobj_linecontours'):
 #                for i in range(len(self.plotobj_linecontours.collections)):
 #                    self.plotobj_linecontours.collections[i].remove()
@@ -845,4 +865,17 @@ class contourwaketracker(waketracker):
                     )
             self.fig.savefig(fname, dpi=dpi)
             print 'Saved',fname
+
+
+    def plotOutline(self,itime=0):
+        """Helper function for plotting the wake outline
+        """
+        if not self.wakeTracked:
+            print 'Need to perform wake tracking first'
+        if self.verbose:
+            print 'Plotting',self.__class__.__name__,'wake outline'
+        path = mpath.Path(self.paths[itime])
+        self.plotobj_wakeOutline = mpatch.PathPatch(path,facecolor='none',
+                                                    edgecolor='w',lw=2,ls='-')
+        self.ax.add_patch(self.plotobj_wakeOutline)
 

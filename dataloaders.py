@@ -292,7 +292,7 @@ class pandas_dataframe(sampled_data):
     Inherits superclass sampled_data.
     """
 
-    def __init__(self,frames,NY=None,NZ=None,xr=None):
+    def __init__(self,frames,NY=None,NZ=None,xr=None,refineFactor=None):
         """Reads a single time instance from one or more scans provided
         in pandas' DataFrame format. Data are assumed to be scalar
         fields.
@@ -306,6 +306,10 @@ class pandas_dataframe(sampled_data):
         xr : ndarray, optional
             Range gate distances; if None, then equal unit spacing is
             assumed.
+        refineFactor : integer, optional
+            Refinement factor for super-resolving (by cubic
+            interpolation) the field in the lateral and vertical
+            directions.
         """
         self.ts = None # not a time series
         self.Ntimes = 1
@@ -329,25 +333,46 @@ class pandas_dataframe(sampled_data):
             zrange = set(frames[0].z.as_matrix())
             NZ = len(zrange)
             print 'Detected z:',NZ,list(zrange)
-        self.NY = NY
-        self.NZ = NZ
 
-        xarray = np.ones((self.NX,NY,NZ))
+        if refineFactor is None:
+            refineFactor = 1
+        elif refineFactor > 1:
+            from scipy.interpolate import RectBivariateSpline
+            refineFactor = int(refineFactor)
+            print 'Refining input frame by factor of',refineFactor
+        self.NY = refineFactor * NY
+        self.NZ = refineFactor * NZ
+
+        xarray = np.ones((self.NX,self.NY,self.NZ))
         for i,xi in enumerate(xr):
             xarray[i,:,:] *= xi
         self.x = xarray
         
+        # sort and interpolate data
         ydata = [ df.y.as_matrix() for df in frames ]
         zdata = [ df.z.as_matrix() for df in frames ]
         udata = [ df.u.as_matrix() for df in frames ]
-        self.y = np.zeros((self.NX,NY,NZ))
-        self.z = np.zeros((self.NX,NY,NZ))
-        self.data = np.zeros((1,self.NX,NY,NZ,1))  # shape == (Ntimes,NX,NY,NZ,datasize)
+        self.y = np.zeros((self.NX,self.NY,self.NZ))
+        self.z = np.zeros((self.NX,self.NY,self.NZ))
+        self.data = np.zeros((1,self.NX,self.NY,self.NZ,1))  # shape == (Ntimes,NX,NY,NZ,datasize)
         for i in range(self.NX):
             order = np.lexsort((zdata[i],ydata[i]))
-            self.y[i,:,:] = ydata[i][order].reshape((NY,NZ))
-            self.z[i,:,:] = zdata[i][order].reshape((NY,NZ))
-            self.data[0,i,:,:,0] = udata[i][order].reshape((NY,NZ))
+            ygrid = ydata[i][order].reshape((NY,NZ))
+            zgrid = zdata[i][order].reshape((NY,NZ))
+            ugrid = udata[i][order].reshape((NY,NZ))
+            if refineFactor > 1:
+                y0,y1 = np.min(ygrid),np.max(ygrid)
+                z0,z1 = np.min(zgrid),np.max(zgrid)
+                interpGrid = RectBivariateSpline(ygrid[:,0],
+                                                 zgrid[0,:],
+                                                 ugrid) # default: 3rd order (cubic)
+                ygrid,zgrid = np.meshgrid(np.linspace(y0,y1,self.NY),
+                                          np.linspace(z0,z1,self.NZ),
+                                          indexing='ij')
+                ugrid = interpGrid(ygrid[:,0],zgrid[0,:])
+            self.y[i,:,:] = ygrid
+            self.z[i,:,:] = zgrid
+            self.data[0,i,:,:,0] = ugrid
         self.datasize = 1
 
 class foam_ensight_array(sampled_data):
