@@ -646,9 +646,9 @@ class contourwaketracker(waketracker):
         Nrefine = 0
 
         if func is None:
-            testField = None
+            testfield = None
         else:
-            testField = getattr(self,field)[itime,:,:]
+            testfield = getattr(self,field)[itime,:,:]
 
         Flist = []  # list of evaluated function values
         level = []  # list of candidate contour values
@@ -683,8 +683,8 @@ class contourwaketracker(waketracker):
                         fval, corr, avgDeficit = \
                                 contour.integrateFunction(path,
                                                           func,
-                                                          self.xh, self.xv,
-                                                          testField, vd=vd)
+                                                          self.xh, self.xv, testfield,
+                                                          vd=vd)
                         #NfnEvals += 1
                         if fval is not None and avgDeficit < 0:
                             paths.append(path)

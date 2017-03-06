@@ -127,7 +127,7 @@ class ConstantFlux(contourwaketracker):
                     fluxFunction,fluxField='u_tot',
                     trajectoryFile=None,outlinesFile=None,
                     weightedCenter=True,frame='rotor-aligned',
-                    Ntest=51,tol=0.01,
+                    Ntest=11,tol=0.01,
                     checkdeficit=True,
                     debug=False):
         """Uses a binary search algorithm (findContourCenter) to
@@ -147,8 +147,8 @@ class ConstantFlux(contourwaketracker):
         refFlux : float
             Flux to attempt to match, e.g., the massflow rate.
         fluxFunction : function
-            A specified function of two variables, the velocity deficit
-            and the instantaneous velocity (with shear removed).
+            A specified function of one (or two) variables, the velocity
+            deficit (and the contour area).
         fluxField : string, optional
             Name of the field to use as input to the fluxFunction; use
             the instantaneous velocity, 'u_tot', by default.
@@ -204,7 +204,12 @@ class ConstantFlux(contourwaketracker):
         # some sanity checks if needed
         if self.verbose:
             Umean = np.mean(testField[-1,self.jmin:self.jmax,self.kmin:self.kmax])
-            print 'Sample function evaluation:',fluxFunction(Umean)
+            if fluxFunction.func_code.co_argcount==1: # fn(u)
+                print 'Sample function evaluation: f(u={:g}) = {:g}'.format(
+                        Umean,fluxFunction(Umean))
+            else: # fn(u,A)
+                print 'Sample function evaluation: f(u={:g},1.0) = {:g}'.format(
+                        Umean,fluxFunction(Umean,1))
             print ' ~= targetValue / area =',refFlux,'/ A'
 
         # calculate trajectories for each time step

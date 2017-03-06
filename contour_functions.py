@@ -144,7 +144,8 @@ def integrateFunction(contourPts,
                       xg,yg,fg,
                       vd=None,
                       Nmin=50):
-    """Integrate a specified function within an arbitrary region.
+    """Integrate a specified function within an arbitrary region. This
+    is a function of f(x,y) and optionally the contour area.
 
     The area of the enclosed cells is compared to the integrated area
     calculated using Green's Theorem to obtain a correction for the
