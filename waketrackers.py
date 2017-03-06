@@ -111,9 +111,8 @@ class waketracker(object):
             if self.verbose: print 'Creating output dir:', self.prefix
             os.makedirs(self.prefix)
 
-
         # check and store sampling mesh
-        if type(args[0]) in (list,tuple):
+        if isinstance(args[0], (list,tuple)):
             xdata = args[0][0]
             ydata = args[0][1]
             zdata = args[0][2]
@@ -609,6 +608,9 @@ class contourwaketracker(waketracker):
         """Helper function that returns the coordinates of the detected
         wake center. Iteration continues in a binary search fashion
         until the difference in contour values is < 'tol'
+
+        if closeLoops is True, then process open contours with ends
+        closed
         """
         j0,j1 = self.jmin,self.jmax
         k0,k1 = self.kmin,self.kmax
@@ -620,23 +622,14 @@ class contourwaketracker(waketracker):
         interval = Crange[1] - Crange[0]
 
         # debug information:
-        NtraceCalls = 0
-        NfnEvals = 0
+        #NtraceCalls = 0
+        #NfnEvals = 0
         Nrefine = 0
 
-        # setup contour function
         if func is None:
-            # Note: This is MUCH faster, since we don't have to search for interior pts!
-            def Cfn(path):
-                return contour.calcArea(path)
+            testfield = None
         else:
-            testField = getattr(self,field)
-            def Cfn(path):
-                return contour.integrateFunction(path,
-                        func,
-                        self.xh, self.xv,
-                        testField[itime,:,:],
-                        vd=self.u[itime,:,:])
+            testField = getattr(self,field)[itime,:,:]
 
         Flist = []  # list of evaluated function values
         level = []  # list of candidate contour values
@@ -648,29 +641,30 @@ class contourwaketracker(waketracker):
 
             # BEGIN search loop
             #vvvvvvvvvvvvvvvvvvvvvvvvvvvv
-            for it,Cval in enumerate(Crange):
-                for path in Cdata.trace(Cval):
-                    NtraceCalls += 1
-                    # Returns a list of arrays (floats) and lists (uint8), of the contour
-                    # coordinates and segment descriptors, respectively
-                    if path.dtype=='uint8': break  # don't need the segment info
+            #for it,Cval in enumerate(Crange):
+            for Cval in Crange:
+                curPathList = contour.getPaths(Cdata,Cval,closePaths=False)
+                paths += curPathList
+                level += len(curPathList)*[Cval]
+                if func is None:
+                    # area contours
+                    # Note: This is MUCH faster, since we don't have to search for interior pts!
+                    Flist += [ contour.calcArea(path) for path in curPathList ]
+                else:
+                    # flux contours
+                    Npaths = len(curPathList)
+                    for path in curPathList:
+                        fval, corr, avgDeficit = \
+                                contour.integrateFunction(path,
+                                                          func,
+                                                          self.xh, self.xv,
+                                                          testField,
+                                                          vd=self.u[itime,:,:])
+                        #NfnEvals += 1
+                        if fval is not None and avgDeficit < 0:
+                            Flist.append(fval)
 
-                    # TODO: handle open contours?
-                    if np.all(path[-1] == path[0]):  # found a closed path
-                        if func is None:
-                            # area contours
-                            Flist.append(Cfn(path))
-                            level.append(Cval)
-                            paths.append(path)
-                        else:
-                            # flux contours
-                            fval, corr, avgDeficit = Cfn(path)
-                            if fval is not None and avgDeficit < 0:
-                                Flist.append(fval)
-                                level.append(Cval)
-                                paths.append(path)
-                        NfnEvals += 1
-
+            # after testing all the candidate contour values...
             if len(Flist) > 0:
                 # found at least one candidate contour
                 Ferr = np.abs( np.array(Flist) - targetValue )
@@ -693,8 +687,8 @@ class contourwaketracker(waketracker):
         info = {
                 'tolerance': tol,
                 'Nrefine': Nrefine,
-                'NtraceCalls': NtraceCalls,
-                'NfnEvals': NfnEvals,
+                #'NtraceCalls': NtraceCalls,
+                #'NfnEvals': NfnEvals,
                 'success': success
                }
 
