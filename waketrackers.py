@@ -607,10 +607,11 @@ class contourwaketracker(waketracker):
                            field='u_tot'):
         """Helper function that returns the coordinates of the detected
         wake center. Iteration continues in a binary search fashion
-        until the difference in contour values is < 'tol'
+        until the difference in contour values is < 'tol'. This *should*
+        be called from contourwaketracker.
 
-        if closeLoops is True, then process open contours with ends
-        closed
+        If closeLoops is True, then process open contours with ends
+        closed along boundaries.
         """
         j0,j1 = self.jmin,self.jmax
         k0,k1 = self.kmin,self.kmax
@@ -652,7 +653,6 @@ class contourwaketracker(waketracker):
                     Flist += [ contour.calcArea(path) for path in curPathList ]
                 else:
                     # flux contours
-                    Npaths = len(curPathList)
                     for path in curPathList:
                         fval, corr, avgDeficit = \
                                 contour.integrateFunction(path,
