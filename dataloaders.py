@@ -109,7 +109,7 @@ class sampled_data(object):
         """
         if i0 is not None and i0==i1:
             print 'Slicing data at i=',i0, \
-                  ' x ~=',np.mean(self.x[i0,:,:])
+                  ' x =',np.mean(self.x[i0,:,:])
             x0 = self.x[i0,j0:j1,k0:k1]
             x1 = self.y[i0,j0:j1,k0:k1]
             x2 = self.z[i0,j0:j1,k0:k1]
@@ -119,7 +119,7 @@ class sampled_data(object):
                 u = self.data[:,i0,:,:,:]
         elif j0 is not None and j0==j1:
             print 'Slicing data at j=',j0, \
-                  ' y ~=',np.mean(self.y[:,j0,:])
+                  ' y =',np.mean(self.y[:,j0,:])
             x0 = self.x[i0:i1,j0,k0:k1]
             x1 = self.y[i0:i1,j0,k0:k1]
             x2 = self.z[i0:i1,j0,k0:k1]
@@ -129,7 +129,7 @@ class sampled_data(object):
                 u = self.data[:,:,j0,:,:]
         elif k0 is not None and k0==k1:
             print 'Slicing data at k=',k0, \
-                  ' z ~=',np.mean(self.z[:,:,k0])
+                  ' z =',np.mean(self.z[:,:,k0])
             x0 = self.x[i0:i1,j0:j1,k0]
             x1 = self.y[i0:i1,j0:j1,k0]
             x2 = self.z[i0:i1,j0:j1,k0]
@@ -272,7 +272,7 @@ class rawdata(sampled_data):
         self.datasize = 1  # scalar
 
         self.ts = None # not a time series
-        self.Ntimes = 0
+        self.Ntimes = 1
 
         data = np.loadtxt(fname,skiprows=skiprows,delimiter=delimiter)
         y = data[:,0]
@@ -286,6 +286,69 @@ class rawdata(sampled_data):
         self.z = z[order].reshape((1,NY,NZ))
         self.data = u[order].reshape((1,1,NY,NZ,1))  # shape == (Ntimes,NX,NY,NZ,datasize)
 
+class pandas_dataframe(sampled_data):
+    """Raw data from pandas dataframe(s)
+    
+    Inherits superclass sampled_data.
+    """
+
+    def __init__(self,frames,NY=None,NZ=None,xr=None):
+        """Reads a single time instance from one or more scans provided
+        in pandas' DataFrame format. Data are assumed to be scalar
+        fields.
+
+        Parameters
+        ----------
+        frames : DataFrame, list, or tuple
+            Pandas frames containing scan data.
+        NY,NZ : integer, optional
+            Number of points in each scan direction.
+        xr : ndarray, optional
+            Range gate distances; if None, then equal unit spacing is
+            assumed.
+        """
+        self.ts = None # not a time series
+        self.Ntimes = 1
+
+        if isinstance(frames,(list,tuple)):
+            self.NX = len(frames)
+        else:
+            self.NX = 1
+            frames = [frames]
+            xr = [0]
+        if xr is None:
+            xr = np.arange(self.NX)
+        else:
+            assert(len(xr) == self.NX)
+            print 'Specified range gates:',xr
+        if NY is None:
+            yrange = set(frames[0].y.as_matrix())
+            NY = len(yrange)
+            print 'Detected y:',NY,list(yrange)
+        if NZ is None:
+            zrange = set(frames[0].z.as_matrix())
+            NZ = len(zrange)
+            print 'Detected z:',NZ,list(zrange)
+        self.NY = NY
+        self.NZ = NZ
+
+        xarray = np.ones((self.NX,NY,NZ))
+        for i,xi in enumerate(xr):
+            xarray[i,:,:] *= xi
+        self.x = xarray
+        
+        ydata = [ df.y.as_matrix() for df in frames ]
+        zdata = [ df.z.as_matrix() for df in frames ]
+        udata = [ df.u.as_matrix() for df in frames ]
+        self.y = np.zeros((self.NX,self.NX,NY,NZ))
+        self.z = np.zeros((self.NX,self.NX,NY,NZ))
+        self.data = np.zeros((1,self.NX,NY,NZ,1))  # shape == (Ntimes,NX,NY,NZ,datasize)
+        for i in range(self.NX):
+            order = np.lexsort((zdata[i],ydata[i]))
+            self.y[i,:,:] = ydata[i][order].reshape((NY,NZ))
+            self.z[i,:,:] = zdata[i][order].reshape((NY,NZ))
+            self.data[0,i,:,:,0] = udata[i][order].reshape((NY,NZ))
+        self.datasize = 1
 
 class foam_ensight_array(sampled_data):
     """OpenFOAM array sampling data in Ensight format
