@@ -448,8 +448,6 @@ class waketracker(object):
         """
         ang = self.yaw
         xd = np.mean(self.xd)  # assuming no sampling rotation error, self.xd should be constant
-        print xd,ang
-        print self.x0,self.y0,self.z0
         self.xwake = self.x0 + np.cos(ang)*xd - np.sin(ang)*self.xh_wake
         self.ywake = self.y0 + np.sin(ang)*xd + np.cos(ang)*self.xh_wake
         self.zwake = self.xv_wake
