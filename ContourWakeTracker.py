@@ -25,6 +25,7 @@ class ConstantArea(contourwaketracker):
                     trajectoryFile=None,outlinesFile=None,
                     weightedCenter=True,frame='rotor-aligned',
                     Ntest=11,tol=0.01,
+                    checkdeficit=True,
                     debug=False):
         """Uses a binary search algorithm (findContourCenter) to
         locate the contour with flux closest to the targetValue.
@@ -43,15 +44,19 @@ class ConstantArea(contourwaketracker):
             Name of pickle archive file (\*.pkl) to attempt input and to
             write out detected contour outlines; set to None to skip
             I/O.
-        weightedCenter : boolean, optional
+        weightedCenter : boolean or function, optional
             If True, calculate the velocity-deficit-weighted "center of
             mass"; if False, calculate the geometric center of the wake.
+            This can also be a weighting function.
         frame : string, optional
             Reference frame, either 'inertial' or 'rotor-aligned'.
         Ntest : integer, optional
             The number of initial test contours to calculate.
         tol : float, optional
             Minimum spacing to test during the binary search.
+        checkdeficit : boolean, optional
+            If True, only consider wake candidates in which the average
+            velocity deficit is less than 0.
         debug : boolean, optional
             Print out debugging information about the contour search
             routine.
@@ -63,7 +68,7 @@ class ConstantArea(contourwaketracker):
         xh_wake,xv_wake : ndarray
             Wake trajectory if frame is 'rotor-aligned'
         """
-        self.plotInitialized = False
+        self.clearPlot()
 
         # try to read trajectories (required) and outlines (optional)
         self._readTrajectory(trajectoryFile)
@@ -83,6 +88,7 @@ class ConstantArea(contourwaketracker):
                                                Ntest=Ntest,
                                                tol=tol,
                                                func=None,
+                                               vdcheck=checkdeficit,
                                                debug=debug)
             if not info['success']:
                 print 'WARNING: findContourCenter was unsuccessful.'
@@ -122,6 +128,7 @@ class ConstantFlux(contourwaketracker):
                     trajectoryFile=None,outlinesFile=None,
                     weightedCenter=True,frame='rotor-aligned',
                     Ntest=51,tol=0.01,
+                    checkdeficit=True,
                     debug=False):
         """Uses a binary search algorithm (findContourCenter) to
         locate the contour with flux closest to the targetValue.
@@ -153,15 +160,19 @@ class ConstantFlux(contourwaketracker):
             Name of pickle archive file (\*.pkl) to attempt input and to
             write out detected contour outlines; set to None to skip
             I/O.
-        weightedCenter : boolean, optional
+        weightedCenter : boolean or function, optional
             If True, calculate the velocity-deficit-weighted "center of
             mass"; if False, calculate the geometric center of the wake.
+            This can also be a weighting function.
         frame : string, optional
             Reference frame, either 'inertial' or 'rotor-aligned'.
         Ntest : integer, optional
             The number of initial test contours to calculate.
         tol : float, optional
             Minimum spacing to test during the binary search.
+        checkdeficit : boolean, optional
+            If True, only consider wake candidates in which the average
+            velocity deficit is less than 0.
         debug : boolean, optional
             Print out debugging information about the contour search
             routine.
@@ -173,7 +184,7 @@ class ConstantFlux(contourwaketracker):
         xh_wake,xv_wake : ndarray
             Wake trajectory if frame is 'rotor-aligned'
         """
-        self.plotInitialized = False
+        self.clearPlot()
 
         # try to read trajectories (required) and outlines (optional)
         self._readTrajectory(trajectoryFile)
@@ -205,6 +216,7 @@ class ConstantFlux(contourwaketracker):
                                                tol=tol,
                                                func=fluxFunction,
                                                field=fluxField,
+                                               vdcheck=checkdeficit,
                                                debug=debug)
             if not info['success']:
                 print 'WARNING: findContourCenter was unsuccessful.'

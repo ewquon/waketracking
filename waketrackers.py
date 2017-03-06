@@ -448,6 +448,8 @@ class waketracker(object):
         """
         ang = self.yaw
         xd = np.mean(self.xd)  # assuming no sampling rotation error, self.xd should be constant
+        print xd,ang
+        print self.x0,self.y0,self.z0
         self.xwake = self.x0 + np.cos(ang)*xd - np.sin(ang)*self.xh_wake
         self.ywake = self.y0 + np.sin(ang)*xd + np.cos(ang)*self.xh_wake
         self.zwake = self.xv_wake
@@ -609,11 +611,12 @@ class contourwaketracker(waketracker):
     def _findContourCenter(self,
                            itime,
                            targetValue,
-                           weightedCenter,
+                           weightedCenter=True,
                            Ntest=11,
                            tol=0.01,
                            func=None,
                            field='u_tot',
+                           vdcheck=True,
                            debug=True):
         """Helper function that returns the coordinates of the detected
         wake center. Iteration continues in a binary search fashion
@@ -665,24 +668,29 @@ class contourwaketracker(waketracker):
 
                 curPathList = contour.getPaths(Cdata,Clevel,closePaths=False)
                 if debug: print '  contour paths found:',len(curPathList)
-                paths += curPathList
-                level += len(curPathList)*[Clevel]
 
                 if func is None:
                     # area contours
                     # Note: This is MUCH faster, since we don't have to search for interior pts!
+                    paths += curPathList
+                    level += len(curPathList)*[Clevel]
                     Flist += [ contour.calcArea(path) for path in curPathList ]
                 else:
                     # flux contours
+                    if vdcheck:
+                        vd = self.u[itime,:,:]
+                    else:
+                        vd = None
                     for path in curPathList:
                         fval, corr, avgDeficit = \
                                 contour.integrateFunction(path,
                                                           func,
                                                           self.xh, self.xv,
-                                                          testField,
-                                                          vd=self.u[itime,:,:])
+                                                          testField, vd=vd)
                         #NfnEvals += 1
                         if fval is not None and avgDeficit < 0:
+                            paths.append(path)
+                            level.append(Clevel)
                             Flist.append(fval)
 
             # after testing all the candidate contour values...
@@ -725,11 +733,16 @@ class contourwaketracker(waketracker):
             self.Clevels[itime] = level[idx]  # save time-varying contour levels as reference data
             self.Cfvals[itime] = Flist[idx]
 
-            if weightedCenter:
+            if not weightedCenter == False:
+                if weightedCenter == True:
+                    func = np.abs
+                else:
+                    func = weightedCenter # function type
                 yc,zc = contour.calcWeightedCenter(paths[idx],
                                                    self.xh,
                                                    self.xv,
-                                                   self.u[itime,:,:])
+                                                   self.u[itime,:,:],
+                                                   weightingFunc=func)
             else:
                 # geometric center
                 yc = np.mean(paths[idx][:,0])
@@ -867,15 +880,26 @@ class contourwaketracker(waketracker):
             print 'Saved',fname
 
 
-    def plotOutline(self,itime=0):
+    def plotOutline(self,itime=0,
+            lw=2,ls='-',facecolor='none',edgecolor='w',
+            **kwargs):
         """Helper function for plotting the wake outline
+
+        Additional plotting style keywords may be specified, e.g.:
+            linewidth, linestyle, facecolor, edgecolor,...
         """
         if not self.wakeTracked:
             print 'Need to perform wake tracking first'
         if self.verbose:
             print 'Plotting',self.__class__.__name__,'wake outline'
+        lw = kwargs.get('linewidth',lw)
+        ls = kwargs.get('linestyle',ls)
+
         path = mpath.Path(self.paths[itime])
-        self.plotobj_wakeOutline = mpatch.PathPatch(path,facecolor='none',
-                                                    edgecolor='w',lw=2,ls='-')
+        self.plotobj_wakeOutline = mpatch.PathPatch(path,
+                                                    lw=lw,ls=ls,
+                                                    facecolor=facecolor,
+                                                    edgecolor=edgecolor,
+                                                    **kwargs)
         self.ax.add_patch(self.plotobj_wakeOutline)
 

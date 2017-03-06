@@ -326,20 +326,22 @@ class pandas_dataframe(sampled_data):
             assert(len(xr) == self.NX)
             print 'Specified range gates:',xr
         if NY is None:
-            yrange = set(frames[0].y.as_matrix())
+            yrange = list(set(frames[0].y.as_matrix()))
+            yrange.sort()
             NY = len(yrange)
-            print 'Detected y:',NY,list(yrange)
+            print 'Detected y:',NY,yrange
         if NZ is None:
-            zrange = set(frames[0].z.as_matrix())
+            zrange = list(set(frames[0].z.as_matrix()))
+            zrange.sort()
             NZ = len(zrange)
-            print 'Detected z:',NZ,list(zrange)
+            print 'Detected z:',NZ,zrange
 
         if refineFactor is None:
             refineFactor = 1
         elif refineFactor > 1:
             from scipy.interpolate import RectBivariateSpline
             refineFactor = int(refineFactor)
-            print 'Refining input frame by factor of',refineFactor
+            print 'Refining input dataframe by factor of',refineFactor
         self.NY = refineFactor * NY
         self.NZ = refineFactor * NZ
 
