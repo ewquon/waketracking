@@ -899,5 +899,8 @@ class contourwaketracker(waketracker):
                                                     facecolor=facecolor,
                                                     edgecolor=edgecolor,
                                                     **kwargs)
+        if self.ax is None:
+            self.ax = plt.gca()
         self.ax.add_patch(self.plotobj_wakeOutline)
+
 
