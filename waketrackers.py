@@ -256,7 +256,36 @@ class waketracker(object):
         s += '  Wake tracking complete : {}\n'.format(self.wakeTracked)
         return s
 
-    def removeShear(self,method='default',Navg=-300,windProfile=None,**kwargs):
+    def averageVelocity(self,Navg=-300):
+        """Calculates moving average using
+        scipy.ndimage.uniform_filter1d
+
+        Called by removeShear()
+
+        Parameters
+        ----------
+        Navg : integer, optional
+            Number of snapshots over which to average. If Navg < 0,
+            average from end of series only.
+
+        Returns
+        -------
+        uavg : ndarray
+            If Navg < 0, uavg.shape==(Nh,Nv); otherwise a moving average
+            is return, with uavg.shape==(Ntimes,Nh,Nv).
+        """
+        if Navg < 0:
+            self.uavg = np.mean(self.u_tot[-Navg:,:,:], axis=0)  # shape=(Nh,Nv)
+        elif Navg > 0:
+            self.uavg = uniform_filter1d(self.u_tot, size=Navg, axis=0, mode='mirror')  # see http://stackoverflow.com/questions/22669252/how-exactly-does-the-reflect-mode-for-scipys-ndimage-filters-work
+        else:
+            # no averaging performed
+            Navg = 1
+            self.uavg = self.u_tot
+        self.Navg = Navg
+        return self.uavg
+
+    def removeShear(self,method='default',Navg=-300,windProfile=None):
         """Removes wind shear from data.
 
         Calculates self.u from self.u_tot.
@@ -286,14 +315,11 @@ class waketracker(object):
             if self.verbose:
                 print 'Estimating velocity profile from fringes of sampling plane', \
                       'with Navg=',Navg
+            uavg = self.averageVelocity(Navg) # updates self.uavg
             if Navg < 0:
-                self.uavg = np.mean(self.u_tot[-Navg:,:,:], axis=0)  # shape=(Nh,Nv)
-                self.Uprofile = (self.uavg[0,:] + self.uavg[-1,:]) / 2  # shape=(Nv)
+                self.Uprofile = (uavg[0,:] + uavg[-1,:]) / 2  # shape=(Nv)
             else:
-                if Navg == 0:
-                    Navg = 1  # no averaging performed
-                self.uavg = uniform_filter1d(self.u_tot, size=self.Navg, axis=0, mode='mirror')  # see http://stackoverflow.com/questions/22669252/how-exactly-does-the-reflect-mode-for-scipys-ndimage-filters-work
-                self.Uprofile = (self.uavg[:,0,:] + self.uavg[:,-1,:]) / 2 # shape=(Ntimes,Nv)
+                self.Uprofile = (uavg[:,0,:] + uavg[:,-1,:]) / 2 # shape=(Ntimes,Nv)
 
         elif method == 'specified':
             if windProfile is None:
@@ -454,7 +480,7 @@ class waketracker(object):
 
     def _initPlot(self):
         """Set up figure properties here""" 
-        print 'Initializing plot'
+        if self.verbose: print 'Initializing plot'
 
         plt.rc('text', usetex=True)
         plt.rc('font', family='serif')
@@ -534,13 +560,17 @@ class waketracker(object):
                                                            extend='both')
 
             # add marker for detected wake center
-            if self.wakeTracked and markercolor is not None:
-                self.plotobj_ctr, = self.ax.plot(self.xh_wake[itime], self.xv_wake[itime], '+',
-                                                 color=markercolor, alpha=0.5,
+            if self.wakeTracked and markercolor is not None \
+                    and (not self.xh_wake[itime] == self.xh_fail) \
+                    and (not self.xv_wake[itime] == self.xv_fail):
+                self.plotobj_ctr, = self.ax.plot(self.xh_wake[itime],
+                                                 self.xv_wake[itime],
+                                                 '+', color=markercolor, alpha=0.5,
                                                  markersize=10,
                                                  markeredgewidth=1.)
-                self.plotobj_crc, = self.ax.plot(self.xh_wake[itime], self.xv_wake[itime], 'o',
-                                                 color=markercolor, alpha=0.5,
+                self.plotobj_crc, = self.ax.plot(self.xh_wake[itime],
+                                                 self.xv_wake[itime],
+                                                 'o', color=markercolor, alpha=0.5,
                                                  markersize=10,
                                                  markeredgewidth=1.,
                                                  markeredgecolor=markercolor )
