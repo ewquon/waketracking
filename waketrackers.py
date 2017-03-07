@@ -507,7 +507,8 @@ class waketracker(object):
         """Resets all saved plot handles and requires reinitialization
         the next time plotContour is called.
         """
-        #plt.close(self.fig)
+        #if hasattr(self,'fig') and self.fig is not None:
+        #    plt.close(self.fig)
         self.fig = None
         self.ax = None
         self.plotInitialized = False
@@ -553,8 +554,8 @@ class waketracker(object):
                 cmin = np.min(self.u[itime,:,:])
             if cmax is None:
                 cmax = np.max(self.u[itime,:,:])
-
             self.plot_clevels = np.linspace(cmin, cmax, 100)
+
             self.plotobj_filledContours = self.ax.contourf(self.xh, self.xv, self.u[itime,:,:],
                                                            self.plot_clevels, cmap=cmap,
                                                            extend='both')
@@ -929,8 +930,6 @@ class contourwaketracker(waketracker):
                                                     facecolor=facecolor,
                                                     edgecolor=edgecolor,
                                                     **kwargs)
-        if self.ax is None:
-            self.ax = plt.gca()
-        self.ax.add_patch(self.plotobj_wakeOutline)
+        plt.gca().add_patch(self.plotobj_wakeOutline)
 
 
