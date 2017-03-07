@@ -23,7 +23,9 @@ class ConstantArea(contourwaketracker):
 
     def findCenters(self,refArea,
                     trajectoryFile=None,outlinesFile=None,
-                    weightedCenter=True,frame='rotor-aligned',
+                    weightedCenter=True,
+                    contourClosure=None,
+                    frame='rotor-aligned',
                     Ntest=21,tol=0.01,
                     checkdeficit=True,
                     debug=False):
@@ -48,6 +50,12 @@ class ConstantArea(contourwaketracker):
             If True, calculate the velocity-deficit-weighted "center of
             mass"; if False, calculate the geometric center of the wake.
             This can also be a weighting function.
+        contourClosure : string, optional
+            If 'simple', then open paths with endpoints on the same
+            edge will be closed by connecting the endpoints; if
+            'compound', then open paths will be closed by adding
+            segments along the domain boundaries to form closed
+            contours.
         frame : string, optional
             Reference frame, either 'inertial' or 'rotor-aligned'.
         Ntest : integer, optional
@@ -78,6 +86,13 @@ class ConstantArea(contourwaketracker):
         if self.wakeTracked:
             return self.trajectoryIn(frame)
 
+        if contourClosure is None or contourClosure=='none':
+            closure = False
+        elif contourClosure=='simple':
+            closure = True
+        elif contourClosure=='compound':
+            closure = (self.xh_range,self.xv_range)
+
         # calculate trajectories for each time step
         if self.verbose:
             print 'Attempting to match area:',refArea,'m^2'
@@ -85,6 +100,7 @@ class ConstantArea(contourwaketracker):
             _,_,info = self._findContourCenter(itime,
                                                refArea,
                                                weightedCenter=weightedCenter,
+                                               contourClosure=closure,
                                                Ntest=Ntest,
                                                tol=tol,
                                                func=None,
@@ -126,7 +142,9 @@ class ConstantFlux(contourwaketracker):
     def findCenters(self,refFlux,
                     fluxFunction,fluxField='u_tot',
                     trajectoryFile=None,outlinesFile=None,
-                    weightedCenter=True,frame='rotor-aligned',
+                    weightedCenter=True,
+                    contourClosure=None,
+                    frame='rotor-aligned',
                     Ntest=21,tol=0.01,
                     checkdeficit=True,
                     debug=False):
@@ -164,6 +182,12 @@ class ConstantFlux(contourwaketracker):
             If True, calculate the velocity-deficit-weighted "center of
             mass"; if False, calculate the geometric center of the wake.
             This can also be a weighting function.
+        contourClosure : string, optional
+            If 'simple', then open paths with endpoints on the same
+            edge will be closed by connecting the endpoints; if
+            'compound', then open paths will be closed by adding
+            segments along the domain boundaries to form closed
+            contours.
         frame : string, optional
             Reference frame, either 'inertial' or 'rotor-aligned'.
         Ntest : integer, optional
@@ -212,11 +236,19 @@ class ConstantFlux(contourwaketracker):
                         Umean,fluxFunction(Umean,1))
             print ' ~= targetValue / area =',refFlux,'/ A'
 
+        if contourClosure is None or contourClosure=='none':
+            closure = False
+        elif contourClosure=='simple':
+            closure = True
+        elif contourClosure=='compound':
+            closure = (self.xh_range,self.xv_range)
+
         # calculate trajectories for each time step
         for itime in range(self.Ntimes):
             _,_,info = self._findContourCenter(itime,
                                                refFlux,
                                                weightedCenter=weightedCenter,
+                                               contourClosure=closure,
                                                Ntest=Ntest,
                                                tol=tol,
                                                func=fluxFunction,

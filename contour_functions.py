@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.path as mpath
 
-def getPaths(Cdata,Clevel,closePaths=False,verbose=True):
+def getPaths(Cdata,Clevel,closePaths=False,verbose=False):
     """Loops over paths identified by the trace function.
 
     Parameters
@@ -93,13 +93,13 @@ def getPaths(Cdata,Clevel,closePaths=False,verbose=True):
                 if verbose: print 'creating CW loop'
                 ipop = 0
                 while not sameEdge(newpath1[-1,:],xstart):
-                    print newpath1[-1,:],'not on same edge as',xstart
+                    if verbose: print newpath1[-1,:],'not on same edge as',xstart
                     newpath1 = np.vstack((newpath1,cornersCW[ipop,:]))
                     ipop += 1
                 if verbose: print 'creating CCW loop'
                 ipop = 0
                 while not sameEdge(newpath2[-1,:],xstart):
-                    print newpath2[-1,:],'not on same edge as',xstart
+                    if verbose: print newpath2[-1,:],'not on same edge as',xstart
                     newpath2 = np.vstack((newpath2,cornersCCW[ipop,:]))
                     ipop += 1
                 # - should have a closed loop now

@@ -641,6 +641,7 @@ class contourwaketracker(waketracker):
                            itime,
                            targetValue,
                            weightedCenter=True,
+                           contourClosure=False,
                            Ntest=11,
                            tol=0.01,
                            func=None,
@@ -652,8 +653,8 @@ class contourwaketracker(waketracker):
         until the difference in contour values is < 'tol'. This *should*
         be called from contourwaketracker.
 
-        If closeLoops is True, then process open contours with ends
-        closed along boundaries.
+        If allowOpenContours is True, then open contours are closed
+        with segments along the boundaries.
 
         Sets the following attributes:
         * self.xh_wake[itime]
@@ -662,8 +663,8 @@ class contourwaketracker(waketracker):
         * self.Clevels[itime]
         * self.Cfvals[itime]
         """
-        j0,j1 = self.jmin,self.jmax
-        k0,k1 = self.kmin,self.kmax
+        j0,j1 = self.jmin,self.jmax+1
+        k0,k1 = self.kmin,self.kmax+1
         usearch = self.u[itime,j0:j1,k0:k1] # velocity deficit contours
         Cdata = Cntr(self.xh[j0:j1,k0:k1],
                      self.xv[j0:j1,k0:k1],
@@ -695,7 +696,7 @@ class contourwaketracker(waketracker):
             for Clevel in Crange:
                 if debug: print '  testing contour level',Clevel
 
-                curPathList = contour.getPaths(Cdata,Clevel,closePaths=False)
+                curPathList = contour.getPaths(Cdata,Clevel,closePaths=contourClosure)
                 if debug: print '  contour paths found:',len(curPathList)
 
                 if func is None:
@@ -924,7 +925,11 @@ class contourwaketracker(waketracker):
         lw = kwargs.get('linewidth',lw)
         ls = kwargs.get('linestyle',ls)
 
-        path = mpath.Path(self.paths[itime])
+        try:
+            path = mpath.Path(self.paths[itime])
+        except ValueError: 
+            print 'No contour available to plot?',self.paths[itime]
+            return
         self.plotobj_wakeOutline = mpatch.PathPatch(path,
                                                     lw=lw,ls=ls,
                                                     facecolor=facecolor,
