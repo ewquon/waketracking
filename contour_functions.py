@@ -190,18 +190,8 @@ def integrateFunction(contourPts,
     A = calcArea(contourPts)
 
     inner = path.contains_points(gridPts)  # <-- most of the processing time is here!
-    Uinner = fg.ravel()[inner]
-    Ninner = len(Uinner)
+    Ninner = len(np.nonzero(inner)[0])
     if Ninner < Nmin:
-        return None,None,None
-
-    # evaluate specified function
-    if func.func_code.co_argcount==1:
-        fvals = func(Uinner)
-    elif func.func_code.co_argcount==2: # assume second argument is A
-        fvals = func(Uinner, A)
-    else:
-        print 'Problem with function formulation!'
         return None,None,None
 
     if vd is not None:
@@ -209,9 +199,23 @@ def integrateFunction(contourPts,
     else:
         vdavg = None
 
-    # correct for errors in area
+    # correct for errors in area due to discretization
     cellFaceArea = (xg[1,0]-xg[0,0])*(yg[0,1]-yg[0,0])
     corr = A / (Ninner*cellFaceArea)
+
+    # if integrating area, we're done at this point
+    if func is None:
+        return A, corr, vdavg
+
+    # evaluate specified function
+    Uinner = fg.ravel()[inner]
+    if func.func_code.co_argcount==1:
+        fvals = func(Uinner)
+    elif func.func_code.co_argcount==2: # assume second argument is A
+        fvals = func(Uinner, A)
+    else:
+        print 'Problem with function formulation!'
+        return None,None,None
 
     fval = corr * np.sum(fvals)*cellFaceArea
     

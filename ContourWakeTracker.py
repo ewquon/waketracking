@@ -11,7 +11,9 @@ class ConstantArea(contourwaketracker):
     enclosing an area closest to the rotor (or another specified
     reference area).
 
-    This is the fastest of the contour-based tracking methods.
+    This is the fastest of the contour-based tracking methods since
+    it does not necessarily depend on the 'contain_pts' function (unless
+    checkDeficit is set to True).
 
     Inherits class contourwaketracker.
     """
@@ -27,7 +29,7 @@ class ConstantArea(contourwaketracker):
                     contourClosure=None,
                     frame='rotor-aligned',
                     Ntest=21,tol=0.01,
-                    checkdeficit=True,
+                    checkdeficit=False,
                     debug=False):
         """Uses a binary search algorithm (findContourCenter) to
         locate the contour with flux closest to the targetValue.

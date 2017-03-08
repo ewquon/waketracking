@@ -362,12 +362,12 @@ class waketracker(object):
         print self.__class__.__name,'needs to override this function!'
         #self.wakeTracked = True
 
-    def trajectoryIn(self,frame):
+    def trajectoryIn(self,frame,tIdx=None):
         """Returns a tuple with the wake trajectory in the specified frame"""
         if frame == 'inertial':
-            return self.xwake, self.ywake, self.zwake
+            return self.xwake[tIdx], self.ywake[tIdx], self.zwake[tIdx]
         elif frame == 'rotor-aligned':
-            return self.xh_wake, self.xv_wake
+            return self.xh_wake[tIdx], self.xv_wake[tIdx]
         else:
             print 'output frame not recognized'
 
@@ -699,12 +699,24 @@ class contourwaketracker(waketracker):
                 curPathList = contour.getPaths(Cdata,Clevel,closePaths=contourClosure)
                 if debug: print '  contour paths found:',len(curPathList)
 
-                if func is None:
-                    # area contours
+                if func is None and not vdcheck:
+                    # area contours without velocity deficit check
                     # Note: This is MUCH faster, since we don't have to search for interior pts!
                     paths += curPathList
                     level += len(curPathList)*[Clevel]
                     Flist += [ contour.calcArea(path) for path in curPathList ]
+                elif func is None:
+                    assert(vdcheck)
+                    # area contours with velocity deficit check
+                    for path in curPathList:
+                        fval, corr, avgDeficit = \
+                                contour.integrateFunction(path, None,
+                                                          self.xh, self.xv, None,
+                                                          vd=self.u[itime,:,:])
+                        if fval is not None and avgDeficit < 0:
+                            paths.append(path)
+                            level.append(Clevel)
+                            Flist.append(fval)
                 else:
                     # flux contours
                     if vdcheck:
