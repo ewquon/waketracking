@@ -396,9 +396,23 @@ class foam_ensight_array(sampled_data):
         """
         super(self.__class__,self).__init__(*args,**kwargs)
 
+        if self.dataReadFrom is not None and self.prefix is None:
+            # we already have data that's been read in...
+            print "Note: 'prefix' not specified, time series was not read."
+            return
+
         # get time series
-        datafile = self.prefix+'.000.U'
-        self.ts = TimeSeries(self.outputDir,datafile)
+        try:
+            datafile = self.prefix+'.000.U'
+            self.ts = TimeSeries(self.outputDir,datafile)
+        except AssertionError:
+            if self.dataReadFrom is not None:
+                print 'Note: Data read but time series information is unavailable.'
+                print '      Proceed at your own risk.'
+                return
+            else:
+                print 'Data not found in',self.outputDir
+                return
 
         if self.dataReadFrom is not None:
             # Previously saved $npzdata was read in super().__init__
