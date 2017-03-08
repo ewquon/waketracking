@@ -144,7 +144,7 @@ the Cartesian reference frame.</li>
 <dt id="waketracking.dataloaders.rawdata">
 <em class="property">class </em><code class="descclassname">waketracking.dataloaders.</code><code class="descname">rawdata</code><span class="sig-paren">(</span><em>fname</em>, <em>NY</em>, <em>NZ=None</em>, <em>skiprows=1</em>, <em>delimiter='</em>, <em>'</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.dataloaders.rawdata" title="Permalink to this definition">¶</a></dt>
 <dd><p>Raw data, e.g., in csv format.</p>
-<p>Inherits superclass sampled_data.</p>
+<p>See superclass sampled_data for more information.</p>
 <p>Reads a single snapshot from the specified file</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -167,7 +167,7 @@ the Cartesian reference frame.</li>
 <dt id="waketracking.dataloaders.pandas_dataframe">
 <em class="property">class </em><code class="descclassname">waketracking.dataloaders.</code><code class="descname">pandas_dataframe</code><span class="sig-paren">(</span><em>frames</em>, <em>NY=None</em>, <em>NZ=None</em>, <em>xr=None</em>, <em>refineFactor=None</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.dataloaders.pandas_dataframe" title="Permalink to this definition">¶</a></dt>
 <dd><p>Raw data from pandas dataframe(s)</p>
-<p>Inherits superclass sampled_data.</p>
+<p>See superclass sampled_data for more information.</p>
 <p>Reads a single time instance from one or more scans provided
 in pandas&#8217; DataFrame format. Data are assumed to be scalar
 fields.</p>
@@ -194,7 +194,7 @@ directions.</li>
 <dt id="waketracking.dataloaders.foam_ensight_array">
 <em class="property">class </em><code class="descclassname">waketracking.dataloaders.</code><code class="descname">foam_ensight_array</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.dataloaders.foam_ensight_array" title="Permalink to this definition">¶</a></dt>
 <dd><p>OpenFOAM array sampling data in Ensight format</p>
-<p>Inherits superclass sampled_data.</p>
+<p>See superclass sampled_data for more information.</p>
 <p>Reads time series data from subdirectories in ${outputDir}.
 Each time subdirectory should contain a file named
 &#8216;${prefix}.000.U&#8217;.</p>
@@ -267,8 +267,30 @@ which to search for the wake center</li>
 </tbody>
 </table>
 <dl class="method">
+<dt id="waketracking.waketrackers.waketracker.averageVelocity">
+<code class="descname">averageVelocity</code><span class="sig-paren">(</span><em>Navg=-300</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.waketrackers.waketracker.averageVelocity" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates moving average using
+scipy.ndimage.uniform_filter1d</p>
+<p>Called by removeShear()</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>Navg</strong> (<em>integer</em><em>, </em><em>optional</em>) &#8211; Number of snapshots over which to average. If Navg &lt; 0,
+average from end of series only.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><strong>uavg</strong> &#8211; If Navg &lt; 0, uavg.shape==(Nh,Nv); otherwise a moving average
+is return, with uavg.shape==(Ntimes,Nh,Nv).</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">ndarray</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
 <dt id="waketracking.waketrackers.waketracker.removeShear">
-<code class="descname">removeShear</code><span class="sig-paren">(</span><em>method='default'</em>, <em>Navg=-300</em>, <em>windProfile=None</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.waketrackers.waketracker.removeShear" title="Permalink to this definition">¶</a></dt>
+<code class="descname">removeShear</code><span class="sig-paren">(</span><em>method='default'</em>, <em>Navg=-300</em>, <em>windProfile=None</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.waketrackers.waketracker.removeShear" title="Permalink to this definition">¶</a></dt>
 <dd><p>Removes wind shear from data.</p>
 <p>Calculates self.u from self.u_tot.</p>
 <p>Current supported methods:</p>
@@ -432,11 +454,11 @@ waketracker.plotContour.</li>
 <em class="property">class </em><code class="descclassname">waketracking.GaussianWakeTracker.</code><code class="descname">Gaussian</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.GaussianWakeTracker.Gaussian" title="Permalink to this definition">¶</a></dt>
 <dd><p>Identifies a wake as the best fit to a univariate Gaussian
 distribution described by:
-<span class="math">\(\exp(-0.5(\Delta_y^2/\sigma_y^2 + \Delta_z^2/\sigma_z^2))\)</span></p>
+<span class="math">\(\exp(-0.5 (\Delta_y^2/\sigma_y^2 + \Delta_z^2/\sigma_z^2))\)</span></p>
 <p>Inherits class waketracker.</p>
 <dl class="method">
 <dt id="waketracking.GaussianWakeTracker.Gaussian.findCenters">
-<code class="descname">findCenters</code><span class="sig-paren">(</span><em>refArea</em>, <em>trajectoryFile=None</em>, <em>frame='rotor-aligned'</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.GaussianWakeTracker.Gaussian.findCenters" title="Permalink to this definition">¶</a></dt>
+<code class="descname">findCenters</code><span class="sig-paren">(</span><em>umin=None</em>, <em>sigma=50.0</em>, <em>trajectoryFile=None</em>, <em>frame='rotor-aligned'</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.GaussianWakeTracker.Gaussian.findCenters" title="Permalink to this definition">¶</a></dt>
 <dd><p>Uses optimization algorithms in scipy.optimize to determine
 the best fit.</p>
 <p>Overrides the parent findCenters routine.</p>
@@ -445,7 +467,11 @@ the best fit.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>refArea</strong> (<em>float</em>) &#8211; Area to attempt to match, e.g., the rotor disk area.</li>
+<li><strong>umin</strong> (<em>float</em><em> or </em><em>ndarray</em>) &#8211; Max velocity deficit (i.e., should be &lt; 0). If None, then
+this is detected from the field.</li>
+<li><strong>sigma</strong> (<em>float</em>) &#8211; Wake width parameter, equivalent to the standard deviation
+of the Gaussian function. This may be a constant or a
+function of downstream distance.</li>
 <li><strong>trajectoryFile</strong> (<em>string</em><em>, </em><em>optional</em>) &#8211; Name of trajectory data file to attempt inputting and to
 write out to; set to None to skip I/O. Data are written out
 in the rotor-aligned frame.</li>
@@ -476,7 +502,7 @@ reference area).</p>
 <p>Inherits class contourwaketracker.</p>
 <dl class="method">
 <dt id="waketracking.ContourWakeTracker.ConstantArea.findCenters">
-<code class="descname">findCenters</code><span class="sig-paren">(</span><em>refArea</em>, <em>trajectoryFile=None</em>, <em>outlinesFile=None</em>, <em>weightedCenter=True</em>, <em>frame='rotor-aligned'</em>, <em>Ntest=21</em>, <em>tol=0.01</em>, <em>checkdeficit=True</em>, <em>debug=False</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.ContourWakeTracker.ConstantArea.findCenters" title="Permalink to this definition">¶</a></dt>
+<code class="descname">findCenters</code><span class="sig-paren">(</span><em>refArea</em>, <em>trajectoryFile=None</em>, <em>outlinesFile=None</em>, <em>weightedCenter=True</em>, <em>contourClosure=None</em>, <em>frame='rotor-aligned'</em>, <em>Ntest=21</em>, <em>tol=0.01</em>, <em>checkdeficit=True</em>, <em>debug=False</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.ContourWakeTracker.ConstantArea.findCenters" title="Permalink to this definition">¶</a></dt>
 <dd><p>Uses a binary search algorithm (findContourCenter) to
 locate the contour with flux closest to the targetValue.</p>
 <p>Overrides the parent findCenters routine.</p>
@@ -495,6 +521,11 @@ I/O.</li>
 <li><strong>weightedCenter</strong> (<em>boolean</em><em> or </em><em>function</em><em>, </em><em>optional</em>) &#8211; If True, calculate the velocity-deficit-weighted &#8220;center of
 mass&#8221;; if False, calculate the geometric center of the wake.
 This can also be a weighting function.</li>
+<li><strong>contourClosure</strong> (<em>string</em><em>, </em><em>optional</em>) &#8211; If &#8216;simple&#8217;, then open paths with endpoints on the same
+edge will be closed by connecting the endpoints; if
+&#8216;compound&#8217;, then open paths will be closed by adding
+segments along the domain boundaries to form closed
+contours.</li>
 <li><strong>frame</strong> (<em>string</em><em>, </em><em>optional</em>) &#8211; Reference frame, either &#8216;inertial&#8217; or &#8216;rotor-aligned&#8217;.</li>
 <li><strong>Ntest</strong> (<em>integer</em><em>, </em><em>optional</em>) &#8211; The number of initial test contours to calculate.</li>
 <li><strong>tol</strong> (<em>float</em><em>, </em><em>optional</em>) &#8211; Minimum spacing to test during the binary search.</li>
@@ -527,7 +558,7 @@ value, given a flux function.</p>
 <p>Inherits class contourwaketracker.</p>
 <dl class="method">
 <dt id="waketracking.ContourWakeTracker.ConstantFlux.findCenters">
-<code class="descname">findCenters</code><span class="sig-paren">(</span><em>refFlux</em>, <em>fluxFunction</em>, <em>fluxField='u_tot'</em>, <em>trajectoryFile=None</em>, <em>outlinesFile=None</em>, <em>weightedCenter=True</em>, <em>frame='rotor-aligned'</em>, <em>Ntest=21</em>, <em>tol=0.01</em>, <em>checkdeficit=True</em>, <em>debug=False</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.ContourWakeTracker.ConstantFlux.findCenters" title="Permalink to this definition">¶</a></dt>
+<code class="descname">findCenters</code><span class="sig-paren">(</span><em>refFlux</em>, <em>fluxFunction</em>, <em>fluxField='u_tot'</em>, <em>trajectoryFile=None</em>, <em>outlinesFile=None</em>, <em>weightedCenter=True</em>, <em>contourClosure=None</em>, <em>frame='rotor-aligned'</em>, <em>Ntest=21</em>, <em>tol=0.01</em>, <em>checkdeficit=True</em>, <em>debug=False</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.ContourWakeTracker.ConstantFlux.findCenters" title="Permalink to this definition">¶</a></dt>
 <dd><p>Uses a binary search algorithm (findContourCenter) to
 locate the contour with flux closest to the targetValue.</p>
 <p>Some candidate functions:</p>
@@ -556,6 +587,11 @@ I/O.</li>
 <li><strong>weightedCenter</strong> (<em>boolean</em><em> or </em><em>function</em><em>, </em><em>optional</em>) &#8211; If True, calculate the velocity-deficit-weighted &#8220;center of
 mass&#8221;; if False, calculate the geometric center of the wake.
 This can also be a weighting function.</li>
+<li><strong>contourClosure</strong> (<em>string</em><em>, </em><em>optional</em>) &#8211; If &#8216;simple&#8217;, then open paths with endpoints on the same
+edge will be closed by connecting the endpoints; if
+&#8216;compound&#8217;, then open paths will be closed by adding
+segments along the domain boundaries to form closed
+contours.</li>
 <li><strong>frame</strong> (<em>string</em><em>, </em><em>optional</em>) &#8211; Reference frame, either &#8216;inertial&#8217; or &#8216;rotor-aligned&#8217;.</li>
 <li><strong>Ntest</strong> (<em>integer</em><em>, </em><em>optional</em>) &#8211; The number of initial test contours to calculate.</li>
 <li><strong>tol</strong> (<em>float</em><em>, </em><em>optional</em>) &#8211; Minimum spacing to test during the binary search.</li>
@@ -585,7 +621,7 @@ routine.</li>
 <p>This is a helper module for processing contour paths identified by <code class="docutils literal"><span class="pre">matplotlib._cntr.Cntr</span></code>.</p>
 <span class="target" id="module-waketracking.contour_functions"></span><dl class="function">
 <dt id="waketracking.contour_functions.getPaths">
-<code class="descclassname">waketracking.contour_functions.</code><code class="descname">getPaths</code><span class="sig-paren">(</span><em>Cdata</em>, <em>Clevel</em>, <em>closePaths=False</em>, <em>verbose=True</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.contour_functions.getPaths" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">waketracking.contour_functions.</code><code class="descname">getPaths</code><span class="sig-paren">(</span><em>Cdata</em>, <em>Clevel</em>, <em>closePaths=False</em>, <em>verbose=False</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.contour_functions.getPaths" title="Permalink to this definition">¶</a></dt>
 <dd><p>Loops over paths identified by the trace function.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />

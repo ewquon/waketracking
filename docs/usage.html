@@ -49,10 +49,15 @@
 <div class="section" id="data-formats">
 <h2>Data Formats<a class="headerlink" href="#data-formats" title="Permalink to this headline">¶</a></h2>
 <p>The waketracking module includes the <code class="docutils literal"><span class="pre">dataloaders</span></code> module for processing differently formatted data into a general form for use with the <code class="docutils literal"><span class="pre">waketrackers</span></code> module. The data are assumed to be regularly sampled (i.e., on a structured grid), otherwise some interpolation will be needed within a custom dataloader.</p>
+<p>One of the purposes of the dataloaders module is to provide a consistent data format for the <code class="docutils literal"><span class="pre">Tracker</span></code> modules to use. Even though the tracking operates on a two-dimensional plane, coordinates in three dimension are retained to handle cases in which the sampling planes are yawed. The user is not expected to directly interact with the data; the inputs should be some data structure depending on the data source (e.g. OpenFOAM), and the outputs will be a time history of the wake center for the selected (sliced) plane. Outputs are calculated in the rotor-aligned frame (flow and plane normal are in the +x direction, with the origin is located at the plane center) or the inertial frame (originally sampled coordinates).</p>
 <div class="section" id="raw-data">
 <h3>Raw Data<a class="headerlink" href="#raw-data" title="Permalink to this headline">¶</a></h3>
 <p>This dataloader assumes that the data is of the form (y,z,u) stored in a CSV file, one time step per file. The sampled points are then sorted and arranged into a regular grid. The shape of the sampled grid is needed as input.</p>
 <p>There is no support for simultaneously reading in multiple time steps (i.e., reading in a time series) at this point.</p>
+</div>
+<div class="section" id="pandas-dataframe">
+<h3>Pandas DataFrame<a class="headerlink" href="#pandas-dataframe" title="Permalink to this headline">¶</a></h3>
+<p>Data are provided in dataframe(s), a data structured based on numpy ndarrays provided by the <code class="docutils literal"><span class="pre">pandas</span></code> package. These data are series of the form (y,z,u).</p>
 </div>
 <div class="section" id="openfoam-array-data">
 <h3>OpenFOAM array data<a class="headerlink" href="#openfoam-array-data" title="Permalink to this headline">¶</a></h3>
@@ -71,16 +76,17 @@
 </div>
 </div></blockquote>
 </li>
-<li><p class="first">First load the data using the appropriate data loader (if necessary), as discussed in the previous section.</p>
+<li><p class="first">First load the data using the appropriate data loader (if necessary), as discussed in the previous section. <em>The &#8216;prefix&#8217; keyword is only needed the first time the data is processed. After the initial processing, a numpy npz archive is stored in</em> <code class="docutils literal"><span class="pre">outputDir</span></code>. <em>Subsequent calls to sampled_data objects will read existing npz archives and the original is not needed.</em></p>
 <blockquote>
 <div><div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">arraydata</span> <span class="o">=</span> <span class="n">foam_ensight_array</span><span class="p">(</span>
         <span class="n">outputDir</span><span class="o">=</span><span class="s1">&#39;postProcessing/array.3D&#39;</span><span class="p">,</span>
-        <span class="n">prefix</span><span class="o">=</span><span class="s1">&#39;array.3D_U&#39;</span><span class="p">)</span>
+        <span class="n">prefix</span><span class="o">=</span><span class="s1">&#39;array.3D_U&#39;</span> <span class="c1"># optional after first time</span>
+        <span class="p">)</span>
 </pre></div>
 </div>
 </div></blockquote>
 </li>
-<li><p class="first">Since the input data may be three-dimensional, extract a slice of the data (if necessary).</p>
+<li><p class="first">Since the input data may be three-dimensional, extract a slice of the data.</p>
 <blockquote>
 <div><div class="highlight-python"><div class="highlight"><pre><span></span><span class="c1"># Returns planar coordinates (x,y,z) and time-varying velocities</span>
 <span class="c1">#   (u) on a plane with size (Nh,Nv), Nh and Nv are the number</span>
@@ -95,8 +101,8 @@
 <blockquote>
 <div><div class="highlight-python"><div class="highlight"><pre><span></span><span class="c1"># All outputs will go into the $prefix directory</span>
 <span class="n">wake</span> <span class="o">=</span> <span class="n">track</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">,</span><span class="n">z</span><span class="p">,</span><span class="n">u</span><span class="p">,</span>
-             <span class="n">horzRange</span><span class="o">=</span><span class="p">(</span><span class="mi">1250</span><span class="p">,</span><span class="mi">1750</span><span class="p">),</span>
-             <span class="n">vertRange</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">250</span><span class="p">),</span>
+             <span class="n">horzRange</span><span class="o">=</span><span class="p">(</span><span class="mi">1250</span><span class="p">,</span><span class="mi">1750</span><span class="p">),</span> <span class="c1">#optional</span>
+             <span class="n">vertRange</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">250</span><span class="p">),</span> <span class="c1">#optional</span>
              <span class="n">prefix</span><span class="o">=</span><span class="s1">&#39;processedWake&#39;</span><span class="p">,</span>
              <span class="n">method</span><span class="o">=</span><span class="s1">&#39;ConstantArea&#39;</span><span class="p">)</span>
 </pre></div>
@@ -106,11 +112,14 @@
 <li><p class="first">Perform the wake tracking. Removing the wind shear is an optional step, but typically performed to facilitate the wake identification. One way to do this is to take a simple average of the last <code class="docutils literal"><span class="pre">Navg</span></code> steps, then take a spatial average of the profiles from the fringes of the sampling plane.</p>
 <p>Results are returned in the rotor-aligned sampling plane by default. For a rotor with axis aligned with the x-direction, the rotor-aligned and intertial frames are identical. Note that the &#8216;rotor-aligned&#8217; option returns two arrays xh,xv while the &#8216;inertial&#8217; option returns three arrays corresponding x,y,z.</p>
 <blockquote>
-<div><div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">wake</span><span class="o">.</span><span class="n">removeShear</span><span class="p">(</span><span class="n">Navg</span><span class="o">=-</span><span class="mi">300</span><span class="p">)</span>
+<div><div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">wake</span><span class="o">.</span><span class="n">removeShear</span><span class="p">(</span><span class="n">Navg</span><span class="o">=-</span><span class="mi">300</span><span class="p">)</span> <span class="c1"># average over _last_ 300 samples</span>
 <span class="n">targetValue</span> <span class="o">=</span> <span class="mf">12500.</span> <span class="c1"># method-dependent value</span>
 <span class="n">wake</span><span class="o">.</span><span class="n">findCenters</span><span class="p">(</span><span class="n">targetValue</span><span class="p">,</span>
                  <span class="n">trajectoryFile</span><span class="o">=</span><span class="s1">&#39;trajectory.dat&#39;</span><span class="p">,</span>
                  <span class="n">outlinesFile</span><span class="o">=</span><span class="s1">&#39;outlines.pkl&#39;</span><span class="p">)</span>
+
+<span class="n">yr</span><span class="p">,</span><span class="n">zr</span> <span class="o">=</span> <span class="n">wake</span><span class="o">.</span><span class="n">trajectoryIn</span><span class="p">(</span><span class="s1">&#39;rotor-aligned&#39;</span><span class="p">)</span>
+<span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">,</span><span class="n">z</span> <span class="o">=</span> <span class="n">wake</span><span class="o">.</span><span class="n">trajectoryIn</span><span class="p">(</span><span class="s1">&#39;inertial&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div></blockquote>

@@ -244,7 +244,7 @@ class _template_sampled_data_format(sampled_data):
 class rawdata(sampled_data):
     """Raw data, e.g., in csv format.
 
-    Inherits superclass sampled_data.
+    See superclass sampled_data for more information.
     """
     def __init__(self,fname,NY,NZ=None,
                  skiprows=1,delimiter=','):
@@ -289,7 +289,7 @@ class rawdata(sampled_data):
 class pandas_dataframe(sampled_data):
     """Raw data from pandas dataframe(s)
     
-    Inherits superclass sampled_data.
+    See superclass sampled_data for more information.
     """
 
     def __init__(self,frames,NY=None,NZ=None,xr=None,refineFactor=None):
@@ -380,7 +380,7 @@ class pandas_dataframe(sampled_data):
 class foam_ensight_array(sampled_data):
     """OpenFOAM array sampling data in Ensight format
     
-    Inherits superclass sampled_data.
+    See superclass sampled_data for more information.
     """
 
     def __init__(self,*args,**kwargs):
