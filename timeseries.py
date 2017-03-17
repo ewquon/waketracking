@@ -5,7 +5,7 @@ class TimeSeries(object):
     in multiple time subdirectories
     """
 
-    def __init__(self,datadir='.',filename=None):
+    def __init__(self,datadir='.',filename=None,verbose=True):
         """ Collect data from subdirectories, assuming that subdirs
         have a name that can be cast as a float
         """
@@ -16,6 +16,7 @@ class TimeSeries(object):
         self.dirList = []
         self.fileList = None
         self.lastFile = -1  # for iterator
+        self.verbose = verbose
 
         # process all subdirectories
         subdirs = [ os.path.join(self.dataDir,d)
@@ -42,11 +43,11 @@ class TimeSeries(object):
             if not os.listdir(d) == self.outputNames:
                 print 'Warning: not all subdirectories contain the same files'
                 break
-        
-        # set up file list
-        if filename is None:
+        if verbose:
             self.outputs() # print available outputs
-        else:
+
+        # set up file list
+        if filename is not None:
             self.setFilename(filename)
 
     def setFilename(self,filename):
@@ -62,12 +63,13 @@ class TimeSeries(object):
 
     def outputs(self,prefix=''):
         """Print available outputs for the given data directory"""
-        if prefix:
-            print 'Files starting with "'+prefix+'" in each subdirectory:'
-        else:
-            print 'Files in each subdirectory:'
         selectedOutputNames = [ name for name in self.outputNames if name.startswith(prefix) ]
-        print '\n'.join([ '    '+name for name in selectedOutputNames ])
+        if self.verbose:
+            if prefix:
+                print 'Files starting with "'+prefix+'" in each subdirectory:'
+            else:
+                print 'Files in each subdirectory:'
+            print '\n'.join([ '    '+name for name in selectedOutputNames ])
         return selectedOutputNames
 
     def __repr__(self):
