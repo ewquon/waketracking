@@ -12,7 +12,7 @@ class sampled_data(object):
             outputDir='.', prefix=None,
             NX=1, NY=None, NZ=None, datasize=3,
             npzdata='arrayData.npz',
-            interpHoles=True
+            interpHoles=False
             ):
         """Attempts to load processed data with shape
         (Ntimes,NX,NY,NZ,datasize).
