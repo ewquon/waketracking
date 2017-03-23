@@ -114,7 +114,7 @@ class ConstantArea(contourwaketracker):
 
             if self.verbose:
                 sys.stderr.write('\rProcessed frame {:d}'.format(itime))
-                sys.stderr.flush()
+                #sys.stderr.flush()
         if self.verbose: sys.stderr.write('\n')
 
         self._updateInertial()
@@ -262,7 +262,7 @@ class ConstantFlux(contourwaketracker):
 
             if self.verbose:
                 sys.stderr.write('\rProcessed frame {:d}'.format(itime))
-                sys.stderr.flush()
+                #sys.stderr.flush()
         if self.verbose: sys.stderr.write('\n')
 
         self._updateInertial()
