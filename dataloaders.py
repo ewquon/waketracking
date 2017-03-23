@@ -555,31 +555,31 @@ class foam_ensight_array(sampled_data):
                 for i in range(3):
                     u[i,holeIndices] = uinterp[:,i]
                 # write out new ensight files for debugging
-                pre = fname[:-len('.000.U')]
-                with open(pre+'_NEW.mesh','w') as f:
-                    f.write('foo\nbar\nnode id assign\nelement id assign\npart\n1\ninternalMesh\ncoordinates\n')
-                    f.write(str(N)+'\n')
-                    for xi in self.x.ravel(order='F'):
-                        f.write(' {:g}\n'.format(xi))
-                    for yi in self.y.ravel(order='F'):
-                        f.write(' {:g}\n'.format(yi))
-                    for zi in self.z.ravel(order='F'):
-                        f.write(' {:g}\n'.format(zi))
-                    f.write('point\n')
-                    f.write(str(N)+'\n')
-                    for i in range(1,N+1):
-                        f.write(str(i)+'\n')
-                with open(pre+'_NEW.000.U','w') as f:
-                    f.write('vector\npart\n1\ncoordinates\n')
-                    for i in range(3):
-                        for j in range(N):
-                            f.write(' {:g}\n'.format(u[i,j]))
-                with open(pre+'.case','r') as f1, open(pre+'_NEW.case','w') as f2:
-                    for line in f1:
-                        if self.prefix in line:
-                            f2.write(line.replace(self.prefix,self.prefix+'_NEW'))
-                        else:
-                            f2.write(line)
+#                pre = fname[:-len('.000.U')]
+#                with open(pre+'_NEW.mesh','w') as f:
+#                    f.write('foo\nbar\nnode id assign\nelement id assign\npart\n1\ninternalMesh\ncoordinates\n')
+#                    f.write(str(N)+'\n')
+#                    for xi in self.x.ravel(order='F'):
+#                        f.write(' {:g}\n'.format(xi))
+#                    for yi in self.y.ravel(order='F'):
+#                        f.write(' {:g}\n'.format(yi))
+#                    for zi in self.z.ravel(order='F'):
+#                        f.write(' {:g}\n'.format(zi))
+#                    f.write('point\n')
+#                    f.write(str(N)+'\n')
+#                    for i in range(1,N+1):
+#                        f.write(str(i)+'\n')
+#                with open(pre+'_NEW.000.U','w') as f:
+#                    f.write('vector\npart\n1\ncoordinates\n')
+#                    for i in range(3):
+#                        for j in range(N):
+#                            f.write(' {:g}\n'.format(u[i,j]))
+#                with open(pre+'.case','r') as f1, open(pre+'_NEW.case','w') as f2:
+#                    for line in f1:
+#                        if self.prefix in line:
+#                            f2.write(line.replace(self.prefix,self.prefix+'_NEW'))
+#                        else:
+#                            f2.write(line)
             else:
                 u = np.loadtxt(fname,skiprows=4).reshape((self.datasize,N))
             data[itime,:,:,:,0] = u[0,:].reshape((NX,NY,NZ),order='F')
