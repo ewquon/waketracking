@@ -421,9 +421,17 @@ class waketracker(object):
         """Helper function to write out specified data (e.g., trajectory
         and optimization parameters)
         """
+        # setup formatting
         Ndata = len(data)
         fmtlist = ['%d'] + Ndata*['%.18e']
+        # arrange data
         data = np.vstack((np.arange(self.Ntimes),data)).T
+        # make sure path exists
+        fpath = os.path.dirname(fname)
+        if not os.path.isdir(fpath):
+            if self.verbose: print 'Creating data subdirectory:', fpath
+            os.makedirs(fpath)
+
         np.savetxt(fname, data, fmt=fmtlist)
 
     def _readTrajectory(self,fname):
@@ -470,7 +478,8 @@ class waketracker(object):
 
     def _updateInertial(self):
         """Called after loading/calculating a wake trajectory in the
-        rotor-aligned frame
+        rotor-aligned frame to calculate the trajectory in the inertial
+        frame.
         """
         ang = self.yaw
         xd = np.mean(self.xd)  # assuming no sampling rotation error, self.xd should be constant
