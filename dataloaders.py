@@ -111,6 +111,8 @@ class sampled_data(object):
         s += ' with shape ({:d},{:d},{:d})'.format(self.NX,self.NY,self.NZ)
         if self.ts is not None:
             s += ' in a series with ' + str(self.ts)
+        if self.dataReadFrom is not None:
+            s += ' read from ' + self.dataReadFrom
         return s
 
     def _slice(self,i0=None,i1=None,j0=None,j1=None,k0=None,k1=None):
@@ -522,6 +524,9 @@ class foam_ensight_array(sampled_data):
                         if np.all(self.y[:NY] == self.y[NY:2*NY]):
                             break
                 print 'Detected NY,NZ =',NY,NZ
+                if NZ == 1:
+                    print '  Warning: There may be holes in the mesh...'
+                    print '           Try running with interpHoles=True'
                 assert(N == NX*NY*NZ)
             self.NY = NY
             self.NZ = NZ
