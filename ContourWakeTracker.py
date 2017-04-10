@@ -7,25 +7,30 @@ import numpy as np
 from waketrackers import contourwaketracker
 
 class ConstantArea(contourwaketracker):
-    """ Identifies a wake as a region with velocity deficit contour
+    """Identifies a wake as a region with velocity deficit contour
     enclosing an area closest to the rotor (or another specified
     reference area).
 
-    The wake center is identified as the velocity-deficit-weighted 
-    "center of mass" of all points within the enclosed region. 
+    This is the fastest of the contour-based tracking methods since
+    it does not necessarily depend on the 'contain_pts' function (unless
+    checkDeficit is set to True).
 
-    This is the fastest of the contour-based tracking methods.
+    Inherits class contourwaketracker.
     """
 
     def __init__(self,*args,**kwargs):
         super(self.__class__,self).__init__(*args,**kwargs)
         if self.verbose:
-            print '\n...finished initializing',self.__class__.__name__
+            print '\n...finished initializing',self.__class__.__name__,'\n'
 
     def findCenters(self,refArea,
                     trajectoryFile=None,outlinesFile=None,
-                    weightedCenter=True,frame='rotor-aligned',
-                    Ntest=51,tol=0.01):
+                    weightedCenter=True,
+                    contourClosure=None,
+                    frame='rotor-aligned',
+                    Ntest=21,tol=0.01,
+                    checkdeficit=False,
+                    debug=False):
         """Uses a binary search algorithm (findContourCenter) to
         locate the contour with flux closest to the targetValue.
         
@@ -43,15 +48,28 @@ class ConstantArea(contourwaketracker):
             Name of pickle archive file (\*.pkl) to attempt input and to
             write out detected contour outlines; set to None to skip
             I/O.
-        weightedCenter : boolean, optional
+        weightedCenter : boolean or function, optional
             If True, calculate the velocity-deficit-weighted "center of
             mass"; if False, calculate the geometric center of the wake.
+            This can also be a weighting function.
+        contourClosure : string, optional
+            If 'simple', then open paths with endpoints on the same
+            edge will be closed by connecting the endpoints; if
+            'compound', then open paths will be closed by adding
+            segments along the domain boundaries to form closed
+            contours.
         frame : string, optional
             Reference frame, either 'inertial' or 'rotor-aligned'.
         Ntest : integer, optional
             The number of initial test contours to calculate.
         tol : float, optional
             Minimum spacing to test during the binary search.
+        checkdeficit : boolean, optional
+            If True, only consider wake candidates in which the average
+            velocity deficit is less than 0.
+        debug : boolean, optional
+            Print out debugging information about the contour search
+            routine.
 
         Returns
         -------
@@ -60,61 +78,200 @@ class ConstantArea(contourwaketracker):
         xh_wake,xv_wake : ndarray
             Wake trajectory if frame is 'rotor-aligned'
         """
-        # try to read trajectories
-        if trajectoryFile is not None:
-            try:
-                data = self._readTrajectory(trajectoryFile)
-                if not data is None:
-                    if self.verbose:
-                        print 'Trajectory loaded from',trajectoryFile
-                    self._updateInertial()
-                    self.wakeTracked = True
-            except AssertionError:
-                print 'Incorrect number of time steps in',trajectoryFile
-            except IOError:
-                print 'Failed to read',trajectoryFile
+        self.clearPlot()
 
-        # try to read wake outlines (optional)
-        if self.wakeTracked and outlinesFile is not None:
-            try:
-                self._readOutlines(outlinesFile)
-                if self.verbose:
-                    print 'Read pickled outlines from',outlinesFile
-            except IOError:
-                print 'Failed to read',outlinesFile
+        # try to read trajectories (required) and outlines (optional)
+        self._readTrajectory(trajectoryFile)
+        self._readOutlines(outlinesFile)
 
         # done if read was successful
         if self.wakeTracked:
             return self.trajectoryIn(frame)
 
+        if contourClosure is None or contourClosure=='none':
+            closure = False
+        elif contourClosure=='simple':
+            closure = True
+        elif contourClosure=='compound':
+            closure = (self.xh_range,self.xv_range)
+
+        # calculate trajectories for each time step
+        if self.verbose:
+            print 'Attempting to match area:',refArea,'m^2'
+        for itime in range(self.Ntimes):
+            _,_,info = self._findContourCenter(itime,
+                                               refArea,
+                                               weightedCenter=weightedCenter,
+                                               contourClosure=closure,
+                                               Ntest=Ntest,
+                                               tol=tol,
+                                               func=None,
+                                               vdcheck=checkdeficit,
+                                               debug=debug)
+            if not info['success']:
+                print 'WARNING: findContourCenter was unsuccessful.'
+                print info
+
+            if self.verbose:
+                sys.stderr.write('\rProcessed frame {:d}'.format(itime))
+                #sys.stderr.flush()
+        if self.verbose: sys.stderr.write('\n')
+
+        self._updateInertial()
+
+        self.wakeTracked = True
+
+        # write out everything
+        self._writeTrajectory(trajectoryFile)
+        self._writeOutlines(outlinesFile)
+    
+        return self.trajectoryIn(frame)
+
+
+class ConstantFlux(contourwaketracker):
+    """Identifies a wake as a region outlined by a velocity deficit
+    contour over which the integrated flux matches a specified target
+    value, given a flux function.
+
+    Inherits class contourwaketracker.
+    """
+
+    def __init__(self,*args,**kwargs):
+        super(self.__class__,self).__init__(*args,**kwargs)
+        if self.verbose:
+            print '\n...finished initializing',self.__class__.__name__,'\n'
+
+    def findCenters(self,refFlux,
+                    fluxFunction,fluxField='u_tot',
+                    trajectoryFile=None,outlinesFile=None,
+                    weightedCenter=True,
+                    contourClosure=None,
+                    frame='rotor-aligned',
+                    Ntest=21,tol=0.01,
+                    checkdeficit=True,
+                    debug=False):
+        """Uses a binary search algorithm (findContourCenter) to
+        locate the contour with flux closest to the targetValue.
+        
+        Some candidate functions:
+
+        * mass flow, func = lambda u: u
+        * momentum flux, func = lambda u: u**2
+
+        The contour area can be referenced as func = lambda u,A: ...
+
+        Overrides the parent findCenters routine.
+        
+        Parameters
+        ----------
+        refFlux : float
+            Flux to attempt to match, e.g., the massflow rate.
+        fluxFunction : function
+            A specified function of one (or two) variables, the velocity
+            deficit (and the contour area).
+        fluxField : string, optional
+            Name of the field to use as input to the fluxFunction; use
+            the instantaneous velocity, 'u_tot', by default.
+        trajectoryFile : string
+            Name of trajectory data file to attempt inputting and to
+            write out to; set to None to skip I/O. Data are written out
+            in the rotor-aligned frame.
+        outlinesFile : string
+            Name of pickle archive file (\*.pkl) to attempt input and to
+            write out detected contour outlines; set to None to skip
+            I/O.
+        weightedCenter : boolean or function, optional
+            If True, calculate the velocity-deficit-weighted "center of
+            mass"; if False, calculate the geometric center of the wake.
+            This can also be a weighting function.
+        contourClosure : string, optional
+            If 'simple', then open paths with endpoints on the same
+            edge will be closed by connecting the endpoints; if
+            'compound', then open paths will be closed by adding
+            segments along the domain boundaries to form closed
+            contours.
+        frame : string, optional
+            Reference frame, either 'inertial' or 'rotor-aligned'.
+        Ntest : integer, optional
+            The number of initial test contours to calculate.
+        tol : float, optional
+            Minimum spacing to test during the binary search.
+        checkdeficit : boolean, optional
+            If True, only consider wake candidates in which the average
+            velocity deficit is less than 0.
+        debug : boolean, optional
+            Print out debugging information about the contour search
+            routine.
+
+        Returns
+        -------
+        x_wake,y_wake,z_wake : ndarray
+            Wake trajectory if frame is 'inertial'
+        xh_wake,xv_wake : ndarray
+            Wake trajectory if frame is 'rotor-aligned'
+        """
+        self.clearPlot()
+
+        # try to read trajectories (required) and outlines (optional)
+        self._readTrajectory(trajectoryFile)
+        self._readOutlines(outlinesFile)
+
+        # done if read was successful
+        if self.wakeTracked:
+            return self.trajectoryIn(frame)
+
+        try:
+            testField = getattr(self,fluxField)
+        except AttributeError:
+            print 'Warning: flux field',fluxField,'not available,', \
+                    'using \'u_tot\' by default'
+            fluxField = 'u_tot'
+
+        # some sanity checks if needed
+        if self.verbose:
+            Umean = np.mean(testField[-1,self.jmin:self.jmax,self.kmin:self.kmax])
+            if fluxFunction.func_code.co_argcount==1: # fn(u)
+                print 'Sample function evaluation: f(u={:g}) = {:g}'.format(
+                        Umean,fluxFunction(Umean))
+            else: # fn(u,A)
+                print 'Sample function evaluation: f(u={:g},1.0) = {:g}'.format(
+                        Umean,fluxFunction(Umean,1))
+            print ' ~= targetValue / area =',refFlux,'/ A'
+
+        if contourClosure is None or contourClosure=='none':
+            closure = False
+        elif contourClosure=='simple':
+            closure = True
+        elif contourClosure=='compound':
+            closure = (self.xh_range,self.xv_range)
+
         # calculate trajectories for each time step
         for itime in range(self.Ntimes):
-            yc,zc,info = self._findContourCenter(itime,
-                                                 refArea,
-                                                 weightedCenter=weightedCenter,
-                                                 Ntest=Ntest,
-                                                 tol=tol,
-                                                 fn=None)
+            _,_,info = self._findContourCenter(itime,
+                                               refFlux,
+                                               weightedCenter=weightedCenter,
+                                               contourClosure=closure,
+                                               Ntest=Ntest,
+                                               tol=tol,
+                                               func=fluxFunction,
+                                               field=fluxField,
+                                               vdcheck=checkdeficit,
+                                               debug=debug)
             if not info['success']:
                 print 'WARNING: findContourCenter was unsuccessful.'
 
             if self.verbose:
                 sys.stderr.write('\rProcessed frame {:d}'.format(itime))
-                sys.stderr.flush()
+                #sys.stderr.flush()
         if self.verbose: sys.stderr.write('\n')
+
         self._updateInertial()
 
-        # write out trajectories
-        if trajectoryFile is not None:
-            self._writeTrajectory(trajectoryFile)
-            if self.verbose:
-                print 'Wrote out trajectory to',trajectoryFile
+        self.wakeTracked = True
 
-        # write out wake outlines
-        if outlinesFile is not None:
-            self._writeOutlines(outlinesFile)
-            if self.verbose:
-                print 'Wrote out pickled outlines to',outlinesFile
+        # write out everything
+        self._writeTrajectory(trajectoryFile)
+        self._writeOutlines(outlinesFile)
     
         return self.trajectoryIn(frame)
 
