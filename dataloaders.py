@@ -604,3 +604,210 @@ class foam_ensight_array(sampled_data):
                 print 'Problem saving array data to',savepath
 
 
+class foam_ensight_array_series(sampled_data):
+    """OpenFOAM array sampling data in Ensight format.
+
+    New output format has a single output directory containing a series of .U
+    files with a single associated .case and .mesh file.
+    
+    See superclass sampled_data for more information.
+    """
+
+    def __init__(self,*args,**kwargs):
+        """Reads time series data from ${prefix}.case file ${outputDir}.
+        The output directory should contain ${prefix}.mesh and solution
+        samples named ${prefix}.#####.U
+
+        Note: This reader does not use the TimeSeries object.
+
+        If NY or NZ are set to None, then the array dimensions 
+        will be guessed from the data.
+        """
+        super(self.__class__,self).__init__(*args,**kwargs)
+
+        if self.prefix is None:
+            self.prefix = os.path.split(self.outputDir)[-1] + '_U'
+
+        # get time series from case file (if available)
+        casefile = os.path.join(self.outputDir, self.prefix + '.case')
+        Ntimes = -1
+        if os.path.isfile(casefile):
+            index_start = 0
+            index_incr = 0
+            with open(casefile,'r') as f:
+                f.readline() # FORMAT
+                f.readline() # type:
+                f.readline() # <blank>
+                f.readline() # GEOMETRY
+                meshfile = f.readline().split()[-1] # model:
+                assert(meshfile == self.prefix + '.mesh')
+                f.readline() # <blank>
+                f.readline() # VARIABLE
+                f.readline() # vector per node:
+                f.readline() # TIME
+                f.readline() # time set:
+                Ntimes = int(f.readline().split()[-1]) # number of steps:
+                index_start = int(f.readline().split()[-1]) # filename start number:
+                index_incr = int(f.readline().split()[-1]) # filename increment:
+                f.readline() # time values:
+                tlist = [ float(val) for val in f.readlines() ] # read all remaining lines
+            assert(Ntimes > 0)
+            assert(Ntimes == len(tlist))
+            self.t = np.array(tlist)
+
+            assert(index_incr > 0)
+            filelist = [ os.path.join(self.outputDir, self.prefix + '.' + str(idx) + '.U')
+                            for idx in index_start+index_incr*np.arange(Ntimes) ]
+
+        if self.dataReadFrom is not None:
+            # Previously saved $npzdata was read in super().__init__
+            if Ntimes < 0 or self.Ntimes == Ntimes:
+                # no case file to compare against OR number of times read matches casefile "number of steps"
+                # ==> we're good, no need to process all data again
+                return
+            else:
+                print self.dataReadFrom,'has',self.Ntimes,'data series,', \
+                    'expected',Ntimes
+
+        self.Ntimes = Ntimes
+
+        # set convenience variables
+        NX = self.NX
+        NY = self.NY
+        NZ = self.NZ
+
+        # read mesh
+        with open(os.path.join(self.outputDir,meshfile),'r') as f:
+            for _ in range(8):  # skip header
+                f.readline()
+            N = int(f.readline())
+            xdata = np.zeros(3*N)
+            for i in range(3*N):
+                xdata[i] = float(f.readline())
+
+        self.x = xdata[:N]
+        self.y = xdata[N:2*N]
+        self.z = xdata[2*N:3*N]
+        print 'x range :',np.min(self.x),np.max(self.x)
+        print 'y range :',np.min(self.y),np.max(self.y)
+        print 'z range :',np.min(self.z),np.max(self.z)
+
+        # detect NY,NZ if necessary for planar input
+        if NY is None or NZ is None:
+            assert(NX==1)
+            # detect NY and NZ
+            if self.interpHoles:
+                y0 = self.y.ravel()
+                z0 = self.z.ravel()
+                y_uni = np.unique(self.y)
+                z_uni = np.unique(self.z)
+                NY = len(y_uni)
+                NZ = len(z_uni)
+                Nold = N
+                N = NX*NY*NZ
+                # debug output
+                print 'Found y:',NY,y_uni
+                print 'Found z:',NZ,z_uni
+                # check spacings
+                dy = np.diff(y_uni)
+                dz = np.diff(z_uni)
+                assert(np.max(dy)-np.min(dy) < 0.1) # all spacings should be ~equal
+                assert(np.max(dz)-np.min(dz) < 0.1)
+                # create the grid we want
+                self.y = np.zeros((1,NY,NZ))
+                self.z = np.zeros((1,NY,NZ))
+                y,z = np.meshgrid(y_uni, z_uni, indexing='ij')
+                self.y[0,:,:] = y
+                self.z[0,:,:] = z
+                y = self.y.ravel(order='F') # points increase in y, then z
+                z = self.z.ravel(order='F')
+                assert(y[1]-y[0] > 0)
+                # find holes
+                print 'Looking for holes in mesh...'
+                Nold = len(y0)
+                dataMap = np.zeros(Nold,dtype=int) # mapping of raveled input array (w/ holes) to new array
+                holeIndices = [] # in new array
+                idx_old = 0
+                Nholes = 0
+                Ndup = 0
+                for idx_new in range(NY*NZ):
+                    if y[idx_new] != y0[idx_old] or z[idx_new] != z0[idx_old]:
+                        print '  hole at',y[idx_new],z[idx_new]
+                        holeIndices.append(idx_new)
+                        Nholes += 1
+                    else:
+                        dataMap[idx_old] = idx_new
+                        idx_old += 1
+                        if idx_old >= Nold:
+                            continue
+                        # handle duplicate points (not sure why this happens in OpenFOAM sampling...)
+                        while y[idx_new] == y0[idx_old] and z[idx_new] == z0[idx_old]:
+                            Ndup += 1
+                            print '  duplicate point at',y[idx_new],z[idx_new]
+                            dataMap[idx_old] = idx_new # map to the same point in the new grid
+                            idx_old += 1
+                assert(idx_old == Nold) # all points mapped
+                print ' ',Nholes,'holes,',Ndup,'duplicate points'
+                # at this point, self.y, self.z, NY, NZ, and N have all changed
+                # need to update self.x to match self.y and .z in shape
+                self.x = self.x[0] * np.ones((NY,NZ))
+            else:
+                for NY in np.arange(2,N+1):
+                    NZ = N/NY
+                    if NZ == float(N)/NY:
+                        if np.all(self.y[:NY] == self.y[NY:2*NY]):
+                            break
+                print 'Detected NY,NZ =',NY,NZ
+                if NZ == 1:
+                    print '  Warning: There may be holes in the mesh...'
+                    print '           Try running with interpHoles=True'
+                assert(N == NX*NY*NZ)
+            self.NY = NY
+            self.NZ = NZ
+
+        self.x = self.x.reshape((NX,NY,NZ),order='F')
+        self.y = self.y.reshape((NX,NY,NZ),order='F')
+        self.z = self.z.reshape((NX,NY,NZ),order='F')
+
+        if self.interpHoles:
+            samplePoints = np.stack((y[holeIndices],z[holeIndices])).T
+            interpPoints = np.stack((y0,z0)).T
+
+        # read data
+        data = np.zeros((self.Ntimes,NX,NY,NZ,self.datasize))
+        for itime,fname in enumerate(filelist):
+            sys.stderr.write('\rProcessing frame {:d}'.format(itime))
+            #sys.stderr.flush()
+            if self.interpHoles and Nold < N:
+                from scipy.interpolate import LinearNDInterpolator
+                u = np.loadtxt(fname,skiprows=4).reshape((self.datasize,Nold))
+                interpValues = u.T
+                u = np.zeros((self.datasize,N)) # raveled
+                # fill new array with known values
+                for idx_old,idx_new in enumerate(dataMap):
+                    # if duplicate points exist, the last recorded value at a
+                    #   location will be used
+                    u[:,idx_new] = interpValues[idx_old,:]
+                # interpolate at holes
+                interpFunc = LinearNDInterpolator(interpPoints, interpValues)
+                uinterp = interpFunc(samplePoints)
+                for i in range(3):
+                    u[i,holeIndices] = uinterp[:,i]
+            else:
+                u = np.loadtxt(fname,skiprows=4).reshape((self.datasize,N))
+            data[itime,:,:,:,0] = u[0,:].reshape((NX,NY,NZ),order='F')
+            data[itime,:,:,:,1] = u[1,:].reshape((NX,NY,NZ),order='F')
+            data[itime,:,:,:,2] = u[2,:].reshape((NX,NY,NZ),order='F')
+        sys.stderr.write('\n')
+        self.data = data
+        self.dataReadFrom = casefile
+
+        # save data
+        if self.npzdata:
+            savepath = os.path.join(self.outputDir,self.npzdata)
+            try:
+                np.savez_compressed(savepath,x=self.x,y=self.y,z=self.z,data=self.data)
+                print 'Saved compressed array data to',savepath
+            except IOError:
+                print 'Problem saving array data to',savepath
+
