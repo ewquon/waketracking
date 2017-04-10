@@ -178,9 +178,9 @@ class waketracker(object):
         # set up search range
         self.hRange = kwargs.get('horzRange',(-1e9,1e9))
         self.vRange = kwargs.get('vertRange',(-1e9,1e9))
-        self.jmin = np.argmin(np.abs(self.hRange[0]-self.xh_range))
+        self.jmin = np.argmin(np.abs(self.hRange[0]-self.xh_range-self.y0))
         self.kmin = np.argmin(np.abs(self.vRange[0]-self.xv_range))
-        self.jmax = np.argmin(np.abs(self.hRange[1]-self.xh_range))
+        self.jmax = np.argmin(np.abs(self.hRange[1]-self.xh_range-self.y0))
         self.kmax = np.argmin(np.abs(self.vRange[1]-self.xv_range))
         self.xh_min = self.xh_range[self.jmin]
         self.xv_min = self.xv_range[self.kmin]
