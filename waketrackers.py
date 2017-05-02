@@ -28,17 +28,24 @@ def track(*args,**kwargs):
         Should correspond to a Tracker class object.
     """
     trackerList = {}
-    for f in os.listdir(os.path.dirname(__file__)):
-        if f.endswith('WakeTracker.py'):
-            mod = importlib.import_module('waketracking.'+f[:-3])
-            for name,cls in inspect.getmembers(mod,inspect.isclass):
-                if cls.__module__ == mod.__name__:
-                    trackerList[name] = cls
+    modulePath = os.path.dirname(__file__)
+    moduleName = os.path.split(modulePath)[-1]
+    assert(moduleName == 'waketracking')
+
+    for rootdir,subdirs,filelist in os.walk(modulePath):
+        trimdir = rootdir.replace(modulePath,moduleName) # trim path
+        pyroot = trimdir.replace(os.sep,'.') # change to python format
+        for filename in filelist:
+            if filename.endswith('Tracker.py'):
+                submodule = pyroot + '.' + filename[:-3]
+                mod = importlib.import_module(submodule)
+                for name,cls in inspect.getmembers(mod,inspect.isclass):
+                    # can have more than one tracker class per module file
+                    if cls.__module__ == mod.__name__:
+                        trackerList[name] = cls
         
-    try:
-        method = kwargs['method']
-        assert(method in trackerList.keys())
-    except (KeyError,AssertionError):
+    method = kwargs.get('method',None)
+    if method not in trackerList.keys():
         print "Need to specify 'method' as one of:"
         for name,tracker in trackerList.iteritems():
             print '  {:s} ({:s})'.format(name,tracker.__module__)
