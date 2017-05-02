@@ -53,7 +53,7 @@ def track(*args,**kwargs):
     else:
         tracker = trackerList[method]
         if kwargs.get('verbose',True):
-            print 'Selected Tracker:',tracker,'\n'
+            print 'Selected Tracker:',tracker.name,'\n'
         return tracker(*args,**kwargs)
 
 #==============================================================================
