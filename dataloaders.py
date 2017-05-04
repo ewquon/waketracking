@@ -621,8 +621,15 @@ class foam_ensight_array(sampled_data):
             try:
                 np.savez_compressed(savepath,x=self.x,y=self.y,z=self.z,data=self.data)
                 print 'Saved compressed array data to',savepath
-            except IOError:
+            except IOError as e:
                 print 'Problem saving array data to',savepath
+                errstr = str(e)
+                if 'requested' in errstr and errstr.endswith('written'):
+                    print 'IOError:',errstr
+                    print 'Possible known filesystem issue!'
+                    print '  Try adding TMPDIR=/scratch/$USER to your environment, or another'
+                    print '  path to use for temporary storage that has more available space.'
+                    print '  (see https://github.com/numpy/numpy/issues/5336)'
 
 
 class foam_ensight_array_series(sampled_data):
@@ -784,6 +791,14 @@ class foam_ensight_array_series(sampled_data):
             try:
                 np.savez_compressed(savepath,x=self.x,y=self.y,z=self.z,data=self.data)
                 print 'Saved compressed array data to',savepath
-            except IOError:
+            except IOError as e:
                 print 'Problem saving array data to',savepath
+                errstr = str(e)
+                if 'requested' in errstr and errstr.endswith('written'):
+                    print 'IOError:',errstr
+                    print 'Possible known filesystem issue!'
+                    print '  Try adding TMPDIR=/scratch/$USER to your environment, or another'
+                    print '  path to use for temporary storage that has more available space.'
+                    print '  (see https://github.com/numpy/numpy/issues/5336)'
+
 
