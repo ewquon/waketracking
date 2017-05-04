@@ -53,7 +53,7 @@ def track(*args,**kwargs):
     else:
         tracker = trackerList[method]
         if kwargs.get('verbose',True):
-            print 'Selected Tracker:',tracker.name,'\n'
+            print 'Selected Tracker:',tracker.__name__,'\n'
         return tracker(*args,**kwargs)
 
 #==============================================================================
@@ -157,7 +157,7 @@ class waketracker(object):
         ang = np.arctan2(self.norm[1],self.norm[0])  # ang>0: rotating from x-dir to y-dir
         self.yaw = ang
 
-        # get wake centers
+        # get sampling plane centers
         self.x0 = (np.max(self.x) + np.min(self.x))/2
         self.y0 = (np.max(self.y) + np.min(self.y))/2
         self.z0 = (np.max(self.z) + np.min(self.z))/2  # not used (rotation about z only)
@@ -232,6 +232,8 @@ class waketracker(object):
         self.zwake = np.zeros(self.Ntimes)
         self.xh_wake = np.zeros(self.Ntimes)
         self.xv_wake = np.zeros(self.Ntimes)
+
+        self.paths = self.Ntimes*[None]
 
         if self.verbose:
             print 'Number of time frames to process:',self.Ntimes
@@ -534,6 +536,7 @@ class waketracker(object):
                     cmin=None,cmax=None,
                     cmap='jet',
                     markercolor='w',
+                    outline=False,
                     writepng=False,outdir='.',seriesname='U',
                     dpi=100):
         """Plot/update contour and center marker in the rotor-aligned
@@ -550,6 +553,8 @@ class waketracker(object):
             Colormap for the contour plot.
         markercolor : any matplotlib color, optional
             To plot the detected wake center, otherwise set to None.
+        outline : boolean, optional
+            If true, plot a representation of the detected wake edge.
         writepng : boolean, optional
             If True, save image to
             ${outdir}/${seriesname}_<timeName>.png
@@ -558,10 +563,12 @@ class waketracker(object):
         seriesname : string, optional
             Prefix for image series (if writepng==True).
         """
+        outdir = os.path.join(self.prefix, outdir)
         if writepng and not os.path.isdir(outdir):
-            outdir = os.path.join(self.prefix,outdir)
             if self.verbose: print 'Creating output subdirectory:', outdir
             os.makedirs(outdir)
+
+        outline = outline and self.wakeTracked
 
         if not self.plotInitialized:
             self._initPlot()  # first time
@@ -605,6 +612,9 @@ class waketracker(object):
             self.plotInitialized = True
 
         else:
+            if outline and hasattr(self,'plotobj_wakeOutline'):
+                self.plotobj_wakeOutline.remove()
+
             # update plot
             for i in range( len(self.plotobj_filledContours.collections) ):
                 self.plotobj_filledContours.collections[i].remove()
@@ -617,6 +627,9 @@ class waketracker(object):
                 self.plotobj_ctr.set_data(self.xh_wake[itime], self.xv_wake[itime])
                 self.plotobj_crc.set_data(self.xh_wake[itime], self.xv_wake[itime])
 
+        if outline:
+            self.plotOutline(itime)
+
         if writepng:
             fname = os.path.join(
                     outdir,
@@ -624,6 +637,35 @@ class waketracker(object):
                     )
             self.fig.savefig(fname, dpi=dpi)
             print 'Saved',fname
+
+
+    def plotOutline(self,itime=0,
+            lw=2,ls='-',facecolor='none',edgecolor='w',
+            **kwargs):
+        """Helper function for plotting a representation of the wake
+        edge
+
+        Additional plotting style keywords may be specified, e.g.:
+            linewidth, linestyle, facecolor, edgecolor,...
+        """
+        if not self.wakeTracked:
+            print 'Need to perform wake tracking first'
+        #if self.verbose: print 'Plotting',self.__class__.__name__,'wake outline'
+        lw = kwargs.get('linewidth',lw)
+        ls = kwargs.get('linestyle',ls)
+
+        try:
+            path = mpath.Path(self.paths[itime])
+        except ValueError: 
+            if self.verbose:
+                print 'No contour available to plot?'
+            return
+        self.plotobj_wakeOutline = mpatch.PathPatch(path,
+                                                    lw=lw,ls=ls,
+                                                    facecolor=facecolor,
+                                                    edgecolor=edgecolor,
+                                                    **kwargs)
+        plt.gca().add_patch(self.plotobj_wakeOutline)
 
 
     def saveSnapshots(self,**kwargs):
@@ -637,6 +679,39 @@ class waketracker(object):
             self.plotContour(itime,writepng='True',**kwargs)
 
 
+    def _readOutlines(self,fname):
+        """Helper function to read compressed (pickled) outlines"""
+        if (fname is None) or (not self.wakeTracked):
+            return None
+
+        if not fname.startswith(self.prefix):
+            fname = os.path.join(self.prefix,fname)
+        if not fname.endswith('.pkl'):
+            fname += '.pkl'
+
+        try:
+            self.paths = pickle.load(open(fname,'r'))
+        except IOError:
+            print 'Failed to read',fname
+            return None
+
+        if self.verbose:
+            print 'Read pickled outlines from',fname
+
+        return self.paths
+
+    def _writeOutlines(self,fname):
+        """Helper function to write compressed (pickled) outlines"""
+        if fname is None: return
+        if not fname.startswith(self.prefix):
+            fname = os.path.join(self.prefix,fname)
+        if not fname.endswith('.pkl'):
+            fname += '.pkl'
+        pickle.dump(self.paths,open(fname,'w'))
+        if self.verbose:
+            print 'Wrote out pickled outlines to',fname
+
+
 class contourwaketracker(waketracker):
     """Class for wake tracking based on (velocity) contours
     
@@ -648,7 +723,6 @@ class contourwaketracker(waketracker):
 
         self.Clevels = np.zeros(self.Ntimes)
         self.Cfvals = np.zeros(self.Ntimes)
-        self.paths = self.Ntimes*[None]
 
         if self.verbose:
             print '\n...finished initializing contourwaketracker'
@@ -839,130 +913,4 @@ class contourwaketracker(waketracker):
                 (self.xh_wake, self.xv_wake, self.Clevels, self.Cfvals))
         if self.verbose:
             print 'Wrote out trajectory to',fname
-
-    def _readOutlines(self,fname):
-        """Helper function to read compressed (pickled) outlines"""
-        if (fname is None) or (not self.wakeTracked):
-            return None
-
-        if not fname.startswith(self.prefix):
-            fname = os.path.join(self.prefix,fname)
-        if not fname.endswith('.pkl'):
-            fname += '.pkl'
-
-        try:
-            self.paths = pickle.load(open(fname,'r'))
-        except IOError:
-            print 'Failed to read',fname
-            return None
-
-        if self.verbose:
-            print 'Read pickled outlines from',fname
-
-        return self.paths
-
-    def _writeOutlines(self,fname):
-        """Helper function to write compressed (pickled) outlines"""
-        if fname is None: return
-        if not fname.startswith(self.prefix):
-            fname = os.path.join(self.prefix,fname)
-        if not fname.endswith('.pkl'):
-            fname += '.pkl'
-        pickle.dump(self.paths,open(fname,'w'))
-        if self.verbose:
-            print 'Wrote out pickled outlines to',fname
-
-    def plotContour(self,itime=0,outline=True,**kwargs):
-        """Plot/update contour and center marker in the rotor-aligned
-        frame at time ${itime}.
-        
-        Overridden waketracker.plotContour function to include the calculated 
-        wake contour outline.
-
-        Parameters
-        ----------
-        itime : integer
-            Index of the wake snapshot to plot.
-        cmin,cmax : float, optional
-            Range of contour values to plot; if None, then set to min
-            and max field values.
-        cmap : string, optional
-            Colormap for the contour plot.
-        markercolor : any matplotlib color, optional
-            To plot the detected wake center, otherwise set to None.
-        writepng : boolean, optional
-            If True, save image to
-            ${outdir}/${seriesname}_<timeName>.png
-        outdir : string, optional
-            Output subdirectory.
-        seriesname : string, optional
-            Prefix for image series (if writepng==True).
-        outline : boolean, optional
-            (contourwaketracker only) Plot the wake contour outline (a
-            path object). If False, operates the same as
-            waketracker.plotContour.
-        """
-        writepng = kwargs.get('writepng',False)
-        outdir = os.path.join(self.prefix,kwargs.get('outdir','.'))
-        seriesname = kwargs.get('seriesname','U')
-        dpi = kwargs.get('dpi',100)
-
-        if writepng and not os.path.isdir(outdir):
-            if self.verbose: print 'Creating output subdirectory:', outdir
-            os.makedirs(outdir)
-
-        outline = outline and self.wakeTracked
-
-        if self.plotInitialized and outline \
-                and hasattr(self,'plotobj_wakeOutline'):
-            self.plotobj_wakeOutline.remove()
-
-        kwargs['writepng'] = False
-        super(contourwaketracker,self).plotContour(itime,**kwargs)
-
-        if outline:
-            self.plotOutline(itime)
-#            if hasattr(self,'plotobj_linecontours'):
-#                for i in range(len(self.plotobj_linecontours.collections)):
-#                    self.plotobj_linecontours.collections[i].remove()
-#            self.plotobj_linecontours = self.ax.contour(
-#                    self.xh, self.xv, self.u[itime,:,:], [self.Clevels[itime]],
-#                    colors='w', linestyles='-', linewidths=2)
-
-        if writepng:
-            fname = os.path.join(
-                    outdir,
-                    '{:s}_{:05d}.png'.format(seriesname,itime)
-                    )
-            self.fig.savefig(fname, dpi=dpi)
-            print 'Saved',fname
-
-
-    def plotOutline(self,itime=0,
-            lw=2,ls='-',facecolor='none',edgecolor='w',
-            **kwargs):
-        """Helper function for plotting the wake outline
-
-        Additional plotting style keywords may be specified, e.g.:
-            linewidth, linestyle, facecolor, edgecolor,...
-        """
-        if not self.wakeTracked:
-            print 'Need to perform wake tracking first'
-        #if self.verbose:
-        #    print 'Plotting',self.__class__.__name__,'wake outline'
-        lw = kwargs.get('linewidth',lw)
-        ls = kwargs.get('linestyle',ls)
-
-        try:
-            path = mpath.Path(self.paths[itime])
-        except ValueError: 
-            print 'No contour available to plot?',self.paths[itime]
-            return
-        self.plotobj_wakeOutline = mpatch.PathPatch(path,
-                                                    lw=lw,ls=ls,
-                                                    facecolor=facecolor,
-                                                    edgecolor=edgecolor,
-                                                    **kwargs)
-        plt.gca().add_patch(self.plotobj_wakeOutline)
-
 

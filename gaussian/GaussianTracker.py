@@ -27,7 +27,8 @@ class Gaussian(waketracker):
     def findCenters(self,
                     umin=None,
                     sigma=50.,
-                    trajectoryFile=None,
+                    res=100,
+                    trajectoryFile=None,outlinesFile=None,
                     frame='rotor-aligned'):
         """Uses optimization algorithms in scipy.optimize to determine
         the best fit to the wake center location, given the wake width.
@@ -43,10 +44,15 @@ class Gaussian(waketracker):
             Wake width parameter, equivalent to the standard deviation
             of the Gaussian function. This may be a constant or a
             function of downstream distance.
+        res : integer, optional
+            Number of points to represent the wake outline as a circle
         trajectoryFile : string, optional
             Name of trajectory data file to attempt inputting and to
             write out to; set to None to skip I/O. Data are written out
             in the rotor-aligned frame.
+        outlinesFile : string, optional
+            Name of pickle archive file (\*.pkl) to attempt input and to
+            write out approximate wake outlines; set to None to skip I/O.
         frame : string, optional
             Reference frame, either 'inertial' or 'rotor-aligned'.
 
@@ -59,8 +65,9 @@ class Gaussian(waketracker):
         """
         self.clearPlot()
 
-        # try to read trajectories
+        # try to read trajectories (required) and outlines (optional)
         self._readTrajectory(trajectoryFile)
+        self._readOutlines(outlinesFile)
 
         # done if read was successful
         if self.wakeTracked:
@@ -84,7 +91,8 @@ class Gaussian(waketracker):
             print 'Warning: Unexpected positive velocity deficit at', \
                     len(np.nonzero(self.umin > 0)[0]),'of',self.Ntimes,'times'
         if self.verbose:
-            print 'average Gaussian function amplitude =',np.mean(self.umin),'m/s'
+            print 'average Gaussian function amplitude =', \
+                    np.mean(self.umin),'m/s'
 
         try:
             # sigma is a specified constnat
@@ -97,6 +105,11 @@ class Gaussian(waketracker):
             self.sigma = sigma(xd)
             if self.verbose:
                 print 'Calculated sigma =',self.sigma,'m at x=',xd,'m'
+
+        # approximate wake outline
+        azi = np.linspace(0,2*np.pi,res)
+        ycirc = self.sigma*np.cos(azi)
+        zcirc = self.sigma*np.sin(azi)
 
         # set up optimization parameters
         guess = [
@@ -124,8 +137,11 @@ class Gaussian(waketracker):
 
             if res.success:
                 self.xh_wake[itime], self.xv_wake[itime] = res.x[:2]
+                self.paths[itime] = np.vstack((ycirc + self.xh_wake[itime],
+                                               zcirc + self.xv_wake[itime])).T
             else:
-                self.xh_wake[itime], self.xv_wake[itime] = self.xh_fail, self.xv_fail
+                self.xh_wake[itime], self.xv_wake[itime] = \
+                        self.xh_fail, self.xv_fail
 
             if self.verbose:
                 sys.stderr.write('\rProcessed frame {:d}'.format(itime))
@@ -138,6 +154,7 @@ class Gaussian(waketracker):
 
         # write out everything
         self._writeTrajectory(trajectoryFile)
+        self._writeOutlines(outlinesFile)
     
         return self.trajectoryIn(frame)
 
