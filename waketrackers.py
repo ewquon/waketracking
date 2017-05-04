@@ -476,12 +476,15 @@ class waketracker(object):
 
         return data
 
-    def _writeTrajectory(self,fname):
+    def _writeTrajectory(self,fname,*args):
         """Helper function to write trajectory history"""
         if fname is None: return
         if not fname.startswith(self.prefix):
             fname = os.path.join(self.prefix,fname)
-        self._writeData(fname,(self.xh_wake, self.xv_wake))
+        data = [self.xh_wake, self.xv_wake]
+        for arg in args:
+            data.append(arg)
+        self._writeData(fname,data)
         if self.verbose:
             print 'Wrote out trajectory to',fname
 
@@ -903,14 +906,4 @@ class contourwaketracker(waketracker):
             self.Clevels = data[:,3]
             self.Cfvals = data[:,4]
         return data
-
-    def _writeTrajectory(self,fname):
-        """Helper function to write trajectory history"""
-        if fname is None: return
-        if not fname.startswith(self.prefix):
-            fname = os.path.join(self.prefix,fname)
-        self._writeData(fname,
-                (self.xh_wake, self.xv_wake, self.Clevels, self.Cfvals))
-        if self.verbose:
-            print 'Wrote out trajectory to',fname
 

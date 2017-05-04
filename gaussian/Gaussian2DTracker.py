@@ -13,9 +13,9 @@ class Gaussian2D(waketracker):
     .. math::
         f(y,z) = A \exp \left[
             -\\frac{1}{2(1-\\rho^2)} \left(
-                \\frac{(y-y_c)^2}{\sigma_y^2}
+                \\frac{(\\bar{y}-y_c)^2}{\sigma_y^2}
                 - \\frac{2\\rho (\\bar{y}-y_c) (\\bar{z}-z_c)}{\sigma_y\sigma_z}
-                + \\frac{(z-z_c)^2}{\sigma_z^2}
+                + \\frac{(\\bar{z}-z_c)^2}{\sigma_z^2}
             \\right)
         \\right]
 
@@ -46,7 +46,8 @@ class Gaussian2D(waketracker):
                     A_max=np.inf,
                     AR_max=10.,
                     rho=None,
-                    trajectoryFile=None,
+                    res=100,
+                    trajectoryFile=None,outlinesFile=None,
                     frame='rotor-aligned'):
         """Uses optimization algorithms in scipy.optimize to determine
         the best fit.
@@ -71,10 +72,15 @@ class Gaussian2D(waketracker):
             an ellipse); this dictates the maximum amount of stretching.
         rho : float, optional
             The cross-correlation parameter--CURRENTLY UNTESTED.
+        res : integer, optional
+            Number of points to represent the wake outline as a circle
         trajectoryFile : string, optional
             Name of trajectory data file to attempt inputting and to
             write out to; set to None to skip I/O. Data are written out
             in the rotor-aligned frame.
+        outlinesFile : string, optional
+            Name of pickle archive file (\*.pkl) to attempt input and to
+            write out approximate wake outlines; set to None to skip I/O.
         frame : string, optional
             Reference frame, either 'inertial' or 'rotor-aligned'.
 
@@ -87,8 +93,9 @@ class Gaussian2D(waketracker):
         """
         self.clearPlot()
 
-        # try to read trajectories
+        # try to read trajectories (required) and outlines (optional)
         self._readTrajectory(trajectoryFile)
+        self._readOutlines(outlinesFile)
 
         # done if read was successful
         if self.wakeTracked:
@@ -107,6 +114,9 @@ class Gaussian2D(waketracker):
             # specified umin as array with length Ntimes
             assert(isinstance(umin,np.ndarray))
             self.umin = umin
+        self.rotation = np.zeros(self.Ntimes)
+        self.sigma_y = np.zeros(self.Ntimes)
+        self.sigma_z = np.zeros(self.Ntimes)
 
         if not np.all(umin < 0):
             print 'Warning: Unexpected positive velocity deficit at', \
@@ -117,23 +127,26 @@ class Gaussian2D(waketracker):
         if rho is not None:
             print 'Note: cross-correlation parameter is not yet implemented'
 
+        # approximate wake outline as best-fit ellipse at 36.8% of the max wake
+        #   deficit (corresponding to f(y,z) = A*exp(-1))
+        azi = np.linspace(0,2*np.pi,res)
+
         # set up optimization parameters
-        # note: origin of the rotor-aligned frame is at the center of the sampling plane already
+        # note: origin of the rotor-aligned frame is at the center of the sampling
+        #   plane already
         # note: sigmay = AR*sigmaz
         #       sigmaz = sqrt(A/(pi*AR))
         guess = [
-                (self.xh_min+self.xh_max)/2, # yc
-                (self.xv_min+self.xv_max)/2, # zc
-                0., # theta
-                7500., # A
-                1., # AR
+                (self.xh_min+self.xh_max)/2,    # 0: yc
+                (self.xv_min+self.xv_max)/2,    # 1: zc
+                0.,                             # 2: theta
+                7500.,                          # 3: A == pi * sigma_y * sigma_z
+                1.,                             # 4: AR == sigma_y/sigma_z
         ]
         minmax = (
-                [self.xh_min,self.xv_min],
-                [self.xh_max,self.xv_max],
-                [0.0,np.pi], # rotation range
-                [A_min,A_max], # wake size
-                [1.0,AR_max], # wake stretching
+                # y range,    z range,     rotation range, wake size, wake stretching
+                [self.xh_min, self.xv_min, -np.pi/2,       A_min,        1.0],
+                [self.xh_max, self.xv_max,  np.pi/2,       A_max,     AR_max],
         )
 
         # calculate trajectories for each time step
@@ -144,10 +157,10 @@ class Gaussian2D(waketracker):
             def func(x):
                 """objective function for x=[yc,zc,theta,Awake,AR]"""
                 ang = x[2]
+                sigma_z = np.sqrt(x[3] / (np.pi*x[4]))  # sqrt( A / (pi * AR) )
+                sigma_y = x[4] * sigma_z
                 delta_y =  x[0]*np.cos(ang) + x[1]*np.sin(ang) - y1
                 delta_z = -x[0]*np.sin(ang) + x[1]*np.cos(ang) - z1
-                sigma_z = np.sqrt(x[3]/(np.pi*x[4]))
-                sigma_y = x[3]*sigma_y
                 return self.umin[itime] * \
                         np.exp( -0.5 * ((delta_y/sigma_y)**2 + (delta_z/sigma_z)**2) ) - u1
 
@@ -155,8 +168,25 @@ class Gaussian2D(waketracker):
 
             if res.success:
                 self.xh_wake[itime], self.xv_wake[itime] = res.x[:2]
+                # calculate elliptical wake outline
+                ang = res.x[2]
+                sigma_z = np.sqrt(res.x[3] / (np.pi*res.x[4]))
+                sigma_y = res.x[4] * sigma_z
+                r = np.sqrt(2)*sigma_y*sigma_z / np.sqrt(sigma_z**2*np.cos(azi)**2 + sigma_y**2*np.sin(azi)**2)
+                tmpy = r*np.cos(azi)
+                tmpz = r*np.sin(azi)
+                yellip =  tmpy*np.cos(ang) + tmpz*np.sin(ang) + self.xh_wake[itime]
+                zellip = -tmpy*np.sin(ang) + tmpz*np.cos(ang) + self.xv_wake[itime]
+                self.paths[itime] = np.vstack((yellip,zellip)).T
+                self.sigma_y[itime] = sigma_y
+                self.sigma_z[itime] = sigma_z
+                self.rotation[itime] = ang
             else:
-                self.xh_wake[itime], self.xv_wake[itime] = self.xh_fail, self.xv_fail
+                self.xh_wake[itime], self.xv_wake[itime] = \
+                        self.xh_fail, self.xv_fail
+                self.sigma_y[itime] = np.nan
+                self.sigma_z[itime] = np.nan
+                self.rotation[itime] = np.nan
 
             if self.verbose:
                 sys.stderr.write('\rProcessed frame {:d}'.format(itime))
@@ -168,7 +198,11 @@ class Gaussian2D(waketracker):
         self.wakeTracked = True
 
         # write out everything
-        self._writeTrajectory(trajectoryFile)
+        self._writeTrajectory(trajectoryFile,
+                self.sigma_y,
+                self.sigma_z,
+                self.rotation)
+        self._writeOutlines(outlinesFile)
     
         return self.trajectoryIn(frame)
 

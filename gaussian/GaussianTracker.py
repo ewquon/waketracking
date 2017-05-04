@@ -106,7 +106,7 @@ class Gaussian(waketracker):
             if self.verbose:
                 print 'Calculated sigma =',self.sigma,'m at x=',xd,'m'
 
-        # approximate wake outline
+        # approximate wake outline with specified wake width, sigma
         azi = np.linspace(0,2*np.pi,res)
         ycirc = self.sigma*np.cos(azi)
         zcirc = self.sigma*np.sin(azi)

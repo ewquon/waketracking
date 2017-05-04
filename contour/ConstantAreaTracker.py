@@ -120,7 +120,7 @@ class ConstantArea(contourwaketracker):
         self.wakeTracked = True
 
         # write out everything
-        self._writeTrajectory(trajectoryFile)
+        self._writeTrajectory(trajectoryFile, self.Clevels, self.Cfvals)
         self._writeOutlines(outlinesFile)
     
         return self.trajectoryIn(frame)
