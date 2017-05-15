@@ -227,6 +227,8 @@ class waketracker(object):
 
             # calculate velocities in the sampling plane frame of reference
             self.u_tot = np.zeros((self.Ntimes,self.Nh,self.Nv))
+            self.v_tot = np.zeros((self.Ntimes,self.Nh,self.Nv))
+            self.w_tot = np.zeros((self.Ntimes,self.Nh,self.Nv))
             for itime in range(self.Ntimes):
                 for ih in range(self.Nh):
                     for iv in range(self.Nv):
