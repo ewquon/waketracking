@@ -244,7 +244,7 @@ class waketracker(object):
 
         self.u = self.u_tot  # in case input u already has shear removed
         self.v = self.v_tot
-        self.w = self.v_tot
+        self.w = self.w_tot
 
         self.xwake = np.zeros(self.Ntimes)
         self.ywake = np.zeros(self.Ntimes)
