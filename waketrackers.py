@@ -231,13 +231,13 @@ class waketracker(object):
                 for ih in range(self.Nh):
                     for iv in range(self.Nv):
                         # normal velocity
-                        self.u_tot[itime,ih,iv] =
+                        self.u_tot[itime,ih,iv] = \
                                 udata[itime,ih,iv,:].dot(self.norm)
                         # horizontal velocity
-                        self.v_tot[itime,ih,iv] =
+                        self.v_tot[itime,ih,iv] = \
                                 udata[itime,ih,iv,:].dot(self.horz)
                         # vertical velocity (expect norm[2]==0, vert=[0,0,1])
-                        self.w_tot[itime,ih,iv] =
+                        self.w_tot[itime,ih,iv] = \
                                 udata[itime,ih,iv,2]
 
         self.u = self.u_tot  # in case input u already has shear removed
