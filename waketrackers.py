@@ -135,6 +135,7 @@ class waketracker(object):
         self.z = zdata
         self.Nh, self.Nv = self.x.shape
 
+        # calculate sampling plane unit normal
         yvec = (self.x[-1, 0] - self.x[ 0,0],
                 self.y[-1, 0] - self.y[ 0,0],
                 self.z[-1, 0] - self.z[ 0,0])
@@ -147,6 +148,10 @@ class waketracker(object):
             print 'Sampling plane normal vector:',self.norm
             if not self.norm[2] == 0:
                 print 'WARNING: sampling plane is tilted?'
+
+        # calculate horizontal unit vector
+        self.vert = np.array((0,0,1))
+        self.horz = np.cross(-self.norm, self.vert)
 
         # setup planar coordinates
         # d: downwind (x)
@@ -207,10 +212,12 @@ class waketracker(object):
         assert(len(udata.shape) in (3,4)) 
         assert((self.Nh,self.Nv) == udata.shape[1:3])
         self.Ntimes = udata.shape[0]
-        if len(udata.shape)==3:
+        if len(udata.shape)==3: # SCALAR data
             self.datasize = 1
             self.u_tot = udata  # shape=(Ntimes,Nh,Nv)
-        else:
+            self.v_tot = np.zeros(udata.shape)
+            self.w_tot = np.zeros(udata.shape)
+        else: # VECTOR data assumed
             self.datasize = udata.shape[3]
             assert(self.datasize == 3)
 
@@ -218,14 +225,24 @@ class waketracker(object):
 #            assert(self.datasize <= 3) 
 #            self.u_tot = np.sqrt(u[:,:,:,0]**2 + u[:,:,:,1]**2)
 
-            # calculate velocity normal to sampling plane
+            # calculate velocities in the sampling plane frame of reference
             self.u_tot = np.zeros((self.Ntimes,self.Nh,self.Nv))
             for itime in range(self.Ntimes):
                 for ih in range(self.Nh):
                     for iv in range(self.Nv):
-                        self.u_tot[itime,ih,iv] = udata[itime,ih,iv,:].dot(self.norm)
+                        # normal velocity
+                        self.u_tot[itime,ih,iv] =
+                                udata[itime,ih,iv,:].dot(self.norm)
+                        # horizontal velocity
+                        self.v_tot[itime,ih,iv] =
+                                udata[itime,ih,iv,:].dot(self.horz)
+                        # vertical velocity (expect norm[2]==0, vert=[0,0,1])
+                        self.w_tot[itime,ih,iv] =
+                                udata[itime,ih,iv,2]
 
         self.u = self.u_tot  # in case input u already has shear removed
+        self.v = self.v_tot
+        self.w = self.v_tot
 
         self.xwake = np.zeros(self.Ntimes)
         self.ywake = np.zeros(self.Ntimes)
