@@ -23,10 +23,10 @@ This module defines generic wake-tracking objects with general helper routines. 
 
 These modules (that have the \*WakeTracker suffix) implement the actual wake tracking algorithms.
 
-.. automodule:: waketracking.GaussianWakeTracker
+.. automodule:: waketracking.gaussian
     :members:
 
-.. automodule:: waketracking.ContourWakeTracker
+.. automodule:: waketracking.contour
     :members:
 
 ``contour_functions`` module

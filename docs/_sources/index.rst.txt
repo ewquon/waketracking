@@ -3,8 +3,8 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Python Wake Tracking
-====================
+SAMWICH: Simulated And Measured Wake Identification and CHaracterization
+========================================================================
 
 Author: `Eliot Quon <mailto:eliot.quon@nrel.gov>`_
 
@@ -17,7 +17,7 @@ Motivation for this work comes from the need for a general and robust methodolog
 
 This module was developed as part of an NREL Laboratory Directory Research and Development (LDRD) funded project, for the purpose of extracting wake modeling parameters. The PI for the LDRD project, FAST.Farm, is `Jason Jonkman <mailto:jason.jonkman@nrel.gov>`_. More information about FAST.Farm can be found at...
 
-Reference journal article...
+WES article reference here...
 
 .. toctree::
    :maxdepth: 2

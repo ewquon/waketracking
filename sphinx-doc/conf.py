@@ -103,7 +103,7 @@ html_theme = 'alabaster'
 # documentation.
 #
 html_theme_options = {
-    'description': 'A set of tools for rotor wake analysis',
+    'description': 'a set of python-based tools for rotor wake analysis',
     'github_user': 'ewquon',
     'github_repo': 'waketracking',
     'github_button': True,
@@ -162,7 +162,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'waketracking.tex', u'WakeTracking Documentation',
+    (master_doc, 'waketracking.tex', u'SAMWICH Documentation',
      u'Eliot Quon', 'manual'),
 ]
 
@@ -172,7 +172,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'waketracking', u'WakeTracking Documentation',
+    (master_doc, 'waketracking', u'SAMWICH Documentation',
      [author], 1)
 ]
 
@@ -183,9 +183,10 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'waketracking', u'WakeTracking Documentation',
-     author, 'waketracking', 'A set of tools for rotor wake analysis.',
-     'Miscellaneous'),
+    (master_doc, 'waketracking', u'SAMWICH',
+     #author, 'waketracking', 'A set of tools for rotor wake analysis.',
+     author, 'SAMWICH', 'Simulated And Measured Wake Identfication and CHaracterization',
+     'Science'),
 ]
 
 # -- Options for autodoc output -------------------------------------------
