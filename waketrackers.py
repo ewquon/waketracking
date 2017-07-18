@@ -390,12 +390,12 @@ class waketracker(object):
         print self.__class__.__name,'needs to override this function!'
         #self.wakeTracked = True
 
-    def trajectoryIn(self,frame,tIdx=None):
+    def trajectoryIn(self,frame):
         """Returns a tuple with the wake trajectory in the specified frame"""
         if frame == 'inertial':
-            return self.xwake[tIdx], self.ywake[tIdx], self.zwake[tIdx]
+            return self.xwake, self.ywake, self.zwake
         elif frame == 'rotor-aligned':
-            return self.xh_wake[tIdx], self.xv_wake[tIdx]
+            return self.xh_wake, self.xv_wake
         else:
             print 'output frame not recognized'
 

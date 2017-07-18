@@ -3,8 +3,8 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-SAMWICH: Simulated And Measured Wake Identification and CHaracterization
-========================================================================
+SAMWICH Box: Simulated And Measured Wake Identification and CHaracterization Toolbox
+====================================================================================
 
 Author: `Eliot Quon <mailto:eliot.quon@nrel.gov>`_
 
