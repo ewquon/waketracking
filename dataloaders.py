@@ -1,3 +1,4 @@
+from __future__ import print_function
 import sys
 import os
 
@@ -94,12 +95,12 @@ class sampled_data(object):
                         and self.data.shape[1] == self.NX \
                         and self.data.shape[2] == self.NY \
                         and self.data.shape[3] == self.NZ:
-                    print 'Loaded compressed array data from',savepath
+                    print('Loaded compressed array data from',savepath)
                     self.dataReadFrom = savepath
             except ValueError:
-                print 'Mismatched data'
+                print('Mismatched data')
         except KeyError:
-            print 'Could not read',savepath
+            print('Could not read',savepath)
 
     def __repr__(self):
         if self.datasize==1:
@@ -123,8 +124,7 @@ class sampled_data(object):
                  aligned frame.
         """
         if i0 is not None and i0==i1:
-            print 'Slicing data at i=',i0, \
-                  ' x =',np.mean(self.x[i0,:,:])
+            print('Slicing data at i={} x={}'.format(i0,np.mean(self.x[i0,:,:])))
             x0 = self.x[i0,j0:j1,k0:k1]
             x1 = self.y[i0,j0:j1,k0:k1]
             x2 = self.z[i0,j0:j1,k0:k1]
@@ -133,8 +133,7 @@ class sampled_data(object):
             else:
                 u = self.data[:,i0,:,:,:]
         elif j0 is not None and j0==j1:
-            print 'Slicing data at j=',j0, \
-                  ' y =',np.mean(self.y[:,j0,:])
+            print('Slicing data at j={} y={}'.format(j0,np.mean(self.y[:,j0,:])))
             x0 = self.x[i0:i1,j0,k0:k1]
             x1 = self.y[i0:i1,j0,k0:k1]
             x2 = self.z[i0:i1,j0,k0:k1]
@@ -143,8 +142,7 @@ class sampled_data(object):
             else:
                 u = self.data[:,:,j0,:,:]
         elif k0 is not None and k0==k1:
-            print 'Slicing data at k=',k0, \
-                  ' z =',np.mean(self.z[:,:,k0])
+            print('Slicing data at k={} z={}'.format(k0,np.mean(self.z[:,:,k0])))
             x0 = self.x[i0:i1,j0:j1,k0]
             x1 = self.y[i0:i1,j0:j1,k0]
             x2 = self.z[i0:i1,j0:j1,k0]
@@ -335,24 +333,24 @@ class pandas_dataframe(sampled_data):
             xr = np.arange(self.NX)
         else:
             assert(len(xr) == self.NX)
-            print 'Specified range gates:',xr
+            print('Specified range gates: {}'.format(xr))
         if NY is None:
             yrange = list(set(frames[0].y.as_matrix()))
             yrange.sort()
             NY = len(yrange)
-            print 'Detected y:',NY,yrange
+            print('Detected y: {} {}'.format(NY,yrange))
         if NZ is None:
             zrange = list(set(frames[0].z.as_matrix()))
             zrange.sort()
             NZ = len(zrange)
-            print 'Detected z:',NZ,zrange
+            print('Detected z: {} {}'.format(NZ,zrange))
 
         if refineFactor is None:
             refineFactor = 1
         elif refineFactor > 1:
             from scipy.interpolate import RectBivariateSpline
             refineFactor = int(refineFactor)
-            print 'Refining input dataframe by factor of',refineFactor
+            print('Refining input dataframe by factor of {}'.format(refineFactor))
         self.NY = refineFactor * NY
         self.NZ = refineFactor * NZ
 
@@ -403,8 +401,8 @@ def interp_holes_2d(y,z,verbose=True):
     NY = len(y_uni)
     NZ = len(z_uni)
     if verbose:
-        print 'Found unique y:',NY,y_uni
-        print 'Found unique z:',NZ,z_uni
+        print('Found unique y: {} {}'.format(NY,y_uni))
+        print('Found unique z: {} {}'.format(NZ,z_uni))
     # check spacings
     dy = np.diff(y_uni)
     dz = np.diff(z_uni)
@@ -422,7 +420,7 @@ def interp_holes_2d(y,z,verbose=True):
     assert(y[1]-y[0] > 0)
 
     # find holes
-    if verbose: print 'Looking for holes in mesh...'
+    if verbose: print('Looking for holes in mesh...')
     holeIndices = [] # in new array
     idx_old = 0
     Nholes = 0
@@ -430,7 +428,7 @@ def interp_holes_2d(y,z,verbose=True):
     dataMap = np.zeros(Norig,dtype=int) # mapping of raveled input array (w/ holes) to new array
     for idx_new in range(NY*NZ):
         if y[idx_new] != y0[idx_old] or z[idx_new] != z0[idx_old]:
-            print '  hole at',y[idx_new],z[idx_new]
+            print('  hole at {} {}'.format(y[idx_new],z[idx_new]))
             holeIndices.append(idx_new)
             Nholes += 1
         else:
@@ -441,12 +439,12 @@ def interp_holes_2d(y,z,verbose=True):
             # handle duplicate points (not sure why this happens in OpenFOAM sampling...)
             while y[idx_new] == y0[idx_old] and z[idx_new] == z0[idx_old]:
                 Ndup += 1
-                print '  duplicate point at',y[idx_new],z[idx_new]
+                print('  duplicate point at {} {}'.format(y[idx_new],z[idx_new]))
                 dataMap[idx_old] = idx_new # map to the same point in the new grid
                 idx_old += 1
     assert(idx_old == Norig) # all points mapped
     if verbose:
-        print ' ',Nholes,'holes,',Ndup,'duplicate points'
+        print('  {} holes, {} duplicate points'.format(Nholes,Ndup))
 
     holeLocations = np.stack((y[holeIndices],z[holeIndices])).T
 
@@ -476,7 +474,7 @@ class foam_ensight_array(sampled_data):
         if self.prefix is None:
             if self.dataReadFrom is not None:
                 # we already have data that's been read in...
-                print "Note: 'prefix' not specified, time series was not read."
+                print("Note: 'prefix' not specified, time series was not read.")
                 return
             else:
                 raise AttributeError("'prefix' needs to be specified")
@@ -487,8 +485,8 @@ class foam_ensight_array(sampled_data):
             self.ts = TimeSeries(self.outputDir,datafile)
         except AssertionError:
             if self.dataReadFrom is not None:
-                print 'Note: Data read but time series information is unavailable.'
-                print '      Proceed at your own risk.'
+                print('Note: Data read but time series information is unavailable.')
+                print('      Proceed at your own risk.')
                 return
             else:
                 raise IOError('Data not found in '+self.outputDir)
@@ -498,8 +496,7 @@ class foam_ensight_array(sampled_data):
             if self.Ntimes == self.ts.Ntimes:
                 return
             else:
-                print self.dataReadFrom,'has',self.Ntimes,'data series,', \
-                    'expected',self.ts.Ntimes
+                print('{} has {} data series, expected {}'.format(self.dataReadFrom,self.Ntimes,self.ts.Ntimes))
 
         self.Ntimes = self.ts.Ntimes
 
@@ -520,9 +517,9 @@ class foam_ensight_array(sampled_data):
         self.x = xdata[:N]
         self.y = xdata[N:2*N]
         self.z = xdata[2*N:3*N]
-        print 'x range :',np.min(self.x),np.max(self.x)
-        print 'y range :',np.min(self.y),np.max(self.y)
-        print 'z range :',np.min(self.z),np.max(self.z)
+        print('x range : {} {}'.format(np.min(self.x),np.max(self.x)))
+        print('y range : {} {}'.format(np.min(self.y),np.max(self.y)))
+        print('z range : {} {}'.format(np.min(self.z),np.max(self.z)))
 
         # detect NY,NZ if necessary for planar input
         if NY is None or NZ is None:
@@ -545,10 +542,10 @@ class foam_ensight_array(sampled_data):
                     if NZ == float(N)/NY:
                         if np.all(self.y[:NY] == self.y[NY:2*NY]):
                             break
-                print 'Detected NY,NZ =',NY,NZ
+                print('Detected NY,NZ = {} {}'.format(NY,NZ))
                 if NZ == 1:
-                    print '  Warning: There may be holes in the mesh...'
-                    print '           Try running with interpHoles=True'
+                    print('  Warning: There may be holes in the mesh...')
+                    print('           Try running with interpHoles=True')
                 assert(N == NX*NY*NZ)
             self.NY = NY
             self.NZ = NZ
@@ -620,16 +617,16 @@ class foam_ensight_array(sampled_data):
             savepath = os.path.join(self.outputDir,self.npzdata)
             try:
                 np.savez_compressed(savepath,x=self.x,y=self.y,z=self.z,data=self.data)
-                print 'Saved compressed array data to',savepath
+                print('Saved compressed array data to',savepath)
             except IOError as e:
-                print 'Problem saving array data to',savepath
+                print('Problem saving array data to',savepath)
                 errstr = str(e)
                 if 'requested' in errstr and errstr.endswith('written'):
-                    print 'IOError:',errstr
-                    print 'Possible known filesystem issue!'
-                    print '  Try adding TMPDIR=/scratch/$USER to your environment, or another'
-                    print '  path to use for temporary storage that has more available space.'
-                    print '  (see https://github.com/numpy/numpy/issues/5336)'
+                    print('IOError:',errstr)
+                    print('Possible known filesystem issue!')
+                    print('  Try adding TMPDIR=/scratch/$USER to your environment, or another')
+                    print('  path to use for temporary storage that has more available space.')
+                    print('  (see https://github.com/numpy/numpy/issues/5336)')
 
 
 class foam_ensight_array_series(sampled_data):
@@ -694,8 +691,7 @@ class foam_ensight_array_series(sampled_data):
                 # ==> we're good, no need to process all data again
                 return
             else:
-                print self.dataReadFrom,'has',self.Ntimes,'data series,', \
-                    'expected',Ntimes
+                print('{} has {} data series, expected {}'.format(self.dataReadFrom,self.Ntimes,Ntimes))
 
         self.Ntimes = Ntimes
 
@@ -716,9 +712,9 @@ class foam_ensight_array_series(sampled_data):
         self.x = xdata[:N]
         self.y = xdata[N:2*N]
         self.z = xdata[2*N:3*N]
-        print 'x range :',np.min(self.x),np.max(self.x)
-        print 'y range :',np.min(self.y),np.max(self.y)
-        print 'z range :',np.min(self.z),np.max(self.z)
+        print('x range : {} {}'.format(np.min(self.x),np.max(self.x)))
+        print('y range : {} {}'.format(np.min(self.y),np.max(self.y)))
+        print('z range : {} {}'.format(np.min(self.z),np.max(self.z)))
 
         # detect NY,NZ if necessary for planar input
         if NY is None or NZ is None:
@@ -741,10 +737,10 @@ class foam_ensight_array_series(sampled_data):
                     if NZ == float(N)/NY:
                         if np.all(self.y[:NY] == self.y[NY:2*NY]):
                             break
-                print 'Detected NY,NZ =',NY,NZ
+                print('Detected NY,NZ = {} {}'.format(NY,NZ))
                 if NZ == 1:
-                    print '  Warning: There may be holes in the mesh...'
-                    print '           Try running with interpHoles=True'
+                    print('  Warning: There may be holes in the mesh...')
+                    print('           Try running with interpHoles=True')
                 assert(N == NX*NY*NZ)
             self.NY = NY
             self.NZ = NZ
@@ -790,15 +786,15 @@ class foam_ensight_array_series(sampled_data):
             savepath = os.path.join(self.outputDir,self.npzdata)
             try:
                 np.savez_compressed(savepath,x=self.x,y=self.y,z=self.z,data=self.data)
-                print 'Saved compressed array data to',savepath
+                print('Saved compressed array data to',savepath)
             except IOError as e:
-                print 'Problem saving array data to',savepath
+                print('Problem saving array data to',savepath)
                 errstr = str(e)
                 if 'requested' in errstr and errstr.endswith('written'):
-                    print 'IOError:',errstr
-                    print 'Possible known filesystem issue!'
-                    print '  Try adding TMPDIR=/scratch/$USER to your environment, or another'
-                    print '  path to use for temporary storage that has more available space.'
-                    print '  (see https://github.com/numpy/numpy/issues/5336)'
+                    print('IOError:',errstr)
+                    print('Possible known filesystem issue!')
+                    print('  Try adding TMPDIR=/scratch/$USER to your environment, or another')
+                    print('  path to use for temporary storage that has more available space.')
+                    print('  (see https://github.com/numpy/numpy/issues/5336)')
 
 

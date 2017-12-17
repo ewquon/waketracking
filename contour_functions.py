@@ -1,3 +1,4 @@
+from __future__ import print_function
 import numpy as np
 import matplotlib.path as mpath
 
@@ -44,8 +45,8 @@ def getPaths(Cdata,Clevel,closePaths=False,verbose=False):
                 path = np.vstack((path,xstart))
                 pathList.append(path)
                 if verbose:
-                    print '  closed contour (simple)'
-                    print ' ',xstart,xend
+                    print('  closed contour (simple)')
+                    print('  {} {}'.format(xstart,xend))
             elif isinstance(closePaths, (list,tuple)):
                 # more complex case, need some additional grid information
                 newpath1 = np.copy(path)
@@ -79,9 +80,9 @@ def getPaths(Cdata,Clevel,closePaths=False,verbose=False):
                 elif xend[1] == y1: # top edge
                     start1,start2 = 1,3
                 if verbose:
-                    print 'contour ends at',xend
-                    print 'next CW pt',cornersCW[start1,:]
-                    print 'next CCW pt',cornersCCW[start2,:]
+                    print('contour ends at {}'.format(xend))
+                    print('next CW pt {}'.format(cornersCW[start1,:]))
+                    print('next CCW pt {}'.format(cornersCCW[start2,:]))
                 # - reorder list of corners
                 cornersCW  = np.vstack(( cornersCW[start1:,:], cornersCW[:start1,:]))
                 cornersCCW = np.vstack((cornersCCW[start2:,:],cornersCCW[:start2,:]))
@@ -90,16 +91,16 @@ def getPaths(Cdata,Clevel,closePaths=False,verbose=False):
                 #   logic; we should be adding at most 3 points, never all 4 corners...
                 def sameEdge(pt1,pt2):
                     return (pt1[0] == pt2[0]) or (pt1[1] == pt2[1])
-                if verbose: print 'creating CW loop'
+                if verbose: print('creating CW loop')
                 ipop = 0
                 while not sameEdge(newpath1[-1,:],xstart):
-                    if verbose: print newpath1[-1,:],'not on same edge as',xstart
+                    if verbose: print('{} not on same edge as {}'.format(newpath1[-1,:],xstart))
                     newpath1 = np.vstack((newpath1,cornersCW[ipop,:]))
                     ipop += 1
-                if verbose: print 'creating CCW loop'
+                if verbose: print('creating CCW loop')
                 ipop = 0
                 while not sameEdge(newpath2[-1,:],xstart):
-                    if verbose: print newpath2[-1,:],'not on same edge as',xstart
+                    if verbose: print('{} not on same edge as {}'.format(newpath2[-1,:],xstart))
                     newpath2 = np.vstack((newpath2,cornersCCW[ipop,:]))
                     ipop += 1
                 # - should have a closed loop now
@@ -108,13 +109,13 @@ def getPaths(Cdata,Clevel,closePaths=False,verbose=False):
                 pathList.append(newpath1)
                 pathList.append(newpath2)
                 if verbose:
-                    print '  closed contour (compound)'
-                    print ' ',xstart,xend
+                    print('  closed contour (compound)')
+                    print('  {} {}'.format(xstart,xend))
             else:
                 # complex closure, but no additional data available
                 if verbose:
-                    print '  compound closure not performed'
-                    print ' ',xstart,xend
+                    print('  compound closure not performed')
+                    print('  {} {}'.format(xstart,xend))
                 continue
 
     return pathList
@@ -214,7 +215,7 @@ def integrateFunction(contourPts,
     elif func.func_code.co_argcount==2: # assume second argument is A
         fvals = func(Uinner, A)
     else:
-        print 'Problem with function formulation!'
+        print('Problem with function formulation!')
         return None,None,None
 
     fval = corr * np.sum(fvals)*cellFaceArea

@@ -1,3 +1,4 @@
+from __future__ import print_function
 import os
 
 class TimeSeries(object):
@@ -41,7 +42,7 @@ class TimeSeries(object):
         self.outputNames = os.listdir(self.dirList[0])
         for d in self.dirList:
             if not os.listdir(d) == self.outputNames:
-                print 'Warning: not all subdirectories contain the same files'
+                print('Warning: not all subdirectories contain the same files')
                 break
         if verbose:
             self.outputs() # print available outputs
@@ -66,10 +67,10 @@ class TimeSeries(object):
         selectedOutputNames = [ name for name in self.outputNames if name.startswith(prefix) ]
         if self.verbose:
             if prefix:
-                print 'Files starting with "'+prefix+'" in each subdirectory:'
+                print('Files starting with "{}" in each subdirectory:'.format(prefix))
             else:
-                print 'Files in each subdirectory:'
-            print '\n'.join([ '    '+name for name in selectedOutputNames ])
+                print('Files in each subdirectory:')
+            print('\n'.join([ '    '+name for name in selectedOutputNames ]))
         return selectedOutputNames
 
     def __repr__(self):
