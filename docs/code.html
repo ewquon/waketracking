@@ -1,16 +1,13 @@
+
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
     <title>Code Reference &#8212; waketracking  documentation</title>
-    
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
@@ -24,7 +21,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="prev" title="Samples" href="samples.html" />
@@ -35,7 +32,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
   </head>
-  <body role="document">
+  <body>
   
 
     <div class="document">
@@ -75,13 +72,13 @@ consistency. The resulting data object should contain:</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>outputDir</strong> (<em>string</em>) &#8211; Path to directory containing time subdirectories.</li>
-<li><strong>prefix</strong> (<em>string</em><em>, </em><em>optional</em>) &#8211; Data file prefix.</li>
-<li><strong>NX</strong><strong>,</strong><strong>NY</strong><strong>,</strong><strong>NZ</strong> (<em>integer</em>) &#8211; Dimensions of data, which depending on the reader may be
+<li><strong>outputDir</strong> (<em>string</em>) – Path to directory containing time subdirectories.</li>
+<li><strong>prefix</strong> (<em>string</em><em>, </em><em>optional</em>) – Data file prefix.</li>
+<li><strong>NX</strong><strong>,</strong><strong>NY</strong><strong>,</strong><strong>NZ</strong> (<em>integer</em>) – Dimensions of data, which depending on the reader may be
 detected or read from the data file.</li>
-<li><strong>datasize</strong> (<em>integer</em>) &#8211; Describes the type of data (scalar=1, vector=3).</li>
-<li><strong>npzdata</strong> (<em>string</em>) &#8211; The compressed numpy data file to load from and save to.</li>
-<li><strong>interpHoles</strong> (<em>boolean</em><em>, </em><em>optional</em>) &#8211; Attempt to interpolate data onto a regular grid in case
+<li><strong>datasize</strong> (<em>integer</em>) – Describes the type of data (scalar=1, vector=3).</li>
+<li><strong>npzdata</strong> (<em>string</em>) – The compressed numpy data file to load from and save to.</li>
+<li><strong>interpHoles</strong> (<em>boolean</em><em>, </em><em>optional</em>) – Attempt to interpolate data onto a regular grid in case
 the input data has sampling errors. This depends on the
 np.unique function to identify coordinates.</li>
 </ul>
@@ -93,15 +90,15 @@ np.unique function to identify coordinates.</li>
 <dt id="waketracking.dataloaders.sampled_data.sliceI">
 <code class="descname">sliceI</code><span class="sig-paren">(</span><em>i=0</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.dataloaders.sampled_data.sliceI" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return slice through the dimension 0.</p>
-<p>This is probably the only slicing that makes sense...</p>
+<p>This is probably the only slicing that makes sense…</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><ul class="simple">
-<li><strong>xh,xv</strong> (<em>ndarray</em>) &#8211; Planar coordinaates&#8211;horizontal and vertical&#8211;with the
+<li><strong>xh,xv</strong> (<em>ndarray</em>) – Planar coordinaates–horizontal and vertical–with the
 dimensions (Nh,Nv).</li>
-<li><strong>u</strong> (<em>ndarray</em>) &#8211; Velocity array with dimensions (Ntimes,Nh,Nv,datasize).</li>
+<li><strong>u</strong> (<em>ndarray</em>) – Velocity array with dimensions (Ntimes,Nh,Nv,datasize).</li>
 </ul>
 </td>
 </tr>
@@ -134,9 +131,9 @@ probably does not make sense.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><ul class="simple">
-<li><strong>* x0,x1,x2</strong> (<em>ndarray</em>) &#8211; Sampling grid with dimensions (N1,N2); coordinates are in
+<li><strong>* x0,x1,x2</strong> (<em>ndarray</em>) – Sampling grid with dimensions (N1,N2); coordinates are in
 the Cartesian reference frame.</li>
-<li><strong>* u</strong> (<em>ndarray</em>) &#8211; Velocity array with dimensions (Ntimes,N1,N2,datasize).</li>
+<li><strong>* u</strong> (<em>ndarray</em>) – Velocity array with dimensions (Ntimes,N1,N2,datasize).</li>
 </ul>
 </td>
 </tr>
@@ -157,11 +154,11 @@ the Cartesian reference frame.</li>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>fname</strong> (<em>string</em>) &#8211; Path to file.</li>
-<li><strong>NY</strong> (<em>integer</em>) &#8211; Number of horizontal points.</li>
-<li><strong>NZ</strong> (<em>integer</em><em>, </em><em>optional</em>) &#8211; Number of vertical points; if omitted, assumed equal to NY.</li>
-<li><strong>skiprows</strong> (<em>integer</em><em>, </em><em>optional</em>) &#8211; Number of rows to skip when calling np.loadtxt.</li>
-<li><strong>delimiter</strong> (<em>string</em><em>, </em><em>optional</em>) &#8211; String to use as delimiter when calling np.loadtxt.</li>
+<li><strong>fname</strong> (<em>string</em>) – Path to file.</li>
+<li><strong>NY</strong> (<em>integer</em>) – Number of horizontal points.</li>
+<li><strong>NZ</strong> (<em>integer</em><em>, </em><em>optional</em>) – Number of vertical points; if omitted, assumed equal to NY.</li>
+<li><strong>skiprows</strong> (<em>integer</em><em>, </em><em>optional</em>) – Number of rows to skip when calling np.loadtxt.</li>
+<li><strong>delimiter</strong> (<em>string</em><em>, </em><em>optional</em>) – String to use as delimiter when calling np.loadtxt.</li>
 </ul>
 </td>
 </tr>
@@ -175,18 +172,18 @@ the Cartesian reference frame.</li>
 <dd><p>Raw data from pandas dataframe(s)</p>
 <p>See superclass sampled_data for more information.</p>
 <p>Reads a single time instance from one or more scans provided
-in pandas&#8217; DataFrame format. Data are assumed to be scalar
+in pandas’ DataFrame format. Data are assumed to be scalar
 fields.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>frames</strong> (<em>DataFrame</em><em>, </em><em>list</em><em>, or </em><em>tuple</em>) &#8211; Pandas frames containing scan data.</li>
-<li><strong>NY</strong><strong>,</strong><strong>NZ</strong> (<em>integer</em><em>, </em><em>optional</em>) &#8211; Number of points in each scan direction.</li>
-<li><strong>xr</strong> (<em>ndarray</em><em>, </em><em>optional</em>) &#8211; Range gate distances; if None, then equal unit spacing is
+<li><strong>frames</strong> (<em>DataFrame</em><em>, </em><em>list</em><em>, or </em><em>tuple</em>) – Pandas frames containing scan data.</li>
+<li><strong>NY</strong><strong>,</strong><strong>NZ</strong> (<em>integer</em><em>, </em><em>optional</em>) – Number of points in each scan direction.</li>
+<li><strong>xr</strong> (<em>ndarray</em><em>, </em><em>optional</em>) – Range gate distances; if None, then equal unit spacing is
 assumed.</li>
-<li><strong>refineFactor</strong> (<em>integer</em><em>, </em><em>optional</em>) &#8211; Refinement factor for super-resolving (by cubic
+<li><strong>refineFactor</strong> (<em>integer</em><em>, </em><em>optional</em>) – Refinement factor for super-resolving (by cubic
 interpolation) the field in the lateral and vertical
 directions.</li>
 </ul>
@@ -203,7 +200,7 @@ directions.</li>
 <p>See superclass sampled_data for more information.</p>
 <p>Reads time series data from subdirectories in ${outputDir}.
 Each time subdirectory should contain a file named
-&#8216;${prefix}.000.U&#8217;.</p>
+‘${prefix}.000.U’.</p>
 <p>If NY or NZ are set to None, then the array dimensions
 will be guessed from the data.</p>
 <p>The .mesh files are assumed identical (the mesh is only read
@@ -240,7 +237,7 @@ object.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>method</strong> (<em>string</em>) &#8211; Should correspond to a Tracker class object.</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>method</strong> (<em>string</em>) – Should correspond to a Tracker class object.</td>
 </tr>
 </tbody>
 </table>
@@ -255,33 +252,33 @@ this class.</p>
 <p>Process structured data in rotor-aligned frames of reference.
 Arguments may be in the form:</p>
 <blockquote>
-<div>waketracker(x, y, z, u, ...)</div></blockquote>
+<div>waketracker(x, y, z, u, …)</div></blockquote>
 <p>or</p>
 <blockquote>
-<div>waketracker((x,y,z,u), ...)</div></blockquote>
-<p>The latter form is useful if the datatracker object&#8217;s slice
+<div>waketracker((x,y,z,u), …)</div></blockquote>
+<p>The latter form is useful if the datatracker object’s slice
 function is called inline.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>x</strong><strong>,</strong><strong>y</strong><strong>,</strong><strong>z</strong> (<em>ndarray</em>) &#8211; Sampling grid coordinates in a Cartesian reference frame,
+<li><strong>x</strong><strong>,</strong><strong>y</strong><strong>,</strong><strong>z</strong> (<em>ndarray</em>) – Sampling grid coordinates in a Cartesian reference frame,
 with shape (Nh,Nv). Used to calculate xh and xv, the
 horizontal and vertical grid coordinates in the rotor-
 aligned frame.</li>
-<li><strong>u</strong> (<em>ndarray</em>) &#8211; Instantaneous velocity array with shape
+<li><strong>u</strong> (<em>ndarray</em>) – Instantaneous velocity array with shape
 (Ntimes,Nh,Nv,datasize) or (Ntimes,Nh,Nv) for which
 datasize=1 (i.e., scalar field) is assumed. In the scalar
 case, the velocity is assumed normal to the sampling plane;
 in the vector case, the planar normal velocity is
 calculated assuming that the sampling plane is only yawed
 (and not tilted).</li>
-<li><strong>horzRange</strong><strong>,</strong><strong>vertRange</strong> (<em>tuple</em><em>, </em><em>optional</em>) &#8211; Range of points in the horizontal and vertical directions,
+<li><strong>horzRange</strong><strong>,</strong><strong>vertRange</strong> (<em>tuple</em><em>, </em><em>optional</em>) – Range of points in the horizontal and vertical directions,
 respectively, in the rotor-aligned sampling plane through
 which to search for the wake center</li>
-<li><strong>prefix</strong> (<em>string</em><em>, </em><em>optional</em>) &#8211; Root output directory to save processed data and images.</li>
-<li><strong>verbose</strong> (<em>boolean</em><em>, </em><em>optional</em>) &#8211; Screen output verbosity.</li>
+<li><strong>prefix</strong> (<em>string</em><em>, </em><em>optional</em>) – Root output directory to save processed data and images.</li>
+<li><strong>verbose</strong> (<em>boolean</em><em>, </em><em>optional</em>) – Screen output verbosity.</li>
 </ul>
 </td>
 </tr>
@@ -297,10 +294,10 @@ scipy.ndimage.uniform_filter1d</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>Navg</strong> (<em>integer</em><em>, </em><em>optional</em>) &#8211; Number of snapshots over which to average. If Navg &lt; 0,
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>Navg</strong> (<em>integer</em><em>, </em><em>optional</em>) – Number of snapshots over which to average. If Navg &lt; 0,
 average from end of series only.</td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><strong>uavg</strong> &#8211; If Navg &lt; 0, uavg.shape==(Nh,Nv); otherwise a moving average
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><strong>uavg</strong> – If Navg &lt; 0, uavg.shape==(Nh,Nv); otherwise a moving average
 is return, with uavg.shape==(Ntimes,Nh,Nv).</td>
 </tr>
 <tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">ndarray</td>
@@ -316,9 +313,9 @@ is return, with uavg.shape==(Ntimes,Nh,Nv).</td>
 <p>Calculates self.u from self.u_tot.</p>
 <p>Current supported methods:</p>
 <ul class="simple">
-<li>&#8220;default&#8221;: Estimate from fringes</li>
+<li>“default”: Estimate from fringes</li>
 <li><dl class="first docutils">
-<dt>&#8220;specified&#8221;: Wind profile specified as either a function or an</dt>
+<dt>“specified”: Wind profile specified as either a function or an</dt>
 <dd>array of heights vs horizontal velocity</dd>
 </dl>
 </li>
@@ -328,10 +325,10 @@ is return, with uavg.shape==(Ntimes,Nh,Nv).</td>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>method</strong> (<em>string</em><em>, </em><em>optional</em>) &#8211; Specify method to remove wind shear, or None to use data as
+<li><strong>method</strong> (<em>string</em><em>, </em><em>optional</em>) – Specify method to remove wind shear, or None to use data as
 is; some methods may require additional keyword arguments</li>
-<li><strong>Navg</strong> (<em>integer</em><em>, </em><em>optional</em>) &#8211; Number of snapshots to average over to obtain an
-instaneous average (when shearRemoval==&#8217;default&#8217;).
+<li><strong>Navg</strong> (<em>integer</em><em>, </em><em>optional</em>) – Number of snapshots to average over to obtain an
+instaneous average (when shearRemoval==’default’).
 If Navg &lt; 0, average from end of series only.</li>
 </ul>
 </td>
@@ -342,7 +339,7 @@ If Navg &lt; 0, average from end of series only.</li>
 
 <dl class="method">
 <dt id="waketracking.waketrackers.waketracker.trajectoryIn">
-<code class="descname">trajectoryIn</code><span class="sig-paren">(</span><em>frame</em>, <em>tIdx=None</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.waketrackers.waketracker.trajectoryIn" title="Permalink to this definition">¶</a></dt>
+<code class="descname">trajectoryIn</code><span class="sig-paren">(</span><em>frame</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.waketrackers.waketracker.trajectoryIn" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a tuple with the wake trajectory in the specified frame</p>
 </dd></dl>
 
@@ -361,12 +358,12 @@ between surrounding points. Piecewise linear interpolation
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>update</strong> (<em>boolean</em><em>, </em><em>optional</em>) &#8211; Set to True to update the ywake and zwake in place.</li>
-<li><strong>istart</strong><strong>,</strong><strong>iend</strong> (<em>integer</em><em>, </em><em>optional</em>) &#8211; The range of values to correct.</li>
+<li><strong>update</strong> (<em>boolean</em><em>, </em><em>optional</em>) – Set to True to update the ywake and zwake in place.</li>
+<li><strong>istart</strong><strong>,</strong><strong>iend</strong> (<em>integer</em><em>, </em><em>optional</em>) – The range of values to correct.</li>
 </ul>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>yw_fix,zw_fix</strong> &#8211; Cleaned-up coordinates</p>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>yw_fix,zw_fix</strong> – Cleaned-up coordinates</p>
 </td>
 </tr>
 <tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">ndarray</p>
@@ -393,16 +390,16 @@ frame at time ${itime}.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>itime</strong> (<em>integer</em>) &#8211; Index of the wake snapshot to plot.</li>
-<li><strong>cmin</strong><strong>,</strong><strong>cmax</strong> (<em>float</em><em>, </em><em>optional</em>) &#8211; Range of contour values to plot; if None, then set to min
+<li><strong>itime</strong> (<em>integer</em>) – Index of the wake snapshot to plot.</li>
+<li><strong>cmin</strong><strong>,</strong><strong>cmax</strong> (<em>float</em><em>, </em><em>optional</em>) – Range of contour values to plot; if None, then set to min
 and max field values.</li>
-<li><strong>cmap</strong> (<em>string</em><em>, </em><em>optional</em>) &#8211; Colormap for the contour plot.</li>
-<li><strong>markercolor</strong> (<em>any matplotlib color</em><em>, </em><em>optional</em>) &#8211; To plot the detected wake center, otherwise set to None.</li>
-<li><strong>outline</strong> (<em>boolean</em><em>, </em><em>optional</em>) &#8211; If true, plot a representation of the detected wake edge.</li>
-<li><strong>writepng</strong> (<em>boolean</em><em>, </em><em>optional</em>) &#8211; If True, save image to
+<li><strong>cmap</strong> (<em>string</em><em>, </em><em>optional</em>) – Colormap for the contour plot.</li>
+<li><strong>markercolor</strong> (<em>any matplotlib color</em><em>, </em><em>optional</em>) – To plot the detected wake center, otherwise set to None.</li>
+<li><strong>outline</strong> (<em>boolean</em><em>, </em><em>optional</em>) – If true, plot a representation of the detected wake edge.</li>
+<li><strong>writepng</strong> (<em>boolean</em><em>, </em><em>optional</em>) – If True, save image to
 ${outdir}/${seriesname}_&lt;timeName&gt;.png</li>
-<li><strong>outdir</strong> (<em>string</em><em>, </em><em>optional</em>) &#8211; Output subdirectory.</li>
-<li><strong>seriesname</strong> (<em>string</em><em>, </em><em>optional</em>) &#8211; Prefix for image series (if writepng==True).</li>
+<li><strong>outdir</strong> (<em>string</em><em>, </em><em>optional</em>) – Output subdirectory.</li>
+<li><strong>seriesname</strong> (<em>string</em><em>, </em><em>optional</em>) – Prefix for image series (if writepng==True).</li>
 </ul>
 </td>
 </tr>
@@ -417,7 +414,7 @@ ${outdir}/${seriesname}_&lt;timeName&gt;.png</li>
 edge</p>
 <dl class="docutils">
 <dt>Additional plotting style keywords may be specified, e.g.:</dt>
-<dd>linewidth, linestyle, facecolor, edgecolor,...</dd>
+<dd>linewidth, linestyle, facecolor, edgecolor,…</dd>
 </dl>
 </dd></dl>
 
@@ -454,9 +451,9 @@ edge</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>Cdata</strong> (<em>contour object</em>) &#8211; Instance of matplotlib._cntr.Cntr</li>
-<li><strong>Clevel</strong> (<em>float</em>) &#8211; Contour level for which to identify paths</li>
-<li><strong>closePaths</strong> (<em>tuple</em><em>, </em><em>optional</em>) &#8211; If None, open contours will be ignored; if True, a simple
+<li><strong>Cdata</strong> (<em>contour object</em>) – Instance of matplotlib._cntr.Cntr</li>
+<li><strong>Clevel</strong> (<em>float</em>) – Contour level for which to identify paths</li>
+<li><strong>closePaths</strong> (<em>tuple</em><em>, </em><em>optional</em>) – If None, open contours will be ignored; if True, a simple
 closure will be attempted (assuming that the start and end
 points lie on the same edge); otherwise, specify a tuple with
 (xh_range,xv_range), i.e., the horizontal and vertical range
@@ -465,7 +462,7 @@ of coordinates is not needed)</li>
 </ul>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>pathList</strong> &#8211; List of closed contour paths</p>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>pathList</strong> – List of closed contour paths</p>
 </td>
 </tr>
 <tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">list</p>
@@ -478,7 +475,7 @@ of coordinates is not needed)</li>
 <dl class="function">
 <dt id="waketracking.contour_functions.calcArea">
 <code class="descclassname">waketracking.contour_functions.</code><code class="descname">calcArea</code><span class="sig-paren">(</span><em>path</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.contour_functions.calcArea" title="Permalink to this definition">¶</a></dt>
-<dd><p>Calculate the area enclosed by an arbitrary path using Green&#8217;s
+<dd><p>Calculate the area enclosed by an arbitrary path using Green’s
 Theorem, assuming that the path is closed.</p>
 </dd></dl>
 
@@ -488,34 +485,34 @@ Theorem, assuming that the path is closed.</p>
 <dd><p>Integrate a specified function within an arbitrary region. This
 is a function of f(x,y) and optionally the contour area.</p>
 <p>The area of the enclosed cells is compared to the integrated area
-calculated using Green&#8217;s Theorem to obtain a correction for the
+calculated using Green’s Theorem to obtain a correction for the
 discretization error. The resulting integrated quantity is scaled
 by the ratio of the actual area divided by the enclosed cell areas.
-This correction is expected to be negligible if there are &#8220;enough&#8221;
+This correction is expected to be negligible if there are “enough”
 cells in the contour region.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>contourPts</strong> (<em>path</em>) &#8211; Output from matplotlib._cntr.Cntr object&#8217;s trace function</li>
-<li><strong>xg</strong><strong>,</strong><strong>yg</strong> (<em>ndarray</em>) &#8211; Sampling plane coordinates, in the rotor-aligned frame.</li>
-<li><strong>fg</strong> (<em>ndarray</em>) &#8211; Instantaneous velocity, including shear, used as the
+<li><strong>contourPts</strong> (<em>path</em>) – Output from matplotlib._cntr.Cntr object’s trace function</li>
+<li><strong>xg</strong><strong>,</strong><strong>yg</strong> (<em>ndarray</em>) – Sampling plane coordinates, in the rotor-aligned frame.</li>
+<li><strong>fg</strong> (<em>ndarray</em>) – Instantaneous velocity, including shear, used as the
 independent variable in the specificed function.</li>
-<li><strong>vd</strong> (<em>ndarray</em><em>, </em><em>optional</em>) &#8211; Velocity deficit; if not None, returns average deficit in the
+<li><strong>vd</strong> (<em>ndarray</em><em>, </em><em>optional</em>) – Velocity deficit; if not None, returns average deficit in the
 enclosed region.</li>
-<li><strong>func</strong> (<em></em><em>(</em><em>lambda</em><em>) </em><em>function</em>) &#8211; Function over which to integrate.</li>
-<li><strong>Nmin</strong> (<em>integer</em><em>, </em><em>optional</em>) &#8211; Minimum number of interior cells to compute; if the contour
+<li><strong>func</strong> (<em>(</em><em>lambda</em><em>) </em><em>function</em>) – Function over which to integrate.</li>
+<li><strong>Nmin</strong> (<em>integer</em><em>, </em><em>optional</em>) – Minimum number of interior cells to compute; if the contour
 region is too small, skip the contour for efficiency.</li>
 </ul>
 </td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
-<li><strong>fval</strong> (<em>float</em>) &#8211; Summation of the specified function values in the enclosed
+<li><strong>fval</strong> (<em>float</em>) – Summation of the specified function values in the enclosed
 region, with correction applied. Returns None if the path
 encloses less points than Nmin.</li>
-<li><strong>corr</strong> (<em>float</em>) &#8211; Scaling factor to correct for discrete integration error.</li>
-<li><strong>vdavg</strong> (<em>float</em>) &#8211; Average velocity deficit in the contour region.</li>
+<li><strong>corr</strong> (<em>float</em>) – Scaling factor to correct for discrete integration error.</li>
+<li><strong>vdavg</strong> (<em>float</em>) – Average velocity deficit in the contour region.</li>
 </ul>
 </p>
 </td>
@@ -537,14 +534,14 @@ values in the enclosed wake region.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>contourPts</strong> (<em>path</em>) &#8211; Output from matplotlib._cntr.Cntr object&#8217;s trace function</li>
-<li><strong>xg</strong><strong>,</strong><strong>yg</strong> (<em>ndarray</em>) &#8211; Sampling plane coordinates, in the rotor-aligned frame.</li>
-<li><strong>fg</strong> (<em>ndarray</em>) &#8211; Field function to use for weighting.</li>
-<li><strong>weightingFunc</strong> (<em></em><em>(</em><em>lambda</em><em>) </em><em>function</em>) &#8211; Univariate weighting function.</li>
+<li><strong>contourPts</strong> (<em>path</em>) – Output from matplotlib._cntr.Cntr object’s trace function</li>
+<li><strong>xg</strong><strong>,</strong><strong>yg</strong> (<em>ndarray</em>) – Sampling plane coordinates, in the rotor-aligned frame.</li>
+<li><strong>fg</strong> (<em>ndarray</em>) – Field function to use for weighting.</li>
+<li><strong>weightingFunc</strong> (<em>(</em><em>lambda</em><em>) </em><em>function</em>) – Univariate weighting function.</li>
 </ul>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>xc,yc</strong> &#8211; Coordinates of the weighted wake center in the rotor-aligned
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>xc,yc</strong> – Coordinates of the weighted wake center in the rotor-aligned
 frame.</p>
 </td>
 </tr>
@@ -615,8 +612,8 @@ frame.</p>
       &copy;2017, Eliot Quon.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5.1</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
       
       |
       <a href="_sources/code.rst.txt"
