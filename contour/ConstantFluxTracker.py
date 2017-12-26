@@ -29,7 +29,8 @@ class ConstantFlux(contourwaketracker):
         """Uses a binary search algorithm (findContourCenter) to
         locate the contour with flux closest to the targetValue.
         
-        Some candidate functions:
+        Some candidate functions to be integrated over the contour
+        surface:
 
         * mass flow, func = lambda u: u
         * momentum flux, func = lambda u: u**2
@@ -102,16 +103,17 @@ class ConstantFlux(contourwaketracker):
             print 'Warning: flux field',fluxField,'not available,', \
                     'using \'u_tot\' by default'
             fluxField = 'u_tot'
+            testField = getattr(self,fluxField)
 
         # some sanity checks if needed
         if self.verbose:
-            Umean = np.mean(testField[-1,self.jmin:self.jmax,self.kmin:self.kmax])
+            Utest = np.min(testField[-1,self.jmin:self.jmax,self.kmin:self.kmax])
             if fluxFunction.func_code.co_argcount==1: # fn(u)
                 print 'Sample function evaluation: f(u={:g}) = {:g}'.format(
-                        Umean,fluxFunction(Umean))
+                        Utest,fluxFunction(Utest))
             else: # fn(u,A)
                 print 'Sample function evaluation: f(u={:g},1.0) = {:g}'.format(
-                        Umean,fluxFunction(Umean,1))
+                        Utest,fluxFunction(Utest,1))
             print ' ~= targetValue / area =',refFlux,'/ A'
 
         if contourClosure is None or contourClosure=='none':
