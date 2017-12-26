@@ -4,7 +4,7 @@ import importlib
 import numpy as np
 from scipy.optimize import least_squares
 
-from waketracking.waketrackers import waketracker
+from samwich.waketrackers import waketracker
 
 class Gaussian(waketracker):
     """Identifies a wake as the best fit to a univariate Gaussian

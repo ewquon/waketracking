@@ -2,7 +2,7 @@ import sys
 
 import numpy as np
 
-from waketracking.waketrackers import contourwaketracker
+from samwich.waketrackers import contourwaketracker
 
 class ConstantArea(contourwaketracker):
     """Identifies a wake as a region with velocity deficit contour

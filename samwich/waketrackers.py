@@ -16,7 +16,7 @@ import samwich.contour_functions as contour
 
 #==============================================================================
 
-def track(cls,*args,**kwargs):
+def track(*args,**kwargs):
     """Returns the specified waketracker object. If no method is
     specified, then a list of available Tracker objects is printed.
 
