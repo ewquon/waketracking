@@ -79,13 +79,12 @@ class Gaussian(waketracker):
         if umin is None:
             # calculate umin available data
             self.umin = np.min(self.u,axis=(1,2))
-        elif not isinstance(umin,np.ndarray):
+        elif isinstance(umin,np.ndarray):
+            # specified umin as array with length Ntimes
+            self.umin = umin
+        else:
             # specified constant umin
             self.umin = umin * np.ones(self.Ntimes)
-        else:
-            # specified umin as array with length Ntimes
-            assert(isinstance(umin,np.ndarray))
-            self.umin = umin
 
         if not np.all(umin < 0):
             print 'Warning: Unexpected positive velocity deficit at', \

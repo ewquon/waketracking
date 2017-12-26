@@ -3,6 +3,7 @@ import os
 import sys
 import importlib
 import inspect
+import pickle  # to archive path objects containing wake outlines
 
 import numpy as np
 from scipy.ndimage import uniform_filter1d  # to perform moving average
@@ -10,13 +11,12 @@ from matplotlib._cntr import Cntr  # to process contour data
 import matplotlib.pyplot as plt
 import matplotlib.path as mpath
 import matplotlib.patches as mpatch
-import pickle  # to archive path objects containing wake outlines
 
-import contour_functions as contour
+import samwich.contour_functions as contour
 
 #==============================================================================
 
-def track(*args,**kwargs):
+def track(cls,*args,**kwargs):
     """Returns the specified waketracker object. If no method is
     specified, then a list of available Tracker objects is printed.
 
@@ -28,14 +28,13 @@ def track(*args,**kwargs):
     method : string
         Should correspond to a Tracker class object.
     """
-    trackerList = {}
-    modulePath = os.path.dirname(__file__)
-    moduleName = os.path.split(modulePath)[-1]
-    assert(moduleName == 'waketracking')
+    tracker_list = {}
+    module_path = os.path.dirname(__file__)
+    module_name = os.path.split(module_path)[-1]
 
-    for rootdir,subdirs,filelist in os.walk(modulePath):
-        trimdir = rootdir.replace(modulePath,moduleName) # trim path
-        pyroot = trimdir.replace(os.sep,'.') # change to python format
+    for rootdir,subdirs,filelist in os.walk(module_path):
+        trimdir = rootdir.replace(module_path,module_name)  # trim path
+        pyroot = trimdir.replace(os.sep,'.')  # change to python format
         for filename in filelist:
             if filename.endswith('Tracker.py'):
                 submodule = pyroot + '.' + filename[:-3]
@@ -43,16 +42,16 @@ def track(*args,**kwargs):
                 for name,cls in inspect.getmembers(mod,inspect.isclass):
                     # can have more than one tracker class per module file
                     if cls.__module__ == mod.__name__:
-                        trackerList[name] = cls
+                        tracker_list[name] = cls
         
     method = kwargs.get('method',None)
-    if method not in trackerList.keys():
+    if method not in tracker_list.keys():
         print("Need to specify 'method' as one of:")
-        for name,tracker in trackerList.iteritems():
+        for name,tracker in tracker_list.iteritems():
             print('  {:s} ({:s})'.format(name,tracker.__module__))
         return None
     else:
-        tracker = trackerList[method]
+        tracker = tracker_list[method]
         if kwargs.get('verbose',True):
             print('Selected Tracker: {}\n'.format(tracker.__name__))
         return tracker(*args,**kwargs)
