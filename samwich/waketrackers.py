@@ -751,7 +751,7 @@ class contourwaketracker(waketracker):
                            itime,
                            targetValue,
                            weightedCenter=True,
-                           contourClosure=False,
+                           contour_closure=False,
                            Ntest=11,
                            tol=0.01,
                            func=None,
@@ -806,7 +806,8 @@ class contourwaketracker(waketracker):
             for Clevel in Crange:
                 if debug: print('  testing contour level {}'.format(Clevel))
 
-                curPathList = contour.getPaths(Cdata,Clevel,closePaths=contourClosure)
+                curPathList = contour.get_paths(Cdata,Clevel,
+                                                close_paths=contour_closure)
                 if debug: print('  contour paths found: {}'.format(len(curPathList)))
 
                 if func is None and not vdcheck:
@@ -814,15 +815,15 @@ class contourwaketracker(waketracker):
                     # Note: This is MUCH faster, since we don't have to search for interior pts!
                     paths += curPathList
                     level += len(curPathList)*[Clevel]
-                    Flist += [ contour.calcArea(path) for path in curPathList ]
+                    Flist += [ contour.calc_area(path) for path in curPathList ]
                 elif func is None:
                     assert(vdcheck)
                     # area contours with velocity deficit check
                     for path in curPathList:
                         fval, corr, avgDeficit = \
-                                contour.integrateFunction(path, None,
-                                                          self.xh, self.xv, None,
-                                                          vd=self.u[itime,:,:])
+                                contour.integrate_function(path, None,
+                                                           self.xh, self.xv, None,
+                                                           vd=self.u[itime,:,:])
                         if fval is not None and avgDeficit < 0:
                             paths.append(path)
                             level.append(Clevel)
@@ -835,7 +836,7 @@ class contourwaketracker(waketracker):
                         vd = None
                     for path in curPathList:
                         fval, corr, avgDeficit = \
-                                contour.integrateFunction(path,
+                                contour.integrate_function(path,
                                                           func,
                                                           self.xh, self.xv, testfield,
                                                           vd=vd)
@@ -890,11 +891,11 @@ class contourwaketracker(waketracker):
                     func = np.abs
                 else:
                     func = weightedCenter # function type
-                yc,zc = contour.calcWeightedCenter(paths[idx],
-                                                   self.xh,
-                                                   self.xv,
-                                                   self.u[itime,:,:],
-                                                   weightingFunc=func)
+                yc,zc = contour.calc_weighted_center(paths[idx],
+                                                     self.xh,
+                                                     self.xv,
+                                                     self.u[itime,:,:],
+                                                     weighting_function=func)
             else:
                 # geometric center
                 yc = np.mean(paths[idx][:,0])

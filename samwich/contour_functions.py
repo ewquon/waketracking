@@ -2,7 +2,7 @@ from __future__ import print_function
 import numpy as np
 import matplotlib.path as mpath
 
-def getPaths(Cdata,Clevel,closePaths=False,verbose=False):
+def get_paths(Cdata,Clevel,close_paths=False,verbose=False):
     """Loops over paths identified by the trace function.
 
     Parameters
@@ -11,7 +11,7 @@ def getPaths(Cdata,Clevel,closePaths=False,verbose=False):
         Instance of matplotlib._cntr.Cntr
     Clevel : float
         Contour level for which to identify paths
-    closePaths : tuple, optional
+    close_paths : tuple, optional
         If None, open contours will be ignored; if True, a simple
         closure will be attempted (assuming that the start and end
         points lie on the same edge); otherwise, specify a tuple with
@@ -21,10 +21,10 @@ def getPaths(Cdata,Clevel,closePaths=False,verbose=False):
 
     Returns
     -------
-    pathList : list
+    path_list : list
         List of closed contour paths
     """
-    pathList = []
+    path_list = []
     for path in Cdata.trace(Clevel):
         # Returns a list of arrays (floats) followed by lists (uint8),
         #   of the contour coordinates and segment descriptors,
@@ -35,27 +35,27 @@ def getPaths(Cdata,Clevel,closePaths=False,verbose=False):
             break
         if np.all(path[-1] == path[0]):
             # closed contour
-            pathList.append(path)
-        elif closePaths:
+            path_list.append(path)
+        elif close_paths:
             # need to close open contour
             xstart = path[0,:]
             xend = path[-1,:]
             if (xstart[0] == xend[0]) or (xstart[1] == xend[1]):
                 # simplest case: both ends point on same edge
                 path = np.vstack((path,xstart))
-                pathList.append(path)
+                path_list.append(path)
                 if verbose:
                     print('  closed contour (simple)')
                     print('  {} {}'.format(xstart,xend))
-            elif isinstance(closePaths, (list,tuple)):
+            elif isinstance(close_paths, (list,tuple)):
                 # more complex case, need some additional grid information
                 newpath1 = np.copy(path)
                 newpath2 = np.copy(path)
                 xend = np.array(xend)
-                x0 = closePaths[0][0]
-                x1 = closePaths[0][-1]
-                y0 = closePaths[1][0]
-                y1 = closePaths[1][-1]
+                x0 = close_paths[0][0]
+                x1 = close_paths[0][-1]
+                y0 = close_paths[1][0]
+                y1 = close_paths[1][-1]
                 assert((xstart[0] == x0 or xstart[0] == x1) or \
                        (xstart[1] == y0 or xstart[1] == y1))
                 assert((xend[0] == x0 or xend[0] == x1) or \
@@ -89,25 +89,25 @@ def getPaths(Cdata,Clevel,closePaths=False,verbose=False):
                 # - add points until we get to the same edge as the start point
                 #   if we get an IndexError on corners*[ipop,:], then we have a problem with the
                 #   logic; we should be adding at most 3 points, never all 4 corners...
-                def sameEdge(pt1,pt2):
+                def same_edge(pt1,pt2):
                     return (pt1[0] == pt2[0]) or (pt1[1] == pt2[1])
                 if verbose: print('creating CW loop')
                 ipop = 0
-                while not sameEdge(newpath1[-1,:],xstart):
+                while not same_edge(newpath1[-1,:],xstart):
                     if verbose: print('{} not on same edge as {}'.format(newpath1[-1,:],xstart))
                     newpath1 = np.vstack((newpath1,cornersCW[ipop,:]))
                     ipop += 1
                 if verbose: print('creating CCW loop')
                 ipop = 0
-                while not sameEdge(newpath2[-1,:],xstart):
+                while not same_edge(newpath2[-1,:],xstart):
                     if verbose: print('{} not on same edge as {}'.format(newpath2[-1,:],xstart))
                     newpath2 = np.vstack((newpath2,cornersCCW[ipop,:]))
                     ipop += 1
                 # - should have a closed loop now
                 newpath1 = np.vstack((newpath1,xstart))
                 newpath2 = np.vstack((newpath2,xstart))
-                pathList.append(newpath1)
-                pathList.append(newpath2)
+                path_list.append(newpath1)
+                path_list.append(newpath2)
                 if verbose:
                     print('  closed contour (compound)')
                     print('  {} {}'.format(xstart,xend))
@@ -118,9 +118,9 @@ def getPaths(Cdata,Clevel,closePaths=False,verbose=False):
                     print('  {} {}'.format(xstart,xend))
                 continue
 
-    return pathList
+    return path_list
 
-def calcArea(path):
+def calc_area(path):
     """Calculate the area enclosed by an arbitrary path using Green's
     Theorem, assuming that the path is closed.
     """
@@ -140,11 +140,11 @@ def calcArea(path):
     dy = np.diff(yp)
     return 0.5*np.abs(np.sum(yp[:-1]*dx - xp[:-1]*dy))
 
-def integrateFunction(contourPts,
-                      func,
-                      xg,yg,fg,
-                      vd=None,
-                      Nmin=50):
+def integrate_function(contour_points,
+                       func,
+                       xg,yg,fg,
+                       vd=None,
+                       Nmin=50):
     """Integrate a specified function within an arbitrary region. This
     is a function of f(x,y) and optionally the contour area.
 
@@ -157,7 +157,7 @@ def integrateFunction(contourPts,
 
     Parameters
     ----------
-    contourPts : path 
+    contour_points : path 
         Output from matplotlib._cntr.Cntr object's trace function
     xg,yg : ndarray
         Sampling plane coordinates, in the rotor-aligned frame.
@@ -187,8 +187,8 @@ def integrateFunction(contourPts,
     x = xg.ravel()
     y = yg.ravel()
     gridPts = np.vstack((x,y)).transpose()
-    path = mpath.Path(contourPts)
-    A = calcArea(contourPts)
+    path = mpath.Path(contour_points)
+    A = calc_area(contour_points)
 
     inner = path.contains_points(gridPts)  # <-- most of the processing time is here!
     Ninner = len(np.nonzero(inner)[0])
@@ -222,9 +222,9 @@ def integrateFunction(contourPts,
     
     return fval, corr, vdavg
 
-def calcWeightedCenter(contourPts,
-                       xg,yg,fg,
-                       weightingFunc=np.abs):
+def calc_weighted_center(contour_points,
+                         xg,yg,fg,
+                         weighting_function=np.abs):
     """Calculated the velocity-weighted center given an arbitrary path.
     The center is weighted by a specified weighting function (the abs
     function by default) applied to specified field values (e.g.
@@ -233,13 +233,13 @@ def calcWeightedCenter(contourPts,
 
     Parameters
     ----------
-    contourPts : path 
+    contour_points : path 
         Output from matplotlib._cntr.Cntr object's trace function
     xg,yg : ndarray
         Sampling plane coordinates, in the rotor-aligned frame.
     fg : ndarray
         Field function to use for weighting.
-    weightingFunc : (lambda) function
+    weighting_function : (lambda) function
         Univariate weighting function.
 
     Returns
@@ -251,12 +251,12 @@ def calcWeightedCenter(contourPts,
     x = xg.ravel()
     y = yg.ravel()
     gridPts = np.vstack((x,y)).transpose()
-    path = mpath.Path(contourPts)
+    path = mpath.Path(contour_points)
 
     inner = path.contains_points(gridPts)
     xin = x[inner]
     yin = y[inner]
-    weights = weightingFunc(fg.ravel()[inner])
+    weights = weighting_function(fg.ravel()[inner])
     denom = np.sum(weights)
 
     xc = weights.dot(xin) / denom

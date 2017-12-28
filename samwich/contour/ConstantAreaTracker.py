@@ -24,7 +24,7 @@ class ConstantArea(contourwaketracker):
     def findCenters(self,refArea,
                     trajectoryFile=None,outlinesFile=None,
                     weightedCenter=True,
-                    contourClosure=None,
+                    contour_closure=None,
                     frame='rotor-aligned',
                     Ntest=21,tol=0.01,
                     checkdeficit=False,
@@ -50,7 +50,7 @@ class ConstantArea(contourwaketracker):
             If True, calculate the velocity-deficit-weighted "center of
             mass"; if False, calculate the geometric center of the wake.
             This can also be a weighting function.
-        contourClosure : string, optional
+        contour_closure : string, optional
             If 'simple', then open paths with endpoints on the same
             edge will be closed by connecting the endpoints; if
             'compound', then open paths will be closed by adding
@@ -86,11 +86,11 @@ class ConstantArea(contourwaketracker):
         if self.wakeTracked:
             return self.trajectoryIn(frame)
 
-        if contourClosure is None or contourClosure=='none':
+        if contour_closure is None or contour_closure=='none':
             closure = False
-        elif contourClosure=='simple':
+        elif contour_closure=='simple':
             closure = True
-        elif contourClosure=='compound':
+        elif contour_closure=='compound':
             closure = (self.xh_range,self.xv_range)
 
         # calculate trajectories for each time step
@@ -100,7 +100,7 @@ class ConstantArea(contourwaketracker):
             _,_,info = self._findContourCenter(itime,
                                                refArea,
                                                weightedCenter=weightedCenter,
-                                               contourClosure=closure,
+                                               contour_closure=closure,
                                                Ntest=Ntest,
                                                tol=tol,
                                                func=None,
