@@ -599,7 +599,7 @@ class waketracker(object):
                 cmax = np.max(self.u[itime,:,:])
             self.plot_clevels = np.linspace(cmin, cmax, 100)
 
-            self.plotobj_filledContours = self.ax.contourf(self.xh, self.xv, self.u[itime,:,:],
+            self.plotobj_filledcontours = self.ax.contourf(self.xh, self.xv, self.u[itime,:,:],
                                                            self.plot_clevels, cmap=cmap,
                                                            extend='both')
 
@@ -621,7 +621,7 @@ class waketracker(object):
 
             # add colorbar
             cb_ticks = np.linspace(cmin, cmax, 11)
-            cb = self.fig.colorbar(self.plotobj_filledContours,
+            cb = self.fig.colorbar(self.plotobj_filledcontours,
                                    ticks=cb_ticks, label=r'$U \ (m/s)$')
 
             # add time annotation
@@ -632,13 +632,13 @@ class waketracker(object):
             self.plot_initialized = True
 
         else:
-            if outline and hasattr(self,'plotobj_wakeOutline'):
-                self.plotobj_wakeOutline.remove()
+            if outline and hasattr(self,'plotobj_wakeoutline'):
+                self.plotobj_wakeoutline.remove()
 
             # update plot
-            for i in range( len(self.plotobj_filledContours.collections) ):
-                self.plotobj_filledContours.collections[i].remove()
-            self.plotobj_filledContours = self.ax.contourf(
+            for i in range( len(self.plotobj_filledcontours.collections) ):
+                self.plotobj_filledcontours.collections[i].remove()
+            self.plotobj_filledcontours = self.ax.contourf(
                     self.xh, self.xv, self.u[itime,:,:],
                     self.plot_clevels, cmap=cmap, extend='both')
 
@@ -680,12 +680,12 @@ class waketracker(object):
             if self.verbose:
                 print('No contour available to plot?')
             return
-        self.plotobj_wakeOutline = mpatch.PathPatch(path,
+        self.plotobj_wakeoutline = mpatch.PathPatch(path,
                                                     lw=lw,ls=ls,
                                                     facecolor=facecolor,
                                                     edgecolor=edgecolor,
                                                     **kwargs)
-        plt.gca().add_patch(self.plotobj_wakeOutline)
+        plt.gca().add_patch(self.plotobj_wakeoutline)
 
 
     def save_snapshots(self,**kwargs):
@@ -763,8 +763,8 @@ class contourwaketracker(waketracker):
         until the difference in contour values is < 'tol'. This *should*
         be called from contourwaketracker.
 
-        If allowOpenContours is True, then open contours are closed
-        with segments along the boundaries.
+        If contour_closure is True, then open contours are closed with
+        segments along the boundaries.
 
         Sets the following attributes:
         * self.xh_wake[itime]
@@ -806,25 +806,26 @@ class contourwaketracker(waketracker):
             for Clevel in Crange:
                 if debug: print('  testing contour level {}'.format(Clevel))
 
-                curPathList = contour.get_paths(Cdata,Clevel,
-                                                close_paths=contour_closure)
-                if debug: print('  contour paths found: {}'.format(len(curPathList)))
+                cur_path_list = contour.get_paths(Cdata,Clevel,
+                                                  close_paths=contour_closure)
+                if debug:
+                    print('  contour paths found: {}'.format(len(cur_path_list)))
 
                 if func is None and not vdcheck:
                     # area contours without velocity deficit check
                     # Note: This is MUCH faster, since we don't have to search for interior pts!
-                    paths += curPathList
-                    level += len(curPathList)*[Clevel]
-                    Flist += [ contour.calc_area(path) for path in curPathList ]
+                    paths += cur_path_list
+                    level += len(cur_path_list)*[Clevel]
+                    Flist += [contour.calc_area(path) for path in cur_path_list]
                 elif func is None:
                     assert(vdcheck)
                     # area contours with velocity deficit check
-                    for path in curPathList:
-                        fval, corr, avgDeficit = \
+                    for path in cur_path_list:
+                        fval, corr, avgdeficit = \
                                 contour.integrate_function(path, None,
                                                            self.xh, self.xv, None,
                                                            vd=self.u[itime,:,:])
-                        if fval is not None and avgDeficit < 0:
+                        if fval is not None and avgdeficit < 0:
                             paths.append(path)
                             level.append(Clevel)
                             Flist.append(fval)
@@ -834,14 +835,14 @@ class contourwaketracker(waketracker):
                         vd = self.u[itime,:,:]
                     else:
                         vd = None
-                    for path in curPathList:
-                        fval, corr, avgDeficit = \
+                    for path in cur_path_list:
+                        fval, corr, avgdeficit = \
                                 contour.integrate_function(path,
-                                                          func,
-                                                          self.xh, self.xv, testfield,
-                                                          vd=vd)
+                                                           func,
+                                                           self.xh, self.xv, testfield,
+                                                           vd=vd)
                         #NfnEvals += 1
-                        if fval is not None and avgDeficit < 0:
+                        if fval is not None and avgdeficit < 0:
                             paths.append(path)
                             level.append(Clevel)
                             Flist.append(fval)
@@ -851,7 +852,7 @@ class contourwaketracker(waketracker):
                 # found at least one candidate contour
                 Ferr = np.abs( np.array(Flist) - target_value )
                 idx = np.argmin(Ferr)
-                curOptLevel = level[idx]
+                cur_opt_level = level[idx]
                 if debug:
                     print('target values: {}'.format(Flist))
                     print('current optimum level: {}'.format(level[idx]))
@@ -866,7 +867,7 @@ class contourwaketracker(waketracker):
 
             # update the contour search range
             interval /= 2.
-            Crange = np.linspace(curOptLevel-interval,curOptLevel+interval,Ntest)
+            Crange = np.linspace(cur_opt_level-interval, cur_opt_level+interval, Ntest)
 
             if debug:
                 print('new interval: {}'.format(interval))
