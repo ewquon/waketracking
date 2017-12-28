@@ -198,9 +198,9 @@ class Gaussian2D(waketracker):
 
         # write out everything
         self._write_trajectory(trajectory_file,
-                self.sigma_y,
-                self.sigma_z,
-                self.rotation)
+                               self.sigma_y,
+                               self.sigma_z,
+                               self.rotation)
         self._write_outlines(outlines_file)
     
         return self.trajectory_in(frame)

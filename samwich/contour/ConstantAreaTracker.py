@@ -21,7 +21,7 @@ class ConstantArea(contourwaketracker):
         if self.verbose:
             print '\n...finished initializing',self.__class__.__name__,'\n'
 
-    def find_centers(self,refArea,
+    def find_centers(self,ref_area,
                      trajectory_file=None,outlines_file=None,
                      weighted_center=True,
                      contour_closure=None,
@@ -36,7 +36,7 @@ class ConstantArea(contourwaketracker):
         
         Parameters
         ----------
-        refArea : float
+        ref_area : float
             Area to attempt to match, e.g., the rotor disk area.
         trajectory_file : string, optional
             Name of trajectory data file to attempt inputting and to
@@ -95,10 +95,10 @@ class ConstantArea(contourwaketracker):
 
         # calculate trajectories for each time step
         if self.verbose:
-            print 'Attempting to match area:',refArea,'m^2'
+            print 'Attempting to match area:',ref_area,'m^2'
         for itime in range(self.Ntimes):
             _,_,info = self._find_contour_center(itime,
-                                                 refArea,
+                                                 ref_area,
                                                  weighted_center=weighted_center,
                                                  contour_closure=closure,
                                                  Ntest=Ntest,
