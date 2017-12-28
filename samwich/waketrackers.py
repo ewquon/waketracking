@@ -93,7 +93,7 @@ class waketracker(object):
             in the vector case, the planar normal velocity is
             calculated assuming that the sampling plane is only yawed
             (and not tilted).
-        horzRange,vertRange : tuple, optional
+        horz_range,vert_range : tuple, optional
             Range of points in the horizontal and vertical directions,
             respectively, in the rotor-aligned sampling plane through
             which to search for the wake center
@@ -108,10 +108,10 @@ class waketracker(object):
             return
 
         # set initial/default values
-        self.wakeTracked = False
-        self.shearRemoval = None
+        self.wake_tracked = False
+        self.shear_removal = None
         self.Navg = None  # for removing shear
-        self.plotInitialized = False
+        self.plot_initialized = False
 
         self.prefix = kwargs.get('prefix','.')
         if not os.path.isdir(self.prefix):
@@ -193,12 +193,12 @@ class waketracker(object):
         self.xv_fail = self.xv_range[0]
 
         # set up search range
-        self.hRange = kwargs.get('horzRange',(-1e9,1e9))
-        self.vRange = kwargs.get('vertRange',(-1e9,1e9))
-        self.jmin = np.argmin(np.abs(self.hRange[0]-self.xh_range-self.y0))
-        self.kmin = np.argmin(np.abs(self.vRange[0]-self.xv_range))
-        self.jmax = np.argmin(np.abs(self.hRange[1]-self.xh_range-self.y0))
-        self.kmax = np.argmin(np.abs(self.vRange[1]-self.xv_range))
+        self.hrange = kwargs.get('horz_range',(-1e9,1e9))
+        self.vrange = kwargs.get('vert_range',(-1e9,1e9))
+        self.jmin = np.argmin(np.abs(self.hrange[0]-self.xh_range-self.y0))
+        self.kmin = np.argmin(np.abs(self.vrange[0]-self.xv_range))
+        self.jmax = np.argmin(np.abs(self.hrange[1]-self.xh_range-self.y0))
+        self.kmax = np.argmin(np.abs(self.vrange[1]-self.xv_range))
         self.xh_min = self.xh_range[self.jmin]
         self.xv_min = self.xv_range[self.kmin]
         self.xh_max = self.xh_range[self.jmax]
@@ -280,15 +280,15 @@ class waketracker(object):
         s += ' with shape ({:d},{:d})\n'.format(self.Nh,self.Nv)
         s += '  Number of frames       : {:d}\n'.format(self.Ntimes)
         s += '  Sampling plane yaw     : {:.1f} deg\n'.format(self.yaw*180/np.pi)
-        s += '  Shear removal          : {}\n'.format(self.shearRemoval)
-        s += '  Wake tracking complete : {}\n'.format(self.wakeTracked)
+        s += '  Shear removal          : {}\n'.format(self.shear_removal)
+        s += '  Wake tracking complete : {}\n'.format(self.wake_tracked)
         return s
 
-    def averageVelocity(self,Navg=-300):
+    def average_velocity(self,Navg=-300):
         """Calculates moving average using
         scipy.ndimage.uniform_filter1d
 
-        Called by removeShear()
+        Called by remove_shear()
 
         Parameters
         ----------
@@ -313,7 +313,7 @@ class waketracker(object):
         self.Navg = Navg
         return self.uavg
 
-    def removeShear(self,method='default',Navg=-300,windProfile=None):
+    def remove_shear(self,method='default',Navg=-300,wind_profile=None):
         """Removes wind shear from data.
 
         Calculates self.u from self.u_tot.
@@ -331,35 +331,35 @@ class waketracker(object):
             is; some methods may require additional keyword arguments
         Navg : integer, optional
             Number of snapshots to average over to obtain an
-            instaneous average (when shearRemoval=='default').
+            instaneous average (when shear_removal=='default').
             If Navg < 0, average from end of series only.
         """
         Navg = int(Navg)
         self.Navg = Navg
-        self.shearRemoval = method
+        self.shear_removal = method
 
         # determine the wind profile
         if method == 'default':
             if self.verbose:
                 print('Estimating velocity profile from fringes of sampling plane with Navg={}'.format(Navg))
-            uavg = self.averageVelocity(Navg) # updates self.uavg
+            uavg = self.average_velocity(Navg) # updates self.uavg
             if Navg < 0:
                 self.Uprofile = (uavg[0,:] + uavg[-1,:]) / 2  # shape=(Nv)
             else:
                 self.Uprofile = (uavg[:,0,:] + uavg[:,-1,:]) / 2 # shape=(Ntimes,Nv)
 
         elif method == 'specified':
-            if windProfile is None:
-                print('Need to specify windProfile, shear not removed.')
+            if wind_profile is None:
+                print('Need to specify wind_profile, shear not removed.')
                 return
-            if isinstance(windProfile, (list,tuple,np.ndarray)):
-                assert(len(windProfile) == self.Nv)
-                self.Uprofile = windProfile
-            elif isinstance(windProfile, str):
-                #zref,Uref = readRef(windProfile)
+            if isinstance(wind_profile, (list,tuple,np.ndarray)):
+                assert(len(wind_profile) == self.Nv)
+                self.Uprofile = wind_profile
+            elif isinstance(wind_profile, str):
+                #zref,Uref = readRef(wind_profile)
                 #self.Uprofile = np.interp(self.z,zref,Uref) 
-                self.Uprofile = np.loadtxt(windProfile)
-                print('Wind profile read from {}'.format(windProfile))
+                self.Uprofile = np.loadtxt(wind_profile)
+                print('Wind profile read from {}'.format(wind_profile))
 
         elif method is not None:
             print('Shear removal method ({}) not supported.'.format(method))
@@ -382,14 +382,14 @@ class waketracker(object):
                 for k,umean in enumerate(self.Uprofile[itime,:]):
                     self.u[itime,:,k] -= umean
 
-    def findCenters(self,
-                    trajectoryFile=None,
+    def find_centers(self,
+                    trajectory_file=None,
                     frame='rotor-aligned'):
-        self.plotInitialized = False
+        self.plot_initialized = False
         print('{} needs to override this function!'.format(self.__class__.__name))
-        #self.wakeTracked = True
+        #self.wake_tracked = True
 
-    def trajectoryIn(self,frame):
+    def trajectory_in(self,frame):
         """Returns a tuple with the wake trajectory in the specified frame"""
         if frame == 'inertial':
             return self.xwake, self.ywake, self.zwake
@@ -398,7 +398,7 @@ class waketracker(object):
         else:
             print('output frame not recognized')
 
-    def fixTrajectoryErrors(self,update=False,istart=0,iend=None):
+    def fix_trajectory_errors(self,update=False,istart=0,iend=None):
         """Some wake detection algorithms are not guaranteed to provide
         a valid trajectory. By default, the coordinates of failed
         detection points is set to be (min(y),min(z)). This routine
@@ -443,7 +443,7 @@ class waketracker(object):
         
         return yw_fix, zw_fix
 
-    def _writeData(self,fname,data):
+    def _write_data(self,fname,data):
         """Helper function to write out specified data (e.g., trajectory
         and optimization parameters)
         """
@@ -460,9 +460,9 @@ class waketracker(object):
 
         np.savetxt(fname, data, fmt=fmtlist)
 
-    def _readTrajectory(self,fname):
+    def _read_trajectory(self,fname):
         """Helper function to read trajectory history typically called
-        at the beginning of findCenters
+        at the beginning of find_centers
         """
         if fname is None:
             return None
@@ -486,14 +486,14 @@ class waketracker(object):
         # data[:,0] is just an index
         self.xh_wake = data[:,1]
         self.xv_wake = data[:,2]
-        self._updateInertial()
-        self.wakeTracked = True
+        self._update_inertial()
+        self.wake_tracked = True
         if self.verbose:
             print('Trajectory loaded from',fname)
 
         return data
 
-    def _writeTrajectory(self,fname,*args):
+    def _write_trajectory(self,fname,*args):
         """Helper function to write trajectory history"""
         if fname is None: return
         if not fname.startswith(self.prefix):
@@ -501,11 +501,11 @@ class waketracker(object):
         data = [self.xh_wake, self.xv_wake]
         for arg in args:
             data.append(arg)
-        self._writeData(fname,data)
+        self._write_data(fname,data)
         if self.verbose:
             print('Wrote out trajectory to',fname)
 
-    def _updateInertial(self):
+    def _update_inertial(self):
         """Called after loading/calculating a wake trajectory in the
         rotor-aligned frame to calculate the trajectory in the inertial
         frame.
@@ -516,7 +516,7 @@ class waketracker(object):
         self.ywake = self.y0 + np.sin(ang)*xd + np.cos(ang)*self.xh_wake
         self.zwake = self.xv_wake
 
-    def _initPlot(self):
+    def _init_plot(self):
         """Set up figure properties here""" 
         if self.verbose: print('Initializing plot')
 
@@ -525,7 +525,7 @@ class waketracker(object):
         self.fig = plt.figure(figsize=(8,6))
 
         def handle_close(event):
-            self.plotInitialized = False
+            self.plot_initialized = False
         cid = self.fig.canvas.mpl_connect('close_event', handle_close)
 
         self.ax = self.fig.add_axes([0.15, 0.15, 0.8, 0.8])
@@ -541,17 +541,17 @@ class waketracker(object):
         self.ax.set_xlabel(r'$y (m)$', fontsize=14)
         self.ax.set_ylabel(r'$z (m)$', fontsize=14)
 
-    def clearPlot(self):
+    def clear_plot(self):
         """Resets all saved plot handles and requires reinitialization
-        the next time plotContour is called.
+        the next time plot_contour is called.
         """
         #if hasattr(self,'fig') and self.fig is not None:
         #    plt.close(self.fig)
         self.fig = None
         self.ax = None
-        self.plotInitialized = False
+        self.plot_initialized = False
 
-    def plotContour(self,
+    def plot_contour(self,
                     itime=0,
                     cmin=None,cmax=None,
                     cmap='jet',
@@ -588,10 +588,10 @@ class waketracker(object):
             if self.verbose: print('Creating output subdirectory:',outdir)
             os.makedirs(outdir)
 
-        outline = outline and self.wakeTracked
+        outline = outline and self.wake_tracked
 
-        if not self.plotInitialized:
-            self._initPlot()  # first time
+        if not self.plot_initialized:
+            self._init_plot()  # first time
 
             if cmin is None:
                 cmin = np.min(self.u[itime,:,:])
@@ -604,7 +604,7 @@ class waketracker(object):
                                                            extend='both')
 
             # add marker for detected wake center
-            if self.wakeTracked and markercolor is not None \
+            if self.wake_tracked and markercolor is not None \
                     and (not self.xh_wake[itime] == self.xh_fail) \
                     and (not self.xv_wake[itime] == self.xv_fail):
                 self.plotobj_ctr, = self.ax.plot(self.xh_wake[itime],
@@ -629,7 +629,7 @@ class waketracker(object):
             #        horizontalalignment='right', verticalalignment='center',
             #        transform=self.ax.transAxes)
 
-            self.plotInitialized = True
+            self.plot_initialized = True
 
         else:
             if outline and hasattr(self,'plotobj_wakeOutline'):
@@ -642,13 +642,13 @@ class waketracker(object):
                     self.xh, self.xv, self.u[itime,:,:],
                     self.plot_clevels, cmap=cmap, extend='both')
 
-            if self.wakeTracked and markercolor is not None:
+            if self.wake_tracked and markercolor is not None:
                 #print('  marker at {} {}'.format(self.xh_wake[itime],self.xv_wake[itime]))
                 self.plotobj_ctr.set_data(self.xh_wake[itime], self.xv_wake[itime])
                 self.plotobj_crc.set_data(self.xh_wake[itime], self.xv_wake[itime])
 
         if outline:
-            self.plotOutline(itime)
+            self.plot_outline(itime)
 
         if writepng:
             fname = os.path.join(
@@ -659,7 +659,7 @@ class waketracker(object):
             print('Saved',fname)
 
 
-    def plotOutline(self,itime=0,
+    def plot_outline(self,itime=0,
             lw=2,ls='-',facecolor='none',edgecolor='w',
             **kwargs):
         """Helper function for plotting a representation of the wake
@@ -668,7 +668,7 @@ class waketracker(object):
         Additional plotting style keywords may be specified, e.g.:
             linewidth, linestyle, facecolor, edgecolor,...
         """
-        if not self.wakeTracked:
+        if not self.wake_tracked:
             print('Need to perform wake tracking first')
         #if self.verbose: print('Plotting',self.__class__.__name__,'wake outline')
         lw = kwargs.get('linewidth',lw)
@@ -688,20 +688,20 @@ class waketracker(object):
         plt.gca().add_patch(self.plotobj_wakeOutline)
 
 
-    def saveSnapshots(self,**kwargs):
+    def save_snapshots(self,**kwargs):
         """Write out all snapshots to ${outdir}.
 
-        See plotContour for keyword arguments.
+        See plot_contour for keyword arguments.
         """ 
-        if not self.wakeTracked:
+        if not self.wake_tracked:
             print('Note: wake tracking has not been performed; wake centers will not be plotted.')
         for itime in range(self.Ntimes):
-            self.plotContour(itime,writepng='True',**kwargs)
+            self.plot_contour(itime,writepng='True',**kwargs)
 
 
-    def _readOutlines(self,fname):
+    def _read_outlines(self,fname):
         """Helper function to read compressed (pickled) outlines"""
-        if (fname is None) or (not self.wakeTracked):
+        if (fname is None) or (not self.wake_tracked):
             return None
 
         if not fname.startswith(self.prefix):
@@ -720,7 +720,7 @@ class waketracker(object):
 
         return self.paths
 
-    def _writeOutlines(self,fname):
+    def _write_outlines(self,fname):
         """Helper function to write compressed (pickled) outlines"""
         if fname is None: return
         if not fname.startswith(self.prefix):
@@ -747,17 +747,17 @@ class contourwaketracker(waketracker):
         if self.verbose:
             print('\n...finished initializing contourwaketracker')
 
-    def _findContourCenter(self,
-                           itime,
-                           targetValue,
-                           weightedCenter=True,
-                           contour_closure=False,
-                           Ntest=11,
-                           tol=0.01,
-                           func=None,
-                           field='u_tot',
-                           vdcheck=True,
-                           debug=True):
+    def _find_contour_center(self,
+                             itime,
+                             target_value,
+                             weighted_center=True,
+                             contour_closure=False,
+                             Ntest=11,
+                             tol=0.01,
+                             func=None,
+                             field='u_tot',
+                             vdcheck=True,
+                             debug=True):
         """Helper function that returns the coordinates of the detected
         wake center. Iteration continues in a binary search fashion
         until the difference in contour values is < 'tol'. This *should*
@@ -849,7 +849,7 @@ class contourwaketracker(waketracker):
             # after testing all the candidate contour values...
             if len(Flist) > 0:
                 # found at least one candidate contour
-                Ferr = np.abs( np.array(Flist) - targetValue )
+                Ferr = np.abs( np.array(Flist) - target_value )
                 idx = np.argmin(Ferr)
                 curOptLevel = level[idx]
                 if debug:
@@ -886,11 +886,11 @@ class contourwaketracker(waketracker):
             self.Clevels[itime] = level[idx]  # save time-varying contour levels as reference data
             self.Cfvals[itime] = Flist[idx]
 
-            if not weightedCenter == False:
-                if weightedCenter == True:
+            if not weighted_center == False:
+                if weighted_center == True:
                     func = np.abs
-                else:
-                    func = weightedCenter # function type
+                else: # specified function
+                    func = weighted_center
                 yc,zc = contour.calc_weighted_center(paths[idx],
                                                      self.xh,
                                                      self.xv,
@@ -914,11 +914,11 @@ class contourwaketracker(waketracker):
 
         return yc,zc,info
 
-    def _readTrajectory(self,fname):
+    def _read_trajectory(self,fname):
         """Helper function to read trajectory history typically called
-        at the beginning of findCenters
+        at the beginning of find_centers
         """
-        data = super(contourwaketracker,self)._readTrajectory(fname)
+        data = super(contourwaketracker,self)._read_trajectory(fname)
         if data is not None:
             # assume load was successful
             self.Clevels = data[:,3]

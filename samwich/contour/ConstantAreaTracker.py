@@ -11,7 +11,7 @@ class ConstantArea(contourwaketracker):
 
     This is the fastest of the contour-based tracking methods since
     it does not necessarily depend on the 'contain_pts' function (unless
-    checkDeficit is set to True).
+    check_deficit is set to True).
 
     Inherits class contourwaketracker.
     """
@@ -21,32 +21,32 @@ class ConstantArea(contourwaketracker):
         if self.verbose:
             print '\n...finished initializing',self.__class__.__name__,'\n'
 
-    def findCenters(self,refArea,
-                    trajectoryFile=None,outlinesFile=None,
-                    weightedCenter=True,
-                    contour_closure=None,
-                    frame='rotor-aligned',
-                    Ntest=21,tol=0.01,
-                    checkdeficit=False,
-                    debug=False):
-        """Uses a binary search algorithm (findContourCenter) to
+    def find_centers(self,refArea,
+                     trajectory_file=None,outlines_file=None,
+                     weighted_center=True,
+                     contour_closure=None,
+                     frame='rotor-aligned',
+                     Ntest=21,tol=0.01,
+                     check_deficit=False,
+                     debug=False):
+        """Uses a binary search algorithm (find_contour_center) to
         locate the contour with flux closest to the targetValue.
         
-        Overrides the parent findCenters routine.
+        Overrides the parent find_centers routine.
         
         Parameters
         ----------
         refArea : float
             Area to attempt to match, e.g., the rotor disk area.
-        trajectoryFile : string, optional
+        trajectory_file : string, optional
             Name of trajectory data file to attempt inputting and to
             write out to; set to None to skip I/O. Data are written out
             in the rotor-aligned frame.
-        outlinesFile : string, optional
+        outlines_file : string, optional
             Name of pickle archive file (\*.pkl) to attempt input and to
             write out detected contour outlines; set to None to skip
             I/O.
-        weightedCenter : boolean or function, optional
+        weighted_center : boolean or function, optional
             If True, calculate the velocity-deficit-weighted "center of
             mass"; if False, calculate the geometric center of the wake.
             This can also be a weighting function.
@@ -62,7 +62,7 @@ class ConstantArea(contourwaketracker):
             The number of initial test contours to calculate.
         tol : float, optional
             Minimum spacing to test during the binary search.
-        checkdeficit : boolean, optional
+        check_deficit : boolean, optional
             If True, only consider wake candidates in which the average
             velocity deficit is less than 0.
         debug : boolean, optional
@@ -76,15 +76,15 @@ class ConstantArea(contourwaketracker):
         xh_wake,xv_wake : ndarray
             Wake trajectory if frame is 'rotor-aligned'
         """
-        self.clearPlot()
+        self.clear_plot()
 
         # try to read trajectories (required) and outlines (optional)
-        self._readTrajectory(trajectoryFile)
-        self._readOutlines(outlinesFile)
+        self._read_trajectory(trajectory_file)
+        self._read_outlines(outlines_file)
 
         # done if read was successful
-        if self.wakeTracked:
-            return self.trajectoryIn(frame)
+        if self.wake_tracked:
+            return self.trajectory_in(frame)
 
         if contour_closure is None or contour_closure=='none':
             closure = False
@@ -97,17 +97,17 @@ class ConstantArea(contourwaketracker):
         if self.verbose:
             print 'Attempting to match area:',refArea,'m^2'
         for itime in range(self.Ntimes):
-            _,_,info = self._findContourCenter(itime,
-                                               refArea,
-                                               weightedCenter=weightedCenter,
-                                               contour_closure=closure,
-                                               Ntest=Ntest,
-                                               tol=tol,
-                                               func=None,
-                                               vdcheck=checkdeficit,
-                                               debug=debug)
+            _,_,info = self._find_contour_center(itime,
+                                                 refArea,
+                                                 weighted_center=weighted_center,
+                                                 contour_closure=closure,
+                                                 Ntest=Ntest,
+                                                 tol=tol,
+                                                 func=None,
+                                                 vdcheck=check_deficit,
+                                                 debug=debug)
             if not info['success']:
-                print 'WARNING: findContourCenter was unsuccessful.'
+                print 'WARNING: find_contour_center was unsuccessful.'
                 print info
 
             if self.verbose:
@@ -115,13 +115,13 @@ class ConstantArea(contourwaketracker):
                 #sys.stderr.flush()
         if self.verbose: sys.stderr.write('\n')
 
-        self._updateInertial()
+        self._update_inertial()
 
-        self.wakeTracked = True
+        self.wake_tracked = True
 
         # write out everything
-        self._writeTrajectory(trajectoryFile, self.Clevels, self.Cfvals)
-        self._writeOutlines(outlinesFile)
+        self._write_trajectory(trajectory_file, self.Clevels, self.Cfvals)
+        self._write_outlines(outlines_file)
     
-        return self.trajectoryIn(frame)
+        return self.trajectory_in(frame)
 

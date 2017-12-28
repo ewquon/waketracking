@@ -24,16 +24,16 @@ class Gaussian(waketracker):
         if self.verbose:
             print '\n...finished initializing',self.__class__.__name__,'\n'
 
-    def findCenters(self,
-                    umin=None,
-                    sigma=50.,
-                    res=100,
-                    trajectoryFile=None,outlinesFile=None,
-                    frame='rotor-aligned'):
+    def find_centers(self,
+                     umin=None,
+                     sigma=50.,
+                     res=100,
+                     trajectory_file=None,outlines_file=None,
+                     frame='rotor-aligned'):
         """Uses optimization algorithms in scipy.optimize to determine
         the best fit to the wake center location, given the wake width.
         
-        Overrides the parent findCenters routine.
+        Overrides the parent find_centers routine.
         
         Parameters
         ----------
@@ -46,11 +46,11 @@ class Gaussian(waketracker):
             function of downstream distance.
         res : integer, optional
             Number of points to represent the wake outline as a circle
-        trajectoryFile : string, optional
+        trajectory_file : string, optional
             Name of trajectory data file to attempt inputting and to
             write out to; set to None to skip I/O. Data are written out
             in the rotor-aligned frame.
-        outlinesFile : string, optional
+        outlines_file : string, optional
             Name of pickle archive file (\*.pkl) to attempt input and to
             write out approximate wake outlines; set to None to skip I/O.
         frame : string, optional
@@ -63,19 +63,19 @@ class Gaussian(waketracker):
         xh_wake,xv_wake : ndarray
             Wake trajectory if frame is 'rotor-aligned'
         """
-        self.clearPlot()
+        self.clear_plot()
 
         # try to read trajectories (required) and outlines (optional)
-        self._readTrajectory(trajectoryFile)
-        self._readOutlines(outlinesFile)
+        self._read_trajectory(trajectory_file)
+        self._read_outlines(outlines_file)
 
         # done if read was successful
-        if self.wakeTracked:
-            return self.trajectoryIn(frame)
+        if self.wake_tracked:
+            return self.trajectory_in(frame)
 
         # setup Gaussian parameters
-        if self.shearRemoval is None:
-            print 'Note: removeShear has not been called'
+        if self.shear_removal is None:
+            print 'Note: remove_shear has not been called'
         if umin is None:
             # calculate umin available data
             self.umin = np.min(self.u,axis=(1,2))
@@ -147,13 +147,13 @@ class Gaussian(waketracker):
                 #sys.stderr.flush()
         if self.verbose: sys.stderr.write('\n')
 
-        self._updateInertial()
+        self._update_inertial()
 
-        self.wakeTracked = True
+        self.wake_tracked = True
 
         # write out everything
-        self._writeTrajectory(trajectoryFile)
-        self._writeOutlines(outlinesFile)
+        self._write_trajectory(trajectory_file)
+        self._write_outlines(outlines_file)
     
-        return self.trajectoryIn(frame)
+        return self.trajectory_in(frame)
 

@@ -17,16 +17,16 @@ class ConstantFlux(contourwaketracker):
         if self.verbose:
             print '\n...finished initializing',self.__class__.__name__,'\n'
 
-    def findCenters(self,refFlux,
-                    fluxFunction,fluxField='u_tot',
-                    trajectoryFile=None,outlinesFile=None,
-                    weightedCenter=True,
-                    contour_closure=None,
-                    frame='rotor-aligned',
-                    Ntest=21,tol=0.01,
-                    checkdeficit=True,
-                    debug=False):
-        """Uses a binary search algorithm (findContourCenter) to
+    def find_centers(self,ref_flux,
+                     flux_function,flux_field='u_tot',
+                     trajectory_file=None,outlines_file=None,
+                     weighted_center=True,
+                     contour_closure=None,
+                     frame='rotor-aligned',
+                     Ntest=21,tol=0.01,
+                     check_deficit=True,
+                     debug=False):
+        """Uses a binary search algorithm (find_contour_center) to
         locate the contour with flux closest to the targetValue.
         
         Some candidate functions to be integrated over the contour
@@ -37,27 +37,27 @@ class ConstantFlux(contourwaketracker):
 
         The contour area can be referenced as func = lambda u,A: ...
 
-        Overrides the parent findCenters routine.
+        Overrides the parent find_centers routine.
         
         Parameters
         ----------
-        refFlux : float
+        ref_flux : float
             Flux to attempt to match, e.g., the massflow rate.
-        fluxFunction : function
+         : function
             A specified function of one (or two) variables, the velocity
             deficit (and the contour area).
-        fluxField : string, optional
-            Name of the field to use as input to the fluxFunction; use
+        flux_field : string, optional
+            Name of the field to use as input to the flux_function; use
             the instantaneous velocity, 'u_tot', by default.
-        trajectoryFile : string
+        trajectory_file : string
             Name of trajectory data file to attempt inputting and to
             write out to; set to None to skip I/O. Data are written out
             in the rotor-aligned frame.
-        outlinesFile : string
+        outlines_file : string
             Name of pickle archive file (\*.pkl) to attempt input and to
             write out detected contour outlines; set to None to skip
             I/O.
-        weightedCenter : boolean or function, optional
+        weighted_center : boolean or function, optional
             If True, calculate the velocity-deficit-weighted "center of
             mass"; if False, calculate the geometric center of the wake.
             This can also be a weighting function.
@@ -73,7 +73,7 @@ class ConstantFlux(contourwaketracker):
             The number of initial test contours to calculate.
         tol : float, optional
             Minimum spacing to test during the binary search.
-        checkdeficit : boolean, optional
+        check_deficit : boolean, optional
             If True, only consider wake candidates in which the average
             velocity deficit is less than 0.
         debug : boolean, optional
@@ -87,34 +87,34 @@ class ConstantFlux(contourwaketracker):
         xh_wake,xv_wake : ndarray
             Wake trajectory if frame is 'rotor-aligned'
         """
-        self.clearPlot()
+        self.clear_plot()
 
         # try to read trajectories (required) and outlines (optional)
-        self._readTrajectory(trajectoryFile)
-        self._readOutlines(outlinesFile)
+        self._read_trajectory(trajectory_file)
+        self._read_outlines(outlines_file)
 
         # done if read was successful
-        if self.wakeTracked:
-            return self.trajectoryIn(frame)
+        if self.wake_tracked:
+            return self.trajectory_in(frame)
 
         try:
-            testField = getattr(self,fluxField)
+            test_field = getattr(self,flux_field)
         except AttributeError:
-            print 'Warning: flux field',fluxField,'not available,', \
+            print 'Warning: flux field',flux_field,'not available,', \
                     'using \'u_tot\' by default'
-            fluxField = 'u_tot'
-            testField = getattr(self,fluxField)
+            flux_field = 'u_tot'
+            test_field = getattr(self,flux_field)
 
         # some sanity checks if needed
         if self.verbose:
-            Utest = np.min(testField[-1,self.jmin:self.jmax,self.kmin:self.kmax])
-            if fluxFunction.func_code.co_argcount==1: # fn(u)
+            Utest = np.min(test_field[-1,self.jmin:self.jmax,self.kmin:self.kmax])
+            if flux_function.func_code.co_argcount==1: # fn(u)
                 print 'Sample function evaluation: f(u={:g}) = {:g}'.format(
-                        Utest,fluxFunction(Utest))
+                        Utest,flux_function(Utest))
             else: # fn(u,A)
                 print 'Sample function evaluation: f(u={:g},1.0) = {:g}'.format(
-                        Utest,fluxFunction(Utest,1))
-            print ' ~= targetValue / area =',refFlux,'/ A'
+                        Utest,flux_function(Utest,1))
+            print ' ~= targetValue / area =',ref_flux,'/ A'
 
         if contour_closure is None or contour_closure=='none':
             closure = False
@@ -125,31 +125,31 @@ class ConstantFlux(contourwaketracker):
 
         # calculate trajectories for each time step
         for itime in range(self.Ntimes):
-            _,_,info = self._findContourCenter(itime,
-                                               refFlux,
-                                               weightedCenter=weightedCenter,
-                                               contour_closure=closure,
-                                               Ntest=Ntest,
-                                               tol=tol,
-                                               func=fluxFunction,
-                                               field=fluxField,
-                                               vdcheck=checkdeficit,
-                                               debug=debug)
+            _,_,info = self._find_contour_center(itime,
+                                                 ref_flux,
+                                                 weighted_center=weighted_center,
+                                                 contour_closure=closure,
+                                                 Ntest=Ntest,
+                                                 tol=tol,
+                                                 func=flux_function,
+                                                 field=flux_field,
+                                                 vdcheck=check_deficit,
+                                                 debug=debug)
             if not info['success']:
-                print 'WARNING: findContourCenter was unsuccessful.'
+                print 'WARNING: find_contour_center was unsuccessful.'
 
             if self.verbose:
                 sys.stderr.write('\rProcessed frame {:d}'.format(itime))
                 #sys.stderr.flush()
         if self.verbose: sys.stderr.write('\n')
 
-        self._updateInertial()
+        self._update_inertial()
 
-        self.wakeTracked = True
+        self.wake_tracked = True
 
         # write out everything
-        self._writeTrajectory(trajectoryFile, self.Clevels, self.Cfvals)
-        self._writeOutlines(outlinesFile)
+        self._write_trajectory(trajectory_file, self.Clevels, self.Cfvals)
+        self._write_outlines(outlines_file)
     
-        return self.trajectoryIn(frame)
+        return self.trajectory_in(frame)
 
