@@ -47,7 +47,7 @@ def track(*args,**kwargs):
     method = kwargs.get('method',None)
     if method not in tracker_list.keys():
         print("Need to specify 'method' as one of:")
-        for name,tracker in tracker_list.iteritems():
+        for name,tracker in tracker_list.items():
             print('  {:s} ({:s})'.format(name,tracker.__module__))
         return None
     else:
@@ -554,7 +554,7 @@ class waketracker(object):
     def plot_contour(self,
                     itime=0,
                     cmin=None,cmax=None,
-                    cmap='jet',
+                    cmap='viridis',
                     markercolor='w',
                     outline=False,
                     writepng=False,outdir='.',seriesname='U',

@@ -1,3 +1,4 @@
+from __future__ import print_function
 import sys
 
 import numpy as np
@@ -15,7 +16,7 @@ class ConstantFlux(contourwaketracker):
     def __init__(self,*args,**kwargs):
         super(self.__class__,self).__init__(*args,**kwargs)
         if self.verbose:
-            print '\n...finished initializing',self.__class__.__name__,'\n'
+            print('\n...finished initializing',self.__class__.__name__,'\n')
 
     def find_centers(self,ref_flux,
                      flux_function,flux_field='u_tot',
@@ -100,8 +101,8 @@ class ConstantFlux(contourwaketracker):
         try:
             test_field = getattr(self,flux_field)
         except AttributeError:
-            print 'Warning: flux field',flux_field,'not available,', \
-                    'using \'u_tot\' by default'
+            print('Warning: flux field',flux_field,'not available,',
+                    "using 'u_tot' by default")
             flux_field = 'u_tot'
             test_field = getattr(self,flux_field)
 
@@ -109,12 +110,12 @@ class ConstantFlux(contourwaketracker):
         if self.verbose:
             Utest = np.min(test_field[-1,self.jmin:self.jmax,self.kmin:self.kmax])
             if flux_function.func_code.co_argcount==1: # fn(u)
-                print 'Sample function evaluation: f(u={:g}) = {:g}'.format(
-                        Utest,flux_function(Utest))
+                print('Sample function evaluation: f(u={:g}) = {:g}'.format(
+                        Utest,flux_function(Utest)))
             else: # fn(u,A)
-                print 'Sample function evaluation: f(u={:g},1.0) = {:g}'.format(
-                        Utest,flux_function(Utest,1))
-            print ' ~= targetValue / area =',ref_flux,'/ A'
+                print('Sample function evaluation: f(u={:g},1.0) = {:g}'.format(
+                        Utest,flux_function(Utest,1)))
+            print(' ~= targetValue / area =',ref_flux,'/ A')
 
         if contour_closure is None or contour_closure=='none':
             closure = False
@@ -136,7 +137,7 @@ class ConstantFlux(contourwaketracker):
                                                  vdcheck=check_deficit,
                                                  debug=debug)
             if not info['success']:
-                print 'WARNING: find_contour_center was unsuccessful.'
+                print('WARNING: find_contour_center was unsuccessful.')
 
             if self.verbose:
                 sys.stderr.write('\rProcessed frame {:d}'.format(itime))

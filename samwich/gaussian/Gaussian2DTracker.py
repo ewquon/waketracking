@@ -1,3 +1,4 @@
+from __future__ import print_function
 import sys
 import importlib
 
@@ -38,7 +39,7 @@ class Gaussian2D(waketracker):
     def __init__(self,*args,**kwargs):
         super(self.__class__,self).__init__(*args,**kwargs)
         if self.verbose:
-            print '\n...finished initializing',self.__class__.__name__,'\n'
+            print('\n...finished initializing',self.__class__.__name__,'\n')
 
     def find_centers(self,
                      umin=None,
@@ -103,7 +104,7 @@ class Gaussian2D(waketracker):
 
         # setup Gaussian parameters
         if self.shear_removal is None:
-            print 'Note: remove_shear has not been called'
+            print('Note: remove_shear has not been called')
         if umin is None:
             # calculate umin available data
             self.umin = np.min(self.u,axis=(1,2))
@@ -118,13 +119,14 @@ class Gaussian2D(waketracker):
         self.sigma_z = np.zeros(self.Ntimes)
 
         if not np.all(umin < 0):
-            print 'Warning: Unexpected positive velocity deficit at', \
-                    len(np.nonzero(self.umin > 0)[0]),'of',self.Ntimes,'times'
+            print('Warning: Unexpected positive velocity deficit at',
+                    len(np.nonzero(self.umin > 0)[0]),'of',self.Ntimes,'times')
         if self.verbose:
-            print 'average Gaussian function amplitude =',np.mean(self.umin),'m/s'
+            print('average Gaussian function amplitude =',
+                    np.mean(self.umin),'m/s')
 
         if rho is not None:
-            print 'Note: cross-correlation parameter is not yet implemented'
+            print('Note: cross-correlation parameter is not yet implemented')
 
         # approximate wake outline as best-fit ellipse at 36.8% of the max wake
         #   deficit (corresponding to f(y,z) = A*exp(-1))

@@ -1,3 +1,4 @@
+from __future__ import print_function
 import sys
 
 import numpy as np
@@ -19,7 +20,7 @@ class ConstantArea(contourwaketracker):
     def __init__(self,*args,**kwargs):
         super(self.__class__,self).__init__(*args,**kwargs)
         if self.verbose:
-            print '\n...finished initializing',self.__class__.__name__,'\n'
+            print('\n...finished initializing',self.__class__.__name__,'\n')
 
     def find_centers(self,ref_area,
                      trajectory_file=None,outlines_file=None,
@@ -95,7 +96,7 @@ class ConstantArea(contourwaketracker):
 
         # calculate trajectories for each time step
         if self.verbose:
-            print 'Attempting to match area:',ref_area,'m^2'
+            print('Attempting to match area:',ref_area,'m^2')
         for itime in range(self.Ntimes):
             _,_,info = self._find_contour_center(itime,
                                                  ref_area,
@@ -107,8 +108,8 @@ class ConstantArea(contourwaketracker):
                                                  vdcheck=check_deficit,
                                                  debug=debug)
             if not info['success']:
-                print 'WARNING: find_contour_center was unsuccessful.'
-                print info
+                print('WARNING: find_contour_center was unsuccessful.')
+                print(info)
 
             if self.verbose:
                 sys.stderr.write('\rProcessed frame {:d}'.format(itime))

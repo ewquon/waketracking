@@ -1,3 +1,4 @@
+from __future__ import print_function
 import sys
 import importlib
 
@@ -22,7 +23,7 @@ class Gaussian(waketracker):
     def __init__(self,*args,**kwargs):
         super(self.__class__,self).__init__(*args,**kwargs)
         if self.verbose:
-            print '\n...finished initializing',self.__class__.__name__,'\n'
+            print('\n...finished initializing',self.__class__.__name__,'\n')
 
     def find_centers(self,
                      umin=None,
@@ -75,7 +76,7 @@ class Gaussian(waketracker):
 
         # setup Gaussian parameters
         if self.shear_removal is None:
-            print 'Note: remove_shear has not been called'
+            print('Note: remove_shear has not been called')
         if umin is None:
             # calculate umin available data
             self.umin = np.min(self.u,axis=(1,2))
@@ -87,23 +88,23 @@ class Gaussian(waketracker):
             self.umin = umin * np.ones(self.Ntimes)
 
         if not np.all(umin < 0):
-            print 'Warning: Unexpected positive velocity deficit at', \
-                    len(np.nonzero(self.umin > 0)[0]),'of',self.Ntimes,'times'
+            print('Warning: Unexpected positive velocity deficit at',
+                    len(np.nonzero(self.umin > 0)[0]),'of',self.Ntimes,'times')
         if self.verbose:
-            print 'average Gaussian function amplitude =', \
-                    np.mean(self.umin),'m/s'
+            print('average Gaussian function amplitude =',
+                    np.mean(self.umin),'m/s')
 
         try:
             # sigma is a specified constnat
             self.sigma = float(sigma)
             if self.verbose:
-                print 'Specified Gaussian width =',self.sigma,'m'
+                print('Specified Gaussian width =',self.sigma,'m')
         except TypeError:
             # sigma is specified as a function of downstream distance
             xd = np.mean(self.xd)
             self.sigma = sigma(xd)
             if self.verbose:
-                print 'Calculated sigma =',self.sigma,'m at x=',xd,'m'
+                print('Calculated sigma =',self.sigma,'m at x=',xd,'m')
 
         # approximate wake outline with specified wake width, sigma
         azi = np.linspace(0,2*np.pi,res)
