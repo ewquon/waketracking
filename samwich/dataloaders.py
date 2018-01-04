@@ -4,7 +4,7 @@ import os
 
 import numpy as np
 
-from timeseries import TimeSeries
+from samwich.timeseries import TimeSeries
 
 class sampled_data(object):
     """Generic regularly sampled data object"""
@@ -65,7 +65,7 @@ class sampled_data(object):
         self.z = None
         self.data = None
         self.npzdata = npzdata
-        self.dataReadFrom = None
+        self.data_read_from = None
 
         self.interpHoles = interpHoles
         if interpHoles and NX > 1:
@@ -96,7 +96,7 @@ class sampled_data(object):
                         and self.data.shape[2] == self.NY \
                         and self.data.shape[3] == self.NZ:
                     print('Loaded compressed array data from',savepath)
-                    self.dataReadFrom = savepath
+                    self.data_read_from = savepath
             except ValueError:
                 print('Mismatched data')
         except KeyError:
@@ -112,8 +112,8 @@ class sampled_data(object):
         s += ' with shape ({:d},{:d},{:d})'.format(self.NX,self.NY,self.NZ)
         if self.ts is not None:
             s += ' in a series with ' + str(self.ts)
-        if self.dataReadFrom is not None:
-            s += ' read from ' + self.dataReadFrom
+        if self.data_read_from is not None:
+            s += ' read from ' + self.data_read_from
         return s
 
     def _slice(self,i0=None,i1=None,j0=None,j1=None,k0=None,k1=None):
@@ -247,7 +247,7 @@ class _template_sampled_data_format(sampled_data):
 
         # read data
         self.data = None
-        self.dataReadFrom = None
+        self.data_read_from = None
 
 
 class rawdata(sampled_data):
@@ -257,7 +257,11 @@ class rawdata(sampled_data):
     """
     def __init__(self,fname,NY,NZ=None,
                  skiprows=1,delimiter=','):
-        """Reads a single snapshot from the specified file
+        """Reads a single snapshot from the specified file. Data are
+        expected to be in xh, xv, and u columns, with xh/xv being the
+        horizontal and vertical sample positions in an inertial frame
+        of reference and u being the velocity normal to the sampling
+        plane.
 
         Parameters
         ----------
@@ -294,6 +298,57 @@ class rawdata(sampled_data):
         self.y = y[order].reshape((1,NY,NZ))
         self.z = z[order].reshape((1,NY,NZ))
         self.data = u[order].reshape((1,1,NY,NZ,1))  # shape == (Ntimes,NX,NY,NZ,datasize)
+        self.data_read_from = None
+
+class planar_data(sampled_data):
+    """Pre-processed data, in 2D arrays.
+
+    See superclass sampled_data for more information.
+    """
+    def __init__(self,datadict,center_x=False,center_y=True):
+        """Takes data stored in a dictionary with keys:
+            'x', 'y', 'z', 'u', 'v', 'w'
+        and returns a sampled_data object. 'x', 'v', and 'w' are
+        optional.
+
+        Parameters
+        ----------
+        datadict : dict
+            Dictionary containing 2D arrays.
+        center_x : boolean
+            Shift center of plane to x=0.
+        center_y : boolean
+            Shift center of plane to y=0.
+        """
+        #super(self.__class__,self).__init__(*args,**kwargs)
+        self.NX = 1  # single plane
+        self.NY, self.NZ = datadict['u'].shape
+        self.datasize = 3  # vector
+
+        self.ts = None # not a time series
+        self.Ntimes = 1
+
+        self.y = datadict['y'].reshape((1,self.NY,self.NZ))
+        self.z = datadict['z'].reshape((1,self.NY,self.NZ))
+        try:
+            self.x = datadict['x'].reshape((1,self.NY,self.NZ))
+        except KeyError:
+            self.x = np.zeros((1,self.NY,self.NZ))
+
+        self.data = np.zeros((1,1,self.NY,self.NZ,3))  # shape == (Ntimes,NX,NY,NZ,datasize)
+        self.data[0,0,:,:,0] = datadict['u']
+        try:
+            self.data[0,0,:,:,1] = datadict['v']
+        except KeyError: pass
+        try:
+            self.data[0,0,:,:,2] = datadict['w']
+        except KeyError: pass
+        self.data_read_from = None
+
+        if center_x:
+            self.x -= np.mean(self.x)
+        if center_y:
+            self.y -= np.mean(self.y)
 
 class pandas_dataframe(sampled_data):
     """Raw data from pandas dataframe(s)
@@ -472,7 +527,7 @@ class foam_ensight_array(sampled_data):
         super(self.__class__,self).__init__(*args,**kwargs)
 
         if self.prefix is None:
-            if self.dataReadFrom is not None:
+            if self.data_read_from is not None:
                 # we already have data that's been read in...
                 print("Note: 'prefix' not specified, time series was not read.")
                 return
@@ -484,19 +539,20 @@ class foam_ensight_array(sampled_data):
             datafile = self.prefix+'.000.U'
             self.ts = TimeSeries(self.outputDir,datafile)
         except AssertionError:
-            if self.dataReadFrom is not None:
+            if self.data_read_from is not None:
                 print('Note: Data read but time series information is unavailable.')
                 print('      Proceed at your own risk.')
                 return
             else:
                 raise IOError('Data not found in '+self.outputDir)
 
-        if self.dataReadFrom is not None:
+        if self.data_read_from is not None:
             # Previously saved $npzdata was read in super().__init__
             if self.Ntimes == self.ts.Ntimes:
                 return
             else:
-                print('{} has {} data series, expected {}'.format(self.dataReadFrom,self.Ntimes,self.ts.Ntimes))
+                print('{} has {} data series, expected {}'.format(
+                    self.data_read_from,self.Ntimes,self.ts.Ntimes))
 
         self.Ntimes = self.ts.Ntimes
 
@@ -610,7 +666,7 @@ class foam_ensight_array(sampled_data):
 
         sys.stderr.write('\n')
         self.data = data
-        self.dataReadFrom = os.path.join(self.outputDir,'*',datafile)
+        self.data_read_from = os.path.join(self.outputDir,'*',datafile)
 
         # save data
         if self.npzdata:
@@ -684,14 +740,15 @@ class foam_ensight_array_series(sampled_data):
             filelist = [ os.path.join(self.outputDir, self.prefix + '.' + str(idx) + '.U')
                             for idx in index_start+index_incr*np.arange(Ntimes) ]
 
-        if self.dataReadFrom is not None:
+        if self.data_read_from is not None:
             # Previously saved $npzdata was read in super().__init__
             if Ntimes < 0 or self.Ntimes == Ntimes:
                 # no case file to compare against OR number of times read matches casefile "number of steps"
                 # ==> we're good, no need to process all data again
                 return
             else:
-                print('{} has {} data series, expected {}'.format(self.dataReadFrom,self.Ntimes,Ntimes))
+                print('{} has {} data series, expected {}'.format(
+                        self.data_read_from,self.Ntimes,Ntimes))
 
         self.Ntimes = Ntimes
 
@@ -779,7 +836,7 @@ class foam_ensight_array_series(sampled_data):
 
         sys.stderr.write('\n')
         self.data = data
-        self.dataReadFrom = casefile
+        self.data_read_from = casefile
 
         # save data
         if self.npzdata:
