@@ -302,6 +302,7 @@ class waketracker(object):
             If Navg < 0, uavg.shape==(Nh,Nv); otherwise a moving average
             is return, with uavg.shape==(Ntimes,Nh,Nv).
         """
+        Navg = int(Navg)
         if Navg < 0:
             self.uavg = np.mean(self.u_tot[-Navg:,:,:], axis=0)  # shape=(Nh,Nv)
         elif Navg > 0:
@@ -313,14 +314,14 @@ class waketracker(object):
         self.Navg = Navg
         return self.uavg
 
-    def remove_shear(self,method='default',Navg=-300,wind_profile=None):
+    def remove_shear(self,method='fringe',Navg=None,wind_profile=None):
         """Removes wind shear from data.
 
         Calculates self.u from self.u_tot.
 
         Current supported methods:
 
-        * "default": Estimate from fringes 
+        * "fringe": Estimate from fringes 
         * "specified": Wind profile specified as either a function or an
             array of heights vs horizontal velocity
 
@@ -332,14 +333,20 @@ class waketracker(object):
         Navg : integer, optional
             Number of snapshots to average over to obtain an
             instaneous average (when shear_removal=='default').
-            If Navg < 0, average from end of series only.
+            If Navg < 0, average from end of series only, otherwise a
+            sliding average is performed.
+        wind_profile : 
         """
-        Navg = int(Navg)
-        self.Navg = Navg
+        if self.shear_removal is not None:
+            print('remove_shear() was already called, doing nothing.')
+            return
+
+        if wind_profile is not None:
+            method = 'specified'
         self.shear_removal = method
 
         # determine the wind profile
-        if method == 'default':
+        if method == 'fringe':
             if self.verbose:
                 print('Estimating velocity profile from fringes of sampling plane with Navg={}'.format(Navg))
             uavg = self.average_velocity(Navg) # updates self.uavg
@@ -353,7 +360,7 @@ class waketracker(object):
                 print('Need to specify wind_profile, shear not removed.')
                 return
             if isinstance(wind_profile, (list,tuple,np.ndarray)):
-                assert(len(wind_profile) == self.Nv)
+                assert(wind_profile.shape[-1] == self.Nv)
                 self.Uprofile = wind_profile
             elif isinstance(wind_profile, str):
                 #zref,Uref = readRef(wind_profile)
