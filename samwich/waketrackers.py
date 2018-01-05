@@ -49,7 +49,7 @@ def track(*args,**kwargs):
         print("Need to specify 'method' as one of:")
         for name,tracker in tracker_list.items():
             print('  {:s} ({:s})'.format(name,tracker.__module__))
-        return None
+        return list(tracker_list.keys())
     else:
         tracker = tracker_list[method]
         if kwargs.get('verbose',True):
