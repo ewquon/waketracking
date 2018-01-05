@@ -80,6 +80,7 @@ class Gaussian(waketracker):
         if umin is None:
             # calculate umin available data
             self.umin = np.min(self.u,axis=(1,2))
+            print('Calculated umin=',self.umin)
         elif isinstance(umin,np.ndarray):
             # specified umin as array with length Ntimes
             self.umin = umin
@@ -87,11 +88,11 @@ class Gaussian(waketracker):
             # specified constant umin
             self.umin = umin * np.ones(self.Ntimes)
 
-        if not np.all(umin < 0):
+        if not np.all(self.umin < 0):
             print('Warning: Unexpected positive velocity deficit at',
                     len(np.nonzero(self.umin > 0)[0]),'of',self.Ntimes,'times')
         if self.verbose:
-            print('average Gaussian function amplitude =',
+            print('Average Gaussian function amplitude =',
                     np.mean(self.umin),'m/s')
 
         try:

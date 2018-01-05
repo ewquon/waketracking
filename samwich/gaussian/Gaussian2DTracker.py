@@ -118,7 +118,7 @@ class Gaussian2D(waketracker):
         self.sigma_y = np.zeros(self.Ntimes)
         self.sigma_z = np.zeros(self.Ntimes)
 
-        if not np.all(umin < 0):
+        if not np.all(self.umin < 0):
             print('Warning: Unexpected positive velocity deficit at',
                     len(np.nonzero(self.umin > 0)[0]),'of',self.Ntimes,'times')
         if self.verbose:
