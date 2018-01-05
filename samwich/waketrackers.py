@@ -560,7 +560,7 @@ class waketracker(object):
 
     def plot_contour(self,
                     itime=0,
-                    cmin=None,cmax=None,
+                    vmin=None,vmax=None,
                     cmap='viridis',
                     markercolor='w',
                     outline=False,
@@ -573,7 +573,7 @@ class waketracker(object):
         ----------
         itime : integer
             Index of the wake snapshot to plot.
-        cmin,cmax : float, optional
+        vmin,vmax : float, optional
             Range of contour values to plot; if None, then set to min
             and max field values.
         cmap : string, optional
@@ -600,11 +600,11 @@ class waketracker(object):
         if not self.plot_initialized:
             self._init_plot()  # first time
 
-            if cmin is None:
-                cmin = np.min(self.u[itime,:,:])
-            if cmax is None:
-                cmax = np.max(self.u[itime,:,:])
-            self.plot_clevels = np.linspace(cmin, cmax, 100)
+            if vmin is None:
+                vmin = np.min(self.u[itime,:,:])
+            if vmax is None:
+                vmax = np.max(self.u[itime,:,:])
+            self.plot_clevels = np.linspace(vmin, vmax, 100)
 
             self.plotobj_filledcontours = self.ax.contourf(self.xh, self.xv, self.u[itime,:,:],
                                                            self.plot_clevels, cmap=cmap,
@@ -627,7 +627,7 @@ class waketracker(object):
                                                  markeredgecolor=markercolor )
 
             # add colorbar
-            cb_ticks = np.linspace(cmin, cmax, 11)
+            cb_ticks = np.linspace(vmin, vmax, 11)
             cb = self.fig.colorbar(self.plotobj_filledcontours,
                                    ticks=cb_ticks, label=r'$U \ (m/s)$')
 
