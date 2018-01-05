@@ -897,7 +897,7 @@ class contourwaketracker(waketracker):
             if not weighted_center == False:
                 if weighted_center == True:
                     func = np.abs
-                else: # specified function
+                else:  # specified weighting function
                     func = weighted_center
                 yc,zc = contour.calc_weighted_center(paths[idx],
                                                      self.xh,

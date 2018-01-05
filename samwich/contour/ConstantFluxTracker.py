@@ -61,7 +61,8 @@ class ConstantFlux(contourwaketracker):
         weighted_center : boolean or function, optional
             If True, calculate the velocity-deficit-weighted "center of
             mass"; if False, calculate the geometric center of the wake.
-            This can also be a weighting function.
+            This can also be a univariate weighting function (of
+            velocity deficit).
         contour_closure : string, optional
             If 'simple', then open paths with endpoints on the same
             edge will be closed by connecting the endpoints; if
