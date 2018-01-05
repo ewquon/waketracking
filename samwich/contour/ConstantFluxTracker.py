@@ -43,13 +43,12 @@ class ConstantFlux(contourwaketracker):
         Parameters
         ----------
         ref_flux : float
-            Flux to attempt to match, e.g., the massflow rate.
-         : function
-            A specified function of one (or two) variables, the velocity
-            deficit (and the contour area).
+            Numerically integrated value to match.
+        flux_function : function
+            The integrand.
         flux_field : string, optional
-            Name of the field to use as input to the flux_function; use
-            the instantaneous velocity, 'u_tot', by default.
+            Name of the field to use as input to the flux_function; the
+            instantaneous velocity, 'u_tot', is used by default.
         trajectory_file : string
             Name of trajectory data file to attempt inputting and to
             write out to; set to None to skip I/O. Data are written out
@@ -110,13 +109,12 @@ class ConstantFlux(contourwaketracker):
         # some sanity checks if needed
         if self.verbose:
             Utest = np.min(test_field[-1,self.jmin:self.jmax,self.kmin:self.kmax])
-            if flux_function.func_code.co_argcount==1: # fn(u)
-                print('Sample function evaluation: f(u={:g}) = {:g}'.format(
-                        Utest,flux_function(Utest)))
-            else: # fn(u,A)
-                print('Sample function evaluation: f(u={:g},1.0) = {:g}'.format(
-                        Utest,flux_function(Utest,1)))
-            print(' ~= targetValue / area =',ref_flux,'/ A')
+            #if flux_function.func_code.co_argcount==1: # fn(u)
+            print('Sample function evaluation: f(u={:g}) = {:g}'.format(
+                    Utest,flux_function(Utest)))
+            #else: # fn(u,A)
+            #    print('Sample function evaluation: f(u={:g},1.0) = {:g}'.format(
+            #            Utest,flux_function(Utest,1)))
 
         if contour_closure is None or contour_closure=='none':
             closure = False

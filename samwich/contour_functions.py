@@ -210,13 +210,13 @@ def integrate_function(contour_points,
 
     # evaluate specified function
     Uinner = fg.ravel()[inner]
-    if func.func_code.co_argcount==1:
-        fvals = func(Uinner)
-    elif func.func_code.co_argcount==2: # assume second argument is A
-        fvals = func(Uinner, A)
-    else:
-        print('Problem with function formulation!')
-        return None,None,None
+    #if func.func_code.co_argcount==1:
+    fvals = func(Uinner)
+    #elif func.func_code.co_argcount==2: # assume second argument is A
+    #    fvals = func(Uinner, A)
+    #else:
+    #    print('Problem with function formulation!')
+    #    return None,None,None
 
     fval = corr * np.sum(fvals)*cellFaceArea
     
