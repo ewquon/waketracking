@@ -124,6 +124,8 @@ class ConstantFlux(contourwaketracker):
             closure = (self.xh_range,self.xv_range)
 
         # calculate trajectories for each time step
+        if self.verbose:
+            print('Attempting to match integral:',ref_flux)
         for itime in range(self.Ntimes):
             _,_,info = self._find_contour_center(itime,
                                                  ref_flux,
@@ -137,6 +139,9 @@ class ConstantFlux(contourwaketracker):
                                                  debug=debug)
             if not info['success']:
                 print('WARNING: find_contour_center was unsuccessful.')
+            elif self.verbose:
+                print('itime={:d} : found contour (u={:.4f}) with integral {:g}'.format(
+                        itime,self.Clevels[itime],self.Cfvals[itime]))
 
             if self.verbose:
                 sys.stderr.write('\rProcessed frame {:d}'.format(itime))

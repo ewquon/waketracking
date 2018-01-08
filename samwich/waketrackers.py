@@ -849,7 +849,7 @@ class contourwaketracker(waketracker):
                                                            self.xh, self.xv, testfield,
                                                            vd=vd)
                         #NfnEvals += 1
-                        if fval is not None and avgdeficit < 0:
+                        if fval is not None and (avgdeficit < 0 or vd is None):
                             paths.append(path)
                             level.append(Clevel)
                             Flist.append(fval)
