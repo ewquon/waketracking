@@ -861,7 +861,7 @@ class contourwaketracker(waketracker):
             # after testing all the candidate contour values...
             if len(Flist) > 0:
                 # found at least one candidate contour
-                Ferr = np.abs( np.array(Flist) - target_value )
+                Ferr = np.abs(np.array(Flist) - target_value)
                 idx = np.argmin(Ferr)
                 cur_opt_level = level[idx]
                 if debug:
@@ -923,8 +923,8 @@ class contourwaketracker(waketracker):
         else:
             # tracking failed!
             self.paths[itime] = []
-            self.Clevels[itime] = 0
-            self.Cfvals[itime] = 0
+            self.Clevels[itime] = np.nan
+            self.Cfvals[itime] = np.nan
             yc = self.xh_fail
             zc = self.xv_fail
 
