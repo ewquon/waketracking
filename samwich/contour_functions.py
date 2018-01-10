@@ -21,7 +21,7 @@ def get_paths(Cdata, Clevel,
         (xh_range,xv_range), i.e., the horizontal and vertical range
         (only the first and last elements will be used, so the full list
         of coordinates is not needed)
-    min_pts : int, optional
+    min_points : int, optional
         Minimum number of points a closed loop must contain for it to be
         considered a candidate path. This is indirectly related to the 
         smallest allowable contour region.

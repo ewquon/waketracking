@@ -23,6 +23,7 @@ class ConstantFlux(contourwaketracker):
                      trajectory_file=None,outlines_file=None,
                      weighted_center=True,
                      contour_closure=None,
+                     min_contour_points=50,
                      frame='rotor-aligned',
                      Ntest=21,tol=0.01,
                      check_deficit=True,
@@ -68,6 +69,10 @@ class ConstantFlux(contourwaketracker):
             'compound', then open paths will be closed by adding
             segments along the domain boundaries to form closed
             contours.
+        min_contour_points : int, optional
+            Minimum number of points a closed loop must contain for it
+            to be considered a candidate path. This is indirectly
+            related to the smallest allowable contour region.
         frame : string, optional
             Reference frame, either 'inertial' or 'rotor-aligned'.
         Ntest : integer, optional
@@ -127,15 +132,16 @@ class ConstantFlux(contourwaketracker):
             print('Attempting to match integral:',ref_flux)
         for itime in range(self.Ntimes):
             _,_,info = self._find_contour_center(itime,
-                                                 ref_flux,
-                                                 weighted_center=weighted_center,
-                                                 contour_closure=closure,
-                                                 Ntest=Ntest,
-                                                 tol=tol,
-                                                 func=flux_function,
-                                                 field=flux_field,
-                                                 vdcheck=check_deficit,
-                                                 debug=(verbosity > 0))
+                                             ref_flux,
+                                             weighted_center=weighted_center,
+                                             contour_closure=closure,
+                                             min_contour_points=min_contour_points,
+                                             Ntest=Ntest,
+                                             tol=tol,
+                                             func=flux_function,
+                                             field=flux_field,
+                                             vdcheck=check_deficit,
+                                             debug=(verbosity > 0))
             if not info['success']:
                 print('WARNING: find_contour_center was unsuccessful.')
             elif self.verbose and verbosity > 0:

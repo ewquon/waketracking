@@ -759,6 +759,7 @@ class contourwaketracker(waketracker):
                              target_value,
                              weighted_center=True,
                              contour_closure=False,
+                             min_contour_points=50,
                              Ntest=11,
                              tol=0.01,
                              func=None,
@@ -816,7 +817,8 @@ class contourwaketracker(waketracker):
                 if debug: print('  testing contour level {}'.format(Clevel))
 
                 cur_path_list = contour.get_paths(Cdata,Clevel,
-                                                  close_paths=contour_closure)
+                                                  close_paths=contour_closure,
+                                                  min_points=min_contour_points)
                 if debug:
                     print('  contour paths found: {}'.format(len(cur_path_list)))
 
