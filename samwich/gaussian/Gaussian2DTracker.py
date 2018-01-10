@@ -43,13 +43,13 @@ class Gaussian2D(waketracker):
 
     def find_centers(self,
                      umin=None,
-                     A_min=100.,
-                     A_max=np.inf,
-                     AR_max=10.,
+                     A_min=100.0,A_max=np.inf,
+                     AR_max=10.0,
                      rho=None,
-                     res=100,
+                     res=100,plotscale=1.0,
                      trajectory_file=None,outlines_file=None,
-                     frame='rotor-aligned'):
+                     frame='rotor-aligned',
+                     verbosity=0):
         """Uses optimization algorithms in scipy.optimize to determine
         the best fit.
 
@@ -75,6 +75,9 @@ class Gaussian2D(waketracker):
             The cross-correlation parameter--CURRENTLY UNTESTED.
         res : integer, optional
             Number of points to represent the wake outline as a circle
+        plotscale : float, optional
+            Scaling factor in standard deviations for a representative
+            wake outline (==1.1774 for FWHM).
         trajectory_file : string, optional
             Name of trajectory data file to attempt inputting and to
             write out to; set to None to skip I/O. Data are written out
@@ -135,14 +138,14 @@ class Gaussian2D(waketracker):
         # set up optimization parameters
         # note: origin of the rotor-aligned frame is at the center of the sampling
         #   plane already
-        # note: sigmay = AR*sigmaz
-        #       sigmaz = sqrt(A/(pi*AR))
+        # note: sigma_y = AR*sigmaz
+        #       sigma_z = sqrt(A/(pi*AR))
         guess = [
                 (self.xh_min+self.xh_max)/2,    # 0: yc
                 (self.xv_min+self.xv_max)/2,    # 1: zc
-                0.,                             # 2: theta
-                7500.,                          # 3: A == pi * sigma_y * sigma_z
-                1.,                             # 4: AR == sigma_y/sigma_z
+                0.0,                            # 2: theta
+                A_min,                          # 3: A == pi * sigma_y * sigma_z
+                1.0,                            # 4: AR == sigma_y/sigma_z
         ]
         minmax = (
                 # y range,    z range,     rotation range, wake size, wake stretching
@@ -156,40 +159,49 @@ class Gaussian2D(waketracker):
         for itime in range(self.Ntimes):
             u1 = self.u[itime,:,:].ravel()
             def func(x):
-                """objective function for x=[yc,zc,theta,Awake,AR]"""
-                ang = x[2]
-                sigma_z = np.sqrt(x[3] / (np.pi*x[4]))  # sqrt( A / (pi * AR) )
-                sigma_y = x[4] * sigma_z
-                delta_y =  x[0]*np.cos(ang) + x[1]*np.sin(ang) - y1
-                delta_z = -x[0]*np.sin(ang) + x[1]*np.cos(ang) - z1
-                return self.umin[itime] * \
-                        np.exp( -0.5 * ((delta_y/sigma_y)**2 + (delta_z/sigma_z)**2) ) - u1
-
-            res = least_squares(func, guess, bounds=minmax)
-
-            if res.success:
-                self.xh_wake[itime], self.xv_wake[itime] = res.x[:2]
+                """objective function for x=[yc,zc,theta,Aref,AR]"""
+                yc,zc,theta,Aref,AR = x
+                sigz2 = Aref / (np.pi*AR)  # sigma_z**2
+                delta_y = y1 - ( yc*np.cos(theta) + zc*np.sin(theta))
+                delta_z = z1 - (-yc*np.sin(theta) + zc*np.cos(theta))
+                return self.umin[itime] \
+                        * np.exp(-0.5*((delta_y/AR)**2 + delta_z**2)/sigz2) \
+                        - u1
+            result = least_squares(func, guess, bounds=minmax)
+            if result.success:
                 # calculate elliptical wake outline
-                ang = res.x[2]
-                sigma_z = np.sqrt(res.x[3] / (np.pi*res.x[4]))
-                sigma_y = res.x[4] * sigma_z
-                r = np.sqrt(2)*sigma_y*sigma_z / np.sqrt(sigma_z**2*np.cos(azi)**2 + sigma_y**2*np.sin(azi)**2)
-                tmpy = r*np.cos(azi)
-                tmpz = r*np.sin(azi)
-                yellip =  tmpy*np.cos(ang) + tmpz*np.sin(ang) + self.xh_wake[itime]
-                zellip = -tmpy*np.sin(ang) + tmpz*np.cos(ang) + self.xv_wake[itime]
-                self.paths[itime] = np.vstack((yellip,zellip)).T
+                yc,zc,theta,Aref,AR = result.x
+                sigma_z = np.sqrt(Aref / (np.pi*AR))
+                sigma_y = AR * sigma_z
+                #r = np.sqrt(2)*sigma_y*sigma_z
+                #    / np.sqrt(sigma_z**2*np.cos(azi)**2
+                #              + sigma_y**2*np.sin(azi)**2)
+                tmpy = plotscale * sigma_y*np.cos(azi)
+                tmpz = plotscale * sigma_z*np.sin(azi)
+                yellipse = yc + tmpy*np.cos(theta) + tmpz*np.sin(theta)
+                zellipse = zc - tmpy*np.sin(theta) + tmpz*np.cos(theta)
+                self.paths[itime] = np.vstack((yellipse,zellipse)).T
+                self.xh_wake[itime] = yc
+                self.xv_wake[itime] = zc
                 self.sigma_y[itime] = sigma_y
                 self.sigma_z[itime] = sigma_z
-                self.rotation[itime] = ang
+                self.rotation[itime] = theta
             else:
-                self.xh_wake[itime], self.xv_wake[itime] = \
-                        self.xh_fail, self.xv_fail
+                self.xh_wake[itime] = self.xh_fail
+                self.xv_wake[itime] = self.xv_fail
                 self.sigma_y[itime] = np.nan
                 self.sigma_z[itime] = np.nan
                 self.rotation[itime] = np.nan
 
             if self.verbose:
+                if verbosity > 0:
+                    Aref = np.pi * self.sigma_y[itime] * self.sigma_z[itime]
+                    plotlevel = self.umin[itime] * np.exp(-0.5*plotscale**2)
+                    print(f'yc,zc : {self.xh_wake[itime]:.1f},',
+                            f' {self.xv_wake[itime]:.1f};',
+                            f' rotation={self.rotation[itime]*180/np.pi} deg;',
+                            f' ref wake area={Aref} m^2'
+                            f' (outline level={plotlevel})')
                 sys.stderr.write('\rProcessed frame {:d}'.format(itime))
                 #sys.stderr.flush()
         if self.verbose: sys.stderr.write('\n')

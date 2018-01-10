@@ -26,11 +26,11 @@ class Gaussian(waketracker):
             print('\n...finished initializing',self.__class__.__name__,'\n')
 
     def find_centers(self,
-                     umin=None,
-                     sigma=50.,
-                     res=100,
+                     umin=None,sigma=None,
+                     res=100,plotscale=1.0,
                      trajectory_file=None,outlines_file=None,
-                     frame='rotor-aligned'):
+                     frame='rotor-aligned',
+                     verbosity=0):
         """Uses optimization algorithms in scipy.optimize to determine
         the best fit to the wake center location, given the wake width.
         
@@ -46,7 +46,10 @@ class Gaussian(waketracker):
             of the Gaussian function. This may be a constant or a
             function of downstream distance.
         res : integer, optional
-            Number of points to represent the wake outline as a circle
+            Number of points to represent the wake outline as a circle.
+        plotscale : float, optional
+            Scaling factor in standard deviations for a representative
+            wake outline (==1.1774 for FWHM).
         trajectory_file : string, optional
             Name of trajectory data file to attempt inputting and to
             write out to; set to None to skip I/O. Data are written out
@@ -93,7 +96,7 @@ class Gaussian(waketracker):
                     len(np.nonzero(self.umin > 0)[0]),'of',self.Ntimes,'times')
         if self.verbose:
             print('Average Gaussian function amplitude =',
-                    np.mean(self.umin),'m/s')
+                    np.mean(self.umin),'m/s (over all times)')
 
         try:
             # sigma is a specified constnat
@@ -109,8 +112,8 @@ class Gaussian(waketracker):
 
         # approximate wake outline with specified wake width, sigma
         azi = np.linspace(0,2*np.pi,res)
-        ycirc = self.sigma*np.cos(azi)
-        zcirc = self.sigma*np.sin(azi)
+        ycirc = plotscale*self.sigma*np.cos(azi)
+        zcirc = plotscale*self.sigma*np.sin(azi)
 
         # set up optimization parameters
         guess = [
@@ -129,22 +132,26 @@ class Gaussian(waketracker):
             u1 = self.u[itime,:,:].ravel()
             def func(x):
                 """objective function for x=[yc,zc]"""
-                delta_y = x[0] - y1
-                delta_z = x[1] - z1
-                return self.umin[itime] * \
-                        np.exp( -0.5 * (delta_y**2 + delta_z**2)/sigma**2 ) - u1
-
-            res = least_squares(func, guess, bounds=minmax)
-
-            if res.success:
-                self.xh_wake[itime], self.xv_wake[itime] = res.x[:2]
+                delta_y = y1 - x[0]
+                delta_z = z1 - x[1]
+                return self.umin[itime] \
+                        * np.exp(-0.5*(delta_y**2 + delta_z**2)/sigma**2) \
+                        - u1
+            result = least_squares(func, guess, bounds=minmax)
+            if result.success:
+                self.xh_wake[itime], self.xv_wake[itime] = result.x[:2]
                 self.paths[itime] = np.vstack((ycirc + self.xh_wake[itime],
                                                zcirc + self.xv_wake[itime])).T
             else:
-                self.xh_wake[itime], self.xv_wake[itime] = \
-                        self.xh_fail, self.xv_fail
+                self.xh_wake[itime] = self.xh_fail
+                self.xv_wake[itime] = self.xv_fail
 
             if self.verbose:
+                if verbosity > 0:
+                    plotlevel = self.umin[itime] * np.exp(-0.5*plotscale**2)
+                    print(f'yc,zc : {self.xh_wake[itime]:.1f},',
+                            f' {self.xv_wake[itime]:.1f}',
+                            f' (outline level={plotlevel})')
                 sys.stderr.write('\rProcessed frame {:d}'.format(itime))
                 #sys.stderr.flush()
         if self.verbose: sys.stderr.write('\n')
