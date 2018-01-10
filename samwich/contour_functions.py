@@ -2,7 +2,10 @@ from __future__ import print_function
 import numpy as np
 import matplotlib.path as mpath
 
-def get_paths(Cdata,Clevel,close_paths=False,verbose=False):
+def get_paths(Cdata, Clevel,
+              close_paths=False,
+              min_points=50,
+              verbose=False):
     """Loops over paths identified by the trace function.
 
     Parameters
@@ -18,6 +21,10 @@ def get_paths(Cdata,Clevel,close_paths=False,verbose=False):
         (xh_range,xv_range), i.e., the horizontal and vertical range
         (only the first and last elements will be used, so the full list
         of coordinates is not needed)
+    min_pts : int, optional
+        Minimum number of points a closed loop must contain for it to be
+        considered a candidate path. This is indirectly related to the 
+        smallest allowable contour region.
 
     Returns
     -------
@@ -35,7 +42,10 @@ def get_paths(Cdata,Clevel,close_paths=False,verbose=False):
             break
         if np.all(path[-1] == path[0]):
             # closed contour
-            path_list.append(path)
+            if len(path) >= min_points:
+                path_list.append(path)
+            elif verbose:
+                print('Ignoring contour with {} points'.format(len(path)))
         elif close_paths:
             # need to close open contour
             xstart = path[0,:]

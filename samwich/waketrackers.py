@@ -770,6 +770,8 @@ class contourwaketracker(waketracker):
         until the difference in contour values is < 'tol'. This *should*
         be called from contourwaketracker.
 
+        NOTE: This not guaranteed to find a global optimum.
+
         If contour_closure is True, then open contours are closed with
         segments along the boundaries.
 
@@ -861,8 +863,15 @@ class contourwaketracker(waketracker):
                 idx = np.argmin(Ferr)
                 cur_opt_level = level[idx]
                 if debug:
-                    print('target values: {}'.format(Flist))
-                    print('current optimum level: {}'.format(level[idx]))
+                    print('target values',
+                          ' (after evaluating all candidate contours):')
+                    evals = np.arange(len(level))
+                    order = np.argsort(level)
+                    print('      level, func_val, num_contour_pts')
+                    for i in order:
+                        print('  ',evals[i],level[i],Flist[i],len(paths[i]))
+                    print('current optimum : {} (level={})'.format(Flist[idx],
+                                                                   level[idx]))
             else:
                 # no closed contours within our range?
                 yc = self.xh_fail
