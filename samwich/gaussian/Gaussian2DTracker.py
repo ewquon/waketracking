@@ -162,8 +162,8 @@ class Gaussian2D(waketracker):
                 """objective function for x=[yc,zc,theta,Aref,AR]"""
                 yc,zc,theta,Aref,AR = x
                 sigz2 = Aref / (np.pi*AR)  # sigma_z**2
-                delta_y = y1 - ( yc*np.cos(theta) + zc*np.sin(theta))
-                delta_z = z1 - (-yc*np.sin(theta) + zc*np.cos(theta))
+                delta_y =  (y1-yc)*np.cos(theta) + (z1-zc)*np.sin(theta)
+                delta_z = -(y1-yc)*np.sin(theta) + (z1-zc)*np.cos(theta)
                 return self.umin[itime] \
                         * np.exp(-0.5*((delta_y/AR)**2 + delta_z**2)/sigz2) \
                         - u1
@@ -178,8 +178,8 @@ class Gaussian2D(waketracker):
                 #              + sigma_y**2*np.sin(azi)**2)
                 tmpy = plotscale * sigma_y*np.cos(azi)
                 tmpz = plotscale * sigma_z*np.sin(azi)
-                yellipse = yc + tmpy*np.cos(theta) + tmpz*np.sin(theta)
-                zellipse = zc - tmpy*np.sin(theta) + tmpz*np.cos(theta)
+                yellipse = yc + tmpy*np.cos(theta) - tmpz*np.sin(theta)
+                zellipse = zc + tmpy*np.sin(theta) + tmpz*np.cos(theta)
                 self.paths[itime] = np.vstack((yellipse,zellipse)).T
                 self.xh_wake[itime] = yc
                 self.xv_wake[itime] = zc
