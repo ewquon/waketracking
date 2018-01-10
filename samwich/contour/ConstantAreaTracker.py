@@ -29,7 +29,7 @@ class ConstantArea(contourwaketracker):
                      frame='rotor-aligned',
                      Ntest=21,tol=0.01,
                      check_deficit=False,
-                     debug=False):
+                     verbosity=0):
         """Uses a binary search algorithm (find_contour_center) to
         locate the contour with flux closest to the targetValue.
         
@@ -67,9 +67,8 @@ class ConstantArea(contourwaketracker):
         check_deficit : boolean, optional
             If True, only consider wake candidates in which the average
             velocity deficit is less than 0.
-        debug : boolean, optional
-            Print out debugging information about the contour search
-            routine.
+        verbosity : int, optional
+            Control verbose output level (e.g., for debug).
 
         Returns
         -------
@@ -107,11 +106,11 @@ class ConstantArea(contourwaketracker):
                                                  tol=tol,
                                                  func=None,
                                                  vdcheck=check_deficit,
-                                                 debug=debug)
+                                                 debug=(verbosity > 0))
             if not info['success']:
                 print('WARNING: find_contour_center was unsuccessful.')
                 print(info)
-            elif self.verbose:
+            elif self.verbose and verbosity > 0:
                 print('itime={:.1f} : found contour (u={:.4f}) with area {:g}'.format(
                         itime,self.Clevels[itime],self.Cfvals[itime]))
 
