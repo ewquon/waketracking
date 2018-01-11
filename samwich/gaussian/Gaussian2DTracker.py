@@ -131,10 +131,6 @@ class Gaussian2D(waketracker):
         if rho is not None:
             print('Note: cross-correlation parameter is not yet implemented')
 
-        # approximate wake outline as best-fit ellipse at 36.8% of the max wake
-        #   deficit (corresponding to f(y,z) = A*exp(-1))
-        azi = np.linspace(0,2*np.pi,res)
-
         # set up optimization parameters
         # note: origin of the rotor-aligned frame is at the center of the sampling
         #   plane already
@@ -156,6 +152,7 @@ class Gaussian2D(waketracker):
         # calculate trajectories for each time step
         y1 = self.xh.ravel()
         z1 = self.xv.ravel()
+        azi = np.linspace(0,2*np.pi,res)
         for itime in range(self.Ntimes):
             u1 = self.u[itime,:,:].ravel()
             def func(x):

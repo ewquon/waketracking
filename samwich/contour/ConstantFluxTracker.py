@@ -45,7 +45,7 @@ class ConstantFlux(contourwaketracker):
         ----------
         ref_flux : float
             Numerically integrated value to match.
-        flux_function : function
+        flux_function : callable
             The integrand.
         flux_field : string, optional
             Name of the field to use as input to the flux_function; the
