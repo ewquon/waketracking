@@ -152,7 +152,6 @@ class CircularTestRegion(waketracker):
                 return np.sum(integrand*testr)*dr*dq  # integrate f*r*dr*dtheta
             result = least_squares(func, guess, bounds=minmax,
                                    verbose=verbosity)
-            print(result)
             if result.success:
                 self.xh_wake[itime], self.xv_wake[itime] = result.x[:2]
                 self.paths[itime] = np.vstack((ycirc + self.xh_wake[itime],
