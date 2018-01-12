@@ -96,7 +96,7 @@ class Gaussian(waketracker):
                     len(np.nonzero(self.umin > 0)[0]),'of',self.Ntimes,'times')
         if self.verbose:
             print('Average Gaussian function amplitude =',
-                    np.mean(self.umin),'m/s (over all times)')
+                    np.mean(self.umin),'m/s (over',self.Ntimes,'times)')
 
         try:
             # sigma is a specified constnat
@@ -109,6 +109,8 @@ class Gaussian(waketracker):
             self.sigma = sigma(xd)
             if self.verbose:
                 print('Calculated sigma =',self.sigma,'m at x=',xd,'m')
+        if self.verbose:
+            print('Reference Gaussian area =',np.pi*self.sigma**2,'m^2')
 
         # approximate wake outline with specified wake width, sigma
         azi = np.linspace(0,2*np.pi,res)

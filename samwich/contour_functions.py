@@ -152,7 +152,7 @@ def calc_area(path):
 
 def integrate_function(contour_points,
                        func,
-                       xg,yg,fg,
+                       xg,yg,fields,
                        vd=None,
                        Nmin=50):
     """Integrate a specified function within an arbitrary region. This
@@ -171,9 +171,9 @@ def integrate_function(contour_points,
         Output from matplotlib._cntr.Cntr object's trace function
     xg,yg : ndarray
         Sampling plane coordinates, in the rotor-aligned frame.
-    fg : ndarray
-        Instantaneous velocity, including shear, used as the
-        independent variable in the specificed function.
+    fields : list-like of ndarray
+        Fields to be used as the independent variable in the specified
+        function.
     vd : ndarray, optional
         Velocity deficit; if not None, returns average deficit in the
         enclosed region.
@@ -211,25 +211,19 @@ def integrate_function(contour_points,
         vdavg = None
 
     # correct for errors in area due to discretization
-    cellFaceArea = (xg[1,0]-xg[0,0])*(yg[0,1]-yg[0,0])
-    corr = A / (Ninner*cellFaceArea)
+    cell_face_area = (xg[1,0]-xg[0,0])*(yg[0,1]-yg[0,0])
+    corr = A / (Ninner*cell_face_area)
 
     # if integrating area, we're done at this point
     if func is None:
         return A, corr, vdavg
 
     # evaluate specified function
-    Uinner = fg.ravel()[inner]
-    #if func.func_code.co_argcount==1:
-    fvals = func(Uinner)
-    #elif func.func_code.co_argcount==2: # assume second argument is A
-    #    fvals = func(Uinner, A)
-    #else:
-    #    print('Problem with function formulation!')
-    #    return None,None,None
+    func_args = [ field.ravel()[inner] for field in fields ]
+    fvals_in_contour = func(*func_args)
 
-    fval = corr * np.sum(fvals)*cellFaceArea
-    
+    fval = corr * np.sum(fvals_in_contour)*cell_face_area
+
     return fval, corr, vdavg
 
 def calc_weighted_center(contour_points,

@@ -126,7 +126,7 @@ class Gaussian2D(waketracker):
                     len(np.nonzero(self.umin > 0)[0]),'of',self.Ntimes,'times')
         if self.verbose:
             print('average Gaussian function amplitude =',
-                    np.mean(self.umin),'m/s')
+                    np.mean(self.umin),'m/s (over',self.Ntimes,'times)')
 
         if rho is not None:
             print('Note: cross-correlation parameter is not yet implemented')

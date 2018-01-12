@@ -19,7 +19,7 @@ class ConstantFlux(contourwaketracker):
             print('\n...finished initializing',self.__class__.__name__,'\n')
 
     def find_centers(self,ref_flux,
-                     flux_function,flux_field='u_tot',
+                     flux_function,field_names=('u_tot',),
                      trajectory_file=None,outlines_file=None,
                      weighted_center=True,
                      contour_closure=None,
@@ -30,14 +30,6 @@ class ConstantFlux(contourwaketracker):
                      verbosity=0):
         """Uses a binary search algorithm (find_contour_center) to
         locate the contour with flux closest to the targetValue.
-        
-        Some candidate functions to be integrated over the contour
-        surface:
-
-        * mass flow, func = lambda u: u
-        * momentum flux, func = lambda u: u**2
-
-        The contour area can be referenced as func = lambda u,A: ...
 
         Overrides the parent find_centers routine.
         
@@ -47,9 +39,12 @@ class ConstantFlux(contourwaketracker):
             Numerically integrated value to match.
         flux_function : callable
             The integrand.
-        flux_field : string, optional
-            Name of the field to use as input to the flux_function; the
-            instantaneous velocity, 'u_tot', is used by default.
+        field_names : tuple, optional
+            List of field names to use as parameters for flux_function;
+            number of arguments to flux_function should match the length
+            of this list. The instantaneous velocity, 'u_tot', is used
+            by default. Other possibilities include 'u' ('u_tot' minus
+            freestream shear), 'v', 'w', etc.
         trajectory_file : string
             Name of trajectory data file to attempt inputting and to
             write out to; set to None to skip I/O. Data are written out
@@ -102,20 +97,20 @@ class ConstantFlux(contourwaketracker):
         if self.wake_tracked:
             return self.trajectory_in(frame)
 
-        try:
-            test_field = getattr(self,flux_field)
-        except AttributeError:
-            print('Warning: flux field',flux_field,'not available,',
-                    "using 'u_tot' by default")
-            flux_field = 'u_tot'
-            test_field = getattr(self,flux_field)
+        # make sure we can get the requested field for calculating flux
+        test_fields = [ getattr(self,fieldname)
+                        for fieldname in field_names ]
 
         # some sanity checks if needed
         if self.verbose:
-            Utest = np.min(test_field[-1,self.jmin:self.jmax,self.kmin:self.kmax])
+            Utest = [ np.min(testfield[-1,self.jmin:self.jmax,self.kmin:self.kmax])
+                        for testfield in test_fields ]
+            input_string = '{}={}'.format(field_names[0],Utest[0])
+            for fieldname, fieldvalue in zip(field_names[1:],Utest[1:]):
+                input_string += ',{:s}={:g}'.format(fieldname,fieldvalue)
             #if flux_function.func_code.co_argcount==1: # fn(u)
-            print('Sample function evaluation: f(u={:g}) = {:g}'.format(
-                    Utest,flux_function(Utest)))
+            print('Sample function evaluation: f({:s}) = {}'.format(
+                    input_string,flux_function(*Utest)))
             #else: # fn(u,A)
             #    print('Sample function evaluation: f(u={:g},1.0) = {:g}'.format(
             #            Utest,flux_function(Utest,1)))
@@ -139,7 +134,7 @@ class ConstantFlux(contourwaketracker):
                                              Ntest=Ntest,
                                              tol=tol,
                                              func=flux_function,
-                                             field=flux_field,
+                                             fields=field_names,
                                              vdcheck=check_deficit,
                                              debug=(verbosity > 0))
             if not info['success']:

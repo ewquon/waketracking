@@ -763,7 +763,7 @@ class contourwaketracker(waketracker):
                              Ntest=11,
                              tol=0.01,
                              func=None,
-                             field='u_tot',
+                             fields=('u_tot'),
                              vdcheck=True,
                              debug=True):
         """Helper function that returns the coordinates of the detected
@@ -798,9 +798,15 @@ class contourwaketracker(waketracker):
         Nrefine = 0
 
         if func is None:
-            testfield = None
+            testfields = None
         else:
-            testfield = getattr(self,field)[itime,:,:]
+            try:
+                func_params = inspect.signature(func).parameters
+            except AttributeError:  # python 2
+                func_params = inspect.getargspec(func).args
+            assert(len(fields) == len(func_params))
+            testfields = [ getattr(self,fieldname)[itime,:,:]
+                            for fieldname in fields ]
 
         Flist = []  # list of evaluated function values
         level = []  # list of candidate contour values
@@ -829,7 +835,6 @@ class contourwaketracker(waketracker):
                     level += len(cur_path_list)*[Clevel]
                     Flist += [contour.calc_area(path) for path in cur_path_list]
                 elif func is None:
-                    assert(vdcheck)
                     # area contours with velocity deficit check
                     for path in cur_path_list:
                         fval, corr, avgdeficit = \
@@ -840,7 +845,7 @@ class contourwaketracker(waketracker):
                             paths.append(path)
                             level.append(Clevel)
                             Flist.append(fval)
-                else:
+                else:  # specified function
                     # flux contours
                     if vdcheck:
                         vd = self.u[itime,:,:]
@@ -848,9 +853,9 @@ class contourwaketracker(waketracker):
                         vd = None
                     for path in cur_path_list:
                         fval, corr, avgdeficit = \
-                                contour.integrate_function(path,
-                                                           func,
-                                                           self.xh, self.xv, testfield,
+                                contour.integrate_function(path, func,
+                                                           self.xh, self.xv,
+                                                           testfields,
                                                            vd=vd)
                         #NfnEvals += 1
                         if fval is not None and (avgdeficit < 0 or vd is None):
