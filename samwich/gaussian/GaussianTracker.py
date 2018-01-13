@@ -41,7 +41,7 @@ class Gaussian(waketracker):
         umin : float or ndarray
             Max velocity deficit (i.e., should be < 0). If None, then
             this is detected from the field.
-        sigma : float
+        sigma : float or ndarray
             Wake width parameter, equivalent to the standard deviation
             of the Gaussian function. This may be a constant or a
             function of downstream distance.
@@ -98,24 +98,33 @@ class Gaussian(waketracker):
             print('Average Gaussian function amplitude =',
                     np.mean(self.umin),'m/s (over',self.Ntimes,'times)')
 
-        try:
-            # sigma is a specified constnat
-            self.sigma = float(sigma)
+        # set up wake width
+        if hasattr(sigma,'__iter__'):
+            # sigma is a specified list-like object
+            self.sigma = np.array(sigma)
+            refarea = np.pi*self.sigma**2
+            print('Mean/min/max reference Gaussian area:',
+                    np.mean(refarea),np.min(refarea),np.max(refarea),'m^2')
+        else:
+            try:
+                # sigma is a specified constnat
+                self.sigma = float(sigma) * np.ones(self.Ntimes)
+                if self.verbose:
+                    print('Specified Gaussian width =',self.sigma[0],'m')
+            except TypeError:
+                # sigma is specified as a function of downstream distance
+                assert(callable(sigma))
+                xd = np.mean(self.xd)
+                self.sigma = sigma(xd) * np.ones(self.Ntimes)
+                if self.verbose:
+                    print('Calculated sigma =',self.sigma[0],'m at x=',xd,'m')
             if self.verbose:
-                print('Specified Gaussian width =',self.sigma,'m')
-        except TypeError:
-            # sigma is specified as a function of downstream distance
-            xd = np.mean(self.xd)
-            self.sigma = sigma(xd)
-            if self.verbose:
-                print('Calculated sigma =',self.sigma,'m at x=',xd,'m')
-        if self.verbose:
-            print('Reference Gaussian area =',np.pi*self.sigma**2,'m^2')
+                print('Reference Gaussian area =',np.pi*self.sigma[0]**2,'m^2')
 
         # approximate wake outline with specified wake width, sigma
         azi = np.linspace(0,2*np.pi,res)
-        ycirc = plotscale*self.sigma*np.cos(azi)
-        zcirc = plotscale*self.sigma*np.sin(azi)
+        ycirc = plotscale*np.cos(azi)
+        zcirc = plotscale*np.sin(azi)
 
         # set up optimization parameters
         guess = [
@@ -137,13 +146,13 @@ class Gaussian(waketracker):
                 delta_y = y1 - x[0]
                 delta_z = z1 - x[1]
                 return self.umin[itime] \
-                        * np.exp(-0.5*(delta_y**2 + delta_z**2)/sigma**2) \
-                        - u1
+                        * np.exp(-0.5*(delta_y**2 + delta_z**2)/self.sigma[itime]**2
+                                ) - u1
             result = least_squares(func, guess, bounds=minmax)
             if result.success:
                 self.xh_wake[itime], self.xv_wake[itime] = result.x[:2]
-                self.paths[itime] = np.vstack((ycirc + self.xh_wake[itime],
-                                               zcirc + self.xv_wake[itime])).T
+                self.paths[itime] = np.vstack((self.sigma[itime]*ycirc + self.xh_wake[itime],
+                                               self.sigma[itime]*zcirc + self.xv_wake[itime])).T
             else:
                 self.xh_wake[itime] = self.xh_fail
                 self.xv_wake[itime] = self.xv_fail
