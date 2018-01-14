@@ -1,16 +1,13 @@
+
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
     <title>Code Reference &#8212; waketracking  documentation</title>
-    
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
@@ -24,7 +21,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="prev" title="Samples" href="samples.html" />
@@ -35,7 +32,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
   </head>
-  <body role="document">
+  <body>
   
 
     <div class="document">
@@ -50,11 +47,14 @@
 <p>This module includes all data processing routines to arbitrary scalar or vector data into a standard form.</p>
 <span class="target" id="module-waketracking.dataloaders"></span><dl class="class">
 <dt id="waketracking.dataloaders.sampled_data">
-<em class="property">class </em><code class="descclassname">waketracking.dataloaders.</code><code class="descname">sampled_data</code><span class="sig-paren">(</span><em>outputDir='.'</em>, <em>prefix=None</em>, <em>NX=1</em>, <em>NY=None</em>, <em>NZ=None</em>, <em>datasize=3</em>, <em>npzdata='arrayData.npz'</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.dataloaders.sampled_data" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">waketracking.dataloaders.</code><code class="descname">sampled_data</code><span class="sig-paren">(</span><em>outputDir='.'</em>, <em>prefix=None</em>, <em>NX=1</em>, <em>NY=None</em>, <em>NZ=None</em>, <em>datasize=3</em>, <em>npzdata='arrayData.npz'</em>, <em>interpHoles=False</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.dataloaders.sampled_data" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generic regularly sampled data object</p>
-<p>Attempts to read data with shape (Ntimes,NX,NY,NZ,datasize).</p>
+<p>Attempts to load processed data with shape
+(Ntimes,NX,NY,NZ,datasize).</p>
+<p>I/O and processing of the data should take place in __init__ of
+the derived class.</p>
 <p>All inherited readers should call this generic data reader for
-consistency. The object should contain:</p>
+consistency. The resulting data object should contain:</p>
 <ul class="simple">
 <li><dl class="first docutils">
 <dt>ts: TimeSeries object with information regarding the location</dt>
@@ -72,12 +72,15 @@ consistency. The object should contain:</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>outputDir</strong> (<em>string</em>) &#8211; Path to directory containing time subdirectories.</li>
-<li><strong>prefix</strong> (<em>string</em><em>, </em><em>optional</em>) &#8211; Data file prefix.</li>
-<li><strong>NX</strong><strong>,</strong><strong>NY</strong><strong>,</strong><strong>NZ</strong> (<em>integer</em>) &#8211; Dimensions of data, which depending on the reader may be
+<li><strong>outputDir</strong> (<em>string</em>) – Path to directory containing time subdirectories.</li>
+<li><strong>prefix</strong> (<em>string</em><em>, </em><em>optional</em>) – Data file prefix.</li>
+<li><strong>NX</strong><strong>,</strong><strong>NY</strong><strong>,</strong><strong>NZ</strong> (<em>integer</em>) – Dimensions of data, which depending on the reader may be
 detected or read from the data file.</li>
-<li><strong>datasize</strong> (<em>integer</em>) &#8211; Describes the type of data (scalar=1, vector=3).</li>
-<li><strong>npzdata</strong> (<em>string</em>) &#8211; The compressed numpy data file to load from and save to.</li>
+<li><strong>datasize</strong> (<em>integer</em>) – Describes the type of data (scalar=1, vector=3).</li>
+<li><strong>npzdata</strong> (<em>string</em>) – The compressed numpy data file to load from and save to.</li>
+<li><strong>interpHoles</strong> (<em>boolean</em><em>, </em><em>optional</em>) – Attempt to interpolate data onto a regular grid in case
+the input data has sampling errors. This depends on the
+np.unique function to identify coordinates.</li>
 </ul>
 </td>
 </tr>
@@ -87,15 +90,15 @@ detected or read from the data file.</li>
 <dt id="waketracking.dataloaders.sampled_data.sliceI">
 <code class="descname">sliceI</code><span class="sig-paren">(</span><em>i=0</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.dataloaders.sampled_data.sliceI" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return slice through the dimension 0.</p>
-<p>This is probably the only slicing that makes sense...</p>
+<p>This is probably the only slicing that makes sense…</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><ul class="simple">
-<li><strong>xh,xv</strong> (<em>ndarray</em>) &#8211; Planar coordinaates&#8211;horizontal and vertical&#8211;with the
+<li><strong>xh,xv</strong> (<em>ndarray</em>) – Planar coordinaates–horizontal and vertical–with the
 dimensions (Nh,Nv).</li>
-<li><strong>u</strong> (<em>ndarray</em>) &#8211; Velocity array with dimensions (Ntimes,Nh,Nv,datasize).</li>
+<li><strong>u</strong> (<em>ndarray</em>) – Velocity array with dimensions (Ntimes,Nh,Nv,datasize).</li>
 </ul>
 </td>
 </tr>
@@ -128,9 +131,9 @@ probably does not make sense.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><ul class="simple">
-<li><strong>* x0,x1,x2</strong> (<em>ndarray</em>) &#8211; Sampling grid with dimensions (N1,N2); coordinates are in
+<li><strong>* x0,x1,x2</strong> (<em>ndarray</em>) – Sampling grid with dimensions (N1,N2); coordinates are in
 the Cartesian reference frame.</li>
-<li><strong>* u</strong> (<em>ndarray</em>) &#8211; Velocity array with dimensions (Ntimes,N1,N2,datasize).</li>
+<li><strong>* u</strong> (<em>ndarray</em>) – Velocity array with dimensions (Ntimes,N1,N2,datasize).</li>
 </ul>
 </td>
 </tr>
@@ -151,11 +154,11 @@ the Cartesian reference frame.</li>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>fname</strong> (<em>string</em>) &#8211; Path to file.</li>
-<li><strong>NY</strong> (<em>integer</em>) &#8211; Number of horizontal points.</li>
-<li><strong>NZ</strong> (<em>integer</em><em>, </em><em>optional</em>) &#8211; Number of vertical points; if omitted, assumed equal to NY.</li>
-<li><strong>skiprows</strong> (<em>integer</em><em>, </em><em>optional</em>) &#8211; Number of rows to skip when calling np.loadtxt.</li>
-<li><strong>delimiter</strong> (<em>string</em><em>, </em><em>optional</em>) &#8211; String to use as delimiter when calling np.loadtxt.</li>
+<li><strong>fname</strong> (<em>string</em>) – Path to file.</li>
+<li><strong>NY</strong> (<em>integer</em>) – Number of horizontal points.</li>
+<li><strong>NZ</strong> (<em>integer</em><em>, </em><em>optional</em>) – Number of vertical points; if omitted, assumed equal to NY.</li>
+<li><strong>skiprows</strong> (<em>integer</em><em>, </em><em>optional</em>) – Number of rows to skip when calling np.loadtxt.</li>
+<li><strong>delimiter</strong> (<em>string</em><em>, </em><em>optional</em>) – String to use as delimiter when calling np.loadtxt.</li>
 </ul>
 </td>
 </tr>
@@ -169,18 +172,18 @@ the Cartesian reference frame.</li>
 <dd><p>Raw data from pandas dataframe(s)</p>
 <p>See superclass sampled_data for more information.</p>
 <p>Reads a single time instance from one or more scans provided
-in pandas&#8217; DataFrame format. Data are assumed to be scalar
+in pandas’ DataFrame format. Data are assumed to be scalar
 fields.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>frames</strong> (<em>DataFrame</em><em>, </em><em>list</em><em>, or </em><em>tuple</em>) &#8211; Pandas frames containing scan data.</li>
-<li><strong>NY</strong><strong>,</strong><strong>NZ</strong> (<em>integer</em><em>, </em><em>optional</em>) &#8211; Number of points in each scan direction.</li>
-<li><strong>xr</strong> (<em>ndarray</em><em>, </em><em>optional</em>) &#8211; Range gate distances; if None, then equal unit spacing is
+<li><strong>frames</strong> (<em>DataFrame</em><em>, </em><em>list</em><em>, or </em><em>tuple</em>) – Pandas frames containing scan data.</li>
+<li><strong>NY</strong><strong>,</strong><strong>NZ</strong> (<em>integer</em><em>, </em><em>optional</em>) – Number of points in each scan direction.</li>
+<li><strong>xr</strong> (<em>ndarray</em><em>, </em><em>optional</em>) – Range gate distances; if None, then equal unit spacing is
 assumed.</li>
-<li><strong>refineFactor</strong> (<em>integer</em><em>, </em><em>optional</em>) &#8211; Refinement factor for super-resolving (by cubic
+<li><strong>refineFactor</strong> (<em>integer</em><em>, </em><em>optional</em>) – Refinement factor for super-resolving (by cubic
 interpolation) the field in the lateral and vertical
 directions.</li>
 </ul>
@@ -197,11 +200,26 @@ directions.</li>
 <p>See superclass sampled_data for more information.</p>
 <p>Reads time series data from subdirectories in ${outputDir}.
 Each time subdirectory should contain a file named
-&#8216;${prefix}.000.U&#8217;.</p>
+‘${prefix}.000.U’.</p>
 <p>If NY or NZ are set to None, then the array dimensions
 will be guessed from the data.</p>
 <p>The .mesh files are assumed identical (the mesh is only read
 once from the first directory)</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="waketracking.dataloaders.foam_ensight_array_series">
+<em class="property">class </em><code class="descclassname">waketracking.dataloaders.</code><code class="descname">foam_ensight_array_series</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.dataloaders.foam_ensight_array_series" title="Permalink to this definition">¶</a></dt>
+<dd><p>OpenFOAM array sampling data in Ensight format.</p>
+<p>New output format has a single output directory containing a series of .U
+files with a single associated .case and .mesh file.</p>
+<p>See superclass sampled_data for more information.</p>
+<p>Reads time series data from ${prefix}.case file ${outputDir}.
+The output directory should contain ${prefix}.mesh and solution
+samples named ${prefix}.#####.U</p>
+<p>Note: This reader does not use the TimeSeries object.</p>
+<p>If NY or NZ are set to None, then the array dimensions
+will be guessed from the data.</p>
 </dd></dl>
 
 </div>
@@ -219,7 +237,7 @@ object.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>method</strong> (<em>string</em>) &#8211; Should correspond to a Tracker class object.</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>method</strong> (<em>string</em>) – Should correspond to a Tracker class object.</td>
 </tr>
 </tbody>
 </table>
@@ -234,33 +252,33 @@ this class.</p>
 <p>Process structured data in rotor-aligned frames of reference.
 Arguments may be in the form:</p>
 <blockquote>
-<div>waketracker(x, y, z, u, ...)</div></blockquote>
+<div>waketracker(x, y, z, u, …)</div></blockquote>
 <p>or</p>
 <blockquote>
-<div>waketracker((x,y,z,u), ...)</div></blockquote>
-<p>The latter form is useful if the datatracker object&#8217;s slice
+<div>waketracker((x,y,z,u), …)</div></blockquote>
+<p>The latter form is useful if the datatracker object’s slice
 function is called inline.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>x</strong><strong>,</strong><strong>y</strong><strong>,</strong><strong>z</strong> (<em>ndarray</em>) &#8211; Sampling grid coordinates in a Cartesian reference frame,
+<li><strong>x</strong><strong>,</strong><strong>y</strong><strong>,</strong><strong>z</strong> (<em>ndarray</em>) – Sampling grid coordinates in a Cartesian reference frame,
 with shape (Nh,Nv). Used to calculate xh and xv, the
 horizontal and vertical grid coordinates in the rotor-
 aligned frame.</li>
-<li><strong>u</strong> (<em>ndarray</em>) &#8211; Instantaneous velocity array with shape
+<li><strong>u</strong> (<em>ndarray</em>) – Instantaneous velocity array with shape
 (Ntimes,Nh,Nv,datasize) or (Ntimes,Nh,Nv) for which
 datasize=1 (i.e., scalar field) is assumed. In the scalar
 case, the velocity is assumed normal to the sampling plane;
 in the vector case, the planar normal velocity is
 calculated assuming that the sampling plane is only yawed
 (and not tilted).</li>
-<li><strong>horzRange</strong><strong>,</strong><strong>vertRange</strong> (<em>tuple</em><em>, </em><em>optional</em>) &#8211; Range of points in the horizontal and vertical directions,
+<li><strong>horzRange</strong><strong>,</strong><strong>vertRange</strong> (<em>tuple</em><em>, </em><em>optional</em>) – Range of points in the horizontal and vertical directions,
 respectively, in the rotor-aligned sampling plane through
 which to search for the wake center</li>
-<li><strong>prefix</strong> (<em>string</em><em>, </em><em>optional</em>) &#8211; Root output directory to save processed data and images.</li>
-<li><strong>verbose</strong> (<em>boolean</em><em>, </em><em>optional</em>) &#8211; Screen output verbosity.</li>
+<li><strong>prefix</strong> (<em>string</em><em>, </em><em>optional</em>) – Root output directory to save processed data and images.</li>
+<li><strong>verbose</strong> (<em>boolean</em><em>, </em><em>optional</em>) – Screen output verbosity.</li>
 </ul>
 </td>
 </tr>
@@ -276,10 +294,10 @@ scipy.ndimage.uniform_filter1d</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>Navg</strong> (<em>integer</em><em>, </em><em>optional</em>) &#8211; Number of snapshots over which to average. If Navg &lt; 0,
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>Navg</strong> (<em>integer</em><em>, </em><em>optional</em>) – Number of snapshots over which to average. If Navg &lt; 0,
 average from end of series only.</td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><strong>uavg</strong> &#8211; If Navg &lt; 0, uavg.shape==(Nh,Nv); otherwise a moving average
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><strong>uavg</strong> – If Navg &lt; 0, uavg.shape==(Nh,Nv); otherwise a moving average
 is return, with uavg.shape==(Ntimes,Nh,Nv).</td>
 </tr>
 <tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">ndarray</td>
@@ -295,9 +313,9 @@ is return, with uavg.shape==(Ntimes,Nh,Nv).</td>
 <p>Calculates self.u from self.u_tot.</p>
 <p>Current supported methods:</p>
 <ul class="simple">
-<li>&#8220;default&#8221;: Estimate from fringes</li>
+<li>“default”: Estimate from fringes</li>
 <li><dl class="first docutils">
-<dt>&#8220;specified&#8221;: Wind profile specified as either a function or an</dt>
+<dt>“specified”: Wind profile specified as either a function or an</dt>
 <dd>array of heights vs horizontal velocity</dd>
 </dl>
 </li>
@@ -307,10 +325,10 @@ is return, with uavg.shape==(Ntimes,Nh,Nv).</td>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>method</strong> (<em>string</em><em>, </em><em>optional</em>) &#8211; Specify method to remove wind shear, or None to use data as
+<li><strong>method</strong> (<em>string</em><em>, </em><em>optional</em>) – Specify method to remove wind shear, or None to use data as
 is; some methods may require additional keyword arguments</li>
-<li><strong>Navg</strong> (<em>integer</em><em>, </em><em>optional</em>) &#8211; Number of snapshots to average over to obtain an
-instaneous average (when shearRemoval==&#8217;default&#8217;).
+<li><strong>Navg</strong> (<em>integer</em><em>, </em><em>optional</em>) – Number of snapshots to average over to obtain an
+instaneous average (when shearRemoval==’default’).
 If Navg &lt; 0, average from end of series only.</li>
 </ul>
 </td>
@@ -321,7 +339,7 @@ If Navg &lt; 0, average from end of series only.</li>
 
 <dl class="method">
 <dt id="waketracking.waketrackers.waketracker.trajectoryIn">
-<code class="descname">trajectoryIn</code><span class="sig-paren">(</span><em>frame</em>, <em>tIdx=None</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.waketrackers.waketracker.trajectoryIn" title="Permalink to this definition">¶</a></dt>
+<code class="descname">trajectoryIn</code><span class="sig-paren">(</span><em>frame</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.waketrackers.waketracker.trajectoryIn" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a tuple with the wake trajectory in the specified frame</p>
 </dd></dl>
 
@@ -340,12 +358,12 @@ between surrounding points. Piecewise linear interpolation
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>update</strong> (<em>boolean</em><em>, </em><em>optional</em>) &#8211; Set to True to update the ywake and zwake in place.</li>
-<li><strong>istart</strong><strong>,</strong><strong>iend</strong> (<em>integer</em><em>, </em><em>optional</em>) &#8211; The range of values to correct.</li>
+<li><strong>update</strong> (<em>boolean</em><em>, </em><em>optional</em>) – Set to True to update the ywake and zwake in place.</li>
+<li><strong>istart</strong><strong>,</strong><strong>iend</strong> (<em>integer</em><em>, </em><em>optional</em>) – The range of values to correct.</li>
 </ul>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>yw_fix,zw_fix</strong> &#8211; Cleaned-up coordinates</p>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>yw_fix,zw_fix</strong> – Cleaned-up coordinates</p>
 </td>
 </tr>
 <tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">ndarray</p>
@@ -364,7 +382,7 @@ the next time plotContour is called.</p>
 
 <dl class="method">
 <dt id="waketracking.waketrackers.waketracker.plotContour">
-<code class="descname">plotContour</code><span class="sig-paren">(</span><em>itime=0</em>, <em>cmin=None</em>, <em>cmax=None</em>, <em>cmap='jet'</em>, <em>markercolor='w'</em>, <em>writepng=False</em>, <em>outdir='.'</em>, <em>seriesname='U'</em>, <em>dpi=100</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.waketrackers.waketracker.plotContour" title="Permalink to this definition">¶</a></dt>
+<code class="descname">plotContour</code><span class="sig-paren">(</span><em>itime=0</em>, <em>cmin=None</em>, <em>cmax=None</em>, <em>cmap='jet'</em>, <em>markercolor='w'</em>, <em>outline=False</em>, <em>writepng=False</em>, <em>outdir='.'</em>, <em>seriesname='U'</em>, <em>dpi=100</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.waketrackers.waketracker.plotContour" title="Permalink to this definition">¶</a></dt>
 <dd><p>Plot/update contour and center marker in the rotor-aligned
 frame at time ${itime}.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -372,20 +390,32 @@ frame at time ${itime}.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>itime</strong> (<em>integer</em>) &#8211; Index of the wake snapshot to plot.</li>
-<li><strong>cmin</strong><strong>,</strong><strong>cmax</strong> (<em>float</em><em>, </em><em>optional</em>) &#8211; Range of contour values to plot; if None, then set to min
+<li><strong>itime</strong> (<em>integer</em>) – Index of the wake snapshot to plot.</li>
+<li><strong>cmin</strong><strong>,</strong><strong>cmax</strong> (<em>float</em><em>, </em><em>optional</em>) – Range of contour values to plot; if None, then set to min
 and max field values.</li>
-<li><strong>cmap</strong> (<em>string</em><em>, </em><em>optional</em>) &#8211; Colormap for the contour plot.</li>
-<li><strong>markercolor</strong> (<em>any matplotlib color</em><em>, </em><em>optional</em>) &#8211; To plot the detected wake center, otherwise set to None.</li>
-<li><strong>writepng</strong> (<em>boolean</em><em>, </em><em>optional</em>) &#8211; If True, save image to
+<li><strong>cmap</strong> (<em>string</em><em>, </em><em>optional</em>) – Colormap for the contour plot.</li>
+<li><strong>markercolor</strong> (<em>any matplotlib color</em><em>, </em><em>optional</em>) – To plot the detected wake center, otherwise set to None.</li>
+<li><strong>outline</strong> (<em>boolean</em><em>, </em><em>optional</em>) – If true, plot a representation of the detected wake edge.</li>
+<li><strong>writepng</strong> (<em>boolean</em><em>, </em><em>optional</em>) – If True, save image to
 ${outdir}/${seriesname}_&lt;timeName&gt;.png</li>
-<li><strong>outdir</strong> (<em>string</em><em>, </em><em>optional</em>) &#8211; Output subdirectory.</li>
-<li><strong>seriesname</strong> (<em>string</em><em>, </em><em>optional</em>) &#8211; Prefix for image series (if writepng==True).</li>
+<li><strong>outdir</strong> (<em>string</em><em>, </em><em>optional</em>) – Output subdirectory.</li>
+<li><strong>seriesname</strong> (<em>string</em><em>, </em><em>optional</em>) – Prefix for image series (if writepng==True).</li>
 </ul>
 </td>
 </tr>
 </tbody>
 </table>
+</dd></dl>
+
+<dl class="method">
+<dt id="waketracking.waketrackers.waketracker.plotOutline">
+<code class="descname">plotOutline</code><span class="sig-paren">(</span><em>itime=0</em>, <em>lw=2</em>, <em>ls='-'</em>, <em>facecolor='none'</em>, <em>edgecolor='w'</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.waketrackers.waketracker.plotOutline" title="Permalink to this definition">¶</a></dt>
+<dd><p>Helper function for plotting a representation of the wake
+edge</p>
+<dl class="docutils">
+<dt>Additional plotting style keywords may be specified, e.g.:</dt>
+<dd>linewidth, linestyle, facecolor, edgecolor,…</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
@@ -402,283 +432,13 @@ ${outdir}/${seriesname}_&lt;timeName&gt;.png</li>
 <em class="property">class </em><code class="descclassname">waketracking.waketrackers.</code><code class="descname">contourwaketracker</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.waketrackers.contourwaketracker" title="Permalink to this definition">¶</a></dt>
 <dd><p>Class for wake tracking based on (velocity) contours</p>
 <p>Inherits superclass waketracker</p>
-<dl class="method">
-<dt id="waketracking.waketrackers.contourwaketracker.plotContour">
-<code class="descname">plotContour</code><span class="sig-paren">(</span><em>itime=0</em>, <em>outline=True</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.waketrackers.contourwaketracker.plotContour" title="Permalink to this definition">¶</a></dt>
-<dd><p>Plot/update contour and center marker in the rotor-aligned
-frame at time ${itime}.</p>
-<p>Overridden waketracker.plotContour function to include the calculated
-wake contour outline.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>itime</strong> (<em>integer</em>) &#8211; Index of the wake snapshot to plot.</li>
-<li><strong>cmin</strong><strong>,</strong><strong>cmax</strong> (<em>float</em><em>, </em><em>optional</em>) &#8211; Range of contour values to plot; if None, then set to min
-and max field values.</li>
-<li><strong>cmap</strong> (<em>string</em><em>, </em><em>optional</em>) &#8211; Colormap for the contour plot.</li>
-<li><strong>markercolor</strong> (<em>any matplotlib color</em><em>, </em><em>optional</em>) &#8211; To plot the detected wake center, otherwise set to None.</li>
-<li><strong>writepng</strong> (<em>boolean</em><em>, </em><em>optional</em>) &#8211; If True, save image to
-${outdir}/${seriesname}_&lt;timeName&gt;.png</li>
-<li><strong>outdir</strong> (<em>string</em><em>, </em><em>optional</em>) &#8211; Output subdirectory.</li>
-<li><strong>seriesname</strong> (<em>string</em><em>, </em><em>optional</em>) &#8211; Prefix for image series (if writepng==True).</li>
-<li><strong>outline</strong> (<em>boolean</em><em>, </em><em>optional</em>) &#8211; (contourwaketracker only) Plot the wake contour outline (a
-path object). If False, operates the same as
-waketracker.plotContour.</li>
-</ul>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="method">
-<dt id="waketracking.waketrackers.contourwaketracker.plotOutline">
-<code class="descname">plotOutline</code><span class="sig-paren">(</span><em>itime=0</em>, <em>lw=2</em>, <em>ls='-'</em>, <em>facecolor='none'</em>, <em>edgecolor='w'</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.waketrackers.contourwaketracker.plotOutline" title="Permalink to this definition">¶</a></dt>
-<dd><p>Helper function for plotting the wake outline</p>
-<dl class="docutils">
-<dt>Additional plotting style keywords may be specified, e.g.:</dt>
-<dd>linewidth, linestyle, facecolor, edgecolor,...</dd>
-</dl>
-</dd></dl>
-
 </dd></dl>
 
 </div>
 <div class="section" id="tracker-modules">
 <h2><code class="docutils literal"><span class="pre">Tracker</span></code> modules<a class="headerlink" href="#tracker-modules" title="Permalink to this headline">¶</a></h2>
 <p>These modules (that have the *WakeTracker suffix) implement the actual wake tracking algorithms.</p>
-<span class="target" id="module-waketracking.GaussianWakeTracker"></span><dl class="class">
-<dt id="waketracking.GaussianWakeTracker.Gaussian">
-<em class="property">class </em><code class="descclassname">waketracking.GaussianWakeTracker.</code><code class="descname">Gaussian</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.GaussianWakeTracker.Gaussian" title="Permalink to this definition">¶</a></dt>
-<dd><p>Identifies a wake as the best fit to a univariate Gaussian
-distribution described by:</p>
-<div class="math">
-\[f(y,z) = A \exp \left(
-    -\frac{1}{2} \frac{(y-y_c)^2 + (z-z_c)^2}{\sigma^2}
-\right)\]</div>
-<p>Inherits class waketracker.</p>
-<dl class="method">
-<dt id="waketracking.GaussianWakeTracker.Gaussian.findCenters">
-<code class="descname">findCenters</code><span class="sig-paren">(</span><em>umin=None</em>, <em>sigma=50.0</em>, <em>trajectoryFile=None</em>, <em>frame='rotor-aligned'</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.GaussianWakeTracker.Gaussian.findCenters" title="Permalink to this definition">¶</a></dt>
-<dd><p>Uses optimization algorithms in scipy.optimize to determine
-the best fit.</p>
-<p>Overrides the parent findCenters routine.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>umin</strong> (<em>float</em><em> or </em><em>ndarray</em>) &#8211; Max velocity deficit (i.e., should be &lt; 0). If None, then
-this is detected from the field.</li>
-<li><strong>sigma</strong> (<em>float</em>) &#8211; Wake width parameter, equivalent to the standard deviation
-of the Gaussian function. This may be a constant or a
-function of downstream distance.</li>
-<li><strong>trajectoryFile</strong> (<em>string</em><em>, </em><em>optional</em>) &#8211; Name of trajectory data file to attempt inputting and to
-write out to; set to None to skip I/O. Data are written out
-in the rotor-aligned frame.</li>
-<li><strong>frame</strong> (<em>string</em><em>, </em><em>optional</em>) &#8211; Reference frame, either &#8216;inertial&#8217; or &#8216;rotor-aligned&#8217;.</li>
-</ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
-<li><strong>x_wake,y_wake,z_wake</strong> (<em>ndarray</em>) &#8211; Wake trajectory if frame is &#8216;inertial&#8217;</li>
-<li><strong>xh_wake,xv_wake</strong> (<em>ndarray</em>) &#8211; Wake trajectory if frame is &#8216;rotor-aligned&#8217;</li>
-</ul>
-</p>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="waketracking.GaussianWakeTracker.Gaussian2D">
-<em class="property">class </em><code class="descclassname">waketracking.GaussianWakeTracker.</code><code class="descname">Gaussian2D</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.GaussianWakeTracker.Gaussian2D" title="Permalink to this definition">¶</a></dt>
-<dd><p>Identifies a wake as the best fit to a bivariate (elliptical)
-Gaussian distribution described by:</p>
-<div class="math">
-\[f(y,z) = A \exp \left[
-    -\frac{1}{2(1-\rho^2)} \left(
-        \frac{(y-y_c)^2}{\sigma_y^2}
-        - \frac{2\rho (\bar{y}-y_c) (\bar{z}-z_c)}{\sigma_y\sigma_z}
-        + \frac{(z-z_c)^2}{\sigma_z^2}
-    \right)
-\right]\]</div>
-<p>where</p>
-<div class="math">
-\[\begin{split}\begin{align}
-\bar{y} &amp;= y\cos\theta - z\sin\theta \\
-\bar{z} &amp;= y\sin\theta + z\cos\theta
-\end{align}\end{split}\]</div>
-<p>Least-squares optimization is performed to simultaneously identify
-the wake center along with the additional Gaussian parameters.</p>
-<p>Inherits class waketracker.</p>
-<dl class="method">
-<dt id="waketracking.GaussianWakeTracker.Gaussian2D.findCenters">
-<code class="descname">findCenters</code><span class="sig-paren">(</span><em>umin=None</em>, <em>sigma_ratio_max=5.0</em>, <em>trajectoryFile=None</em>, <em>frame='rotor-aligned'</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.GaussianWakeTracker.Gaussian2D.findCenters" title="Permalink to this definition">¶</a></dt>
-<dd><p>Uses optimization algorithms in scipy.optimize to determine
-the best fit.</p>
-<p>Overrides the parent findCenters routine.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>umin</strong> (<em>float</em><em> or </em><em>ndarray</em>) &#8211; Max velocity deficit (i.e., should be &lt; 0). If None, then
-this is detected from the field.</li>
-<li><strong>sigma_ratio_max</strong> (<em>float</em>) &#8211; The ratio between the wake widths in two directions
-(analogous to the semi-major and -minor axes in an ellipse);
-this dictates the maximum amount of stretching.</li>
-<li><strong>trajectoryFile</strong> (<em>string</em><em>, </em><em>optional</em>) &#8211; Name of trajectory data file to attempt inputting and to
-write out to; set to None to skip I/O. Data are written out
-in the rotor-aligned frame.</li>
-<li><strong>frame</strong> (<em>string</em><em>, </em><em>optional</em>) &#8211; Reference frame, either &#8216;inertial&#8217; or &#8216;rotor-aligned&#8217;.</li>
-</ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
-<li><strong>x_wake,y_wake,z_wake</strong> (<em>ndarray</em>) &#8211; Wake trajectory if frame is &#8216;inertial&#8217;</li>
-<li><strong>xh_wake,xv_wake</strong> (<em>ndarray</em>) &#8211; Wake trajectory if frame is &#8216;rotor-aligned&#8217;</li>
-</ul>
-</p>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-</dd></dl>
-
-<span class="target" id="module-waketracking.ContourWakeTracker"></span><dl class="class">
-<dt id="waketracking.ContourWakeTracker.ConstantArea">
-<em class="property">class </em><code class="descclassname">waketracking.ContourWakeTracker.</code><code class="descname">ConstantArea</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.ContourWakeTracker.ConstantArea" title="Permalink to this definition">¶</a></dt>
-<dd><p>Identifies a wake as a region with velocity deficit contour
-enclosing an area closest to the rotor (or another specified
-reference area).</p>
-<p>This is the fastest of the contour-based tracking methods since
-it does not necessarily depend on the &#8216;contain_pts&#8217; function (unless
-checkDeficit is set to True).</p>
-<p>Inherits class contourwaketracker.</p>
-<dl class="method">
-<dt id="waketracking.ContourWakeTracker.ConstantArea.findCenters">
-<code class="descname">findCenters</code><span class="sig-paren">(</span><em>refArea</em>, <em>trajectoryFile=None</em>, <em>outlinesFile=None</em>, <em>weightedCenter=True</em>, <em>contourClosure=None</em>, <em>frame='rotor-aligned'</em>, <em>Ntest=21</em>, <em>tol=0.01</em>, <em>checkdeficit=False</em>, <em>debug=False</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.ContourWakeTracker.ConstantArea.findCenters" title="Permalink to this definition">¶</a></dt>
-<dd><p>Uses a binary search algorithm (findContourCenter) to
-locate the contour with flux closest to the targetValue.</p>
-<p>Overrides the parent findCenters routine.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>refArea</strong> (<em>float</em>) &#8211; Area to attempt to match, e.g., the rotor disk area.</li>
-<li><strong>trajectoryFile</strong> (<em>string</em><em>, </em><em>optional</em>) &#8211; Name of trajectory data file to attempt inputting and to
-write out to; set to None to skip I/O. Data are written out
-in the rotor-aligned frame.</li>
-<li><strong>outlinesFile</strong> (<em>string</em><em>, </em><em>optional</em>) &#8211; Name of pickle archive file (*.pkl) to attempt input and to
-write out detected contour outlines; set to None to skip
-I/O.</li>
-<li><strong>weightedCenter</strong> (<em>boolean</em><em> or </em><em>function</em><em>, </em><em>optional</em>) &#8211; If True, calculate the velocity-deficit-weighted &#8220;center of
-mass&#8221;; if False, calculate the geometric center of the wake.
-This can also be a weighting function.</li>
-<li><strong>contourClosure</strong> (<em>string</em><em>, </em><em>optional</em>) &#8211; If &#8216;simple&#8217;, then open paths with endpoints on the same
-edge will be closed by connecting the endpoints; if
-&#8216;compound&#8217;, then open paths will be closed by adding
-segments along the domain boundaries to form closed
-contours.</li>
-<li><strong>frame</strong> (<em>string</em><em>, </em><em>optional</em>) &#8211; Reference frame, either &#8216;inertial&#8217; or &#8216;rotor-aligned&#8217;.</li>
-<li><strong>Ntest</strong> (<em>integer</em><em>, </em><em>optional</em>) &#8211; The number of initial test contours to calculate.</li>
-<li><strong>tol</strong> (<em>float</em><em>, </em><em>optional</em>) &#8211; Minimum spacing to test during the binary search.</li>
-<li><strong>checkdeficit</strong> (<em>boolean</em><em>, </em><em>optional</em>) &#8211; If True, only consider wake candidates in which the average
-velocity deficit is less than 0.</li>
-<li><strong>debug</strong> (<em>boolean</em><em>, </em><em>optional</em>) &#8211; Print out debugging information about the contour search
-routine.</li>
-</ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
-<li><strong>x_wake,y_wake,z_wake</strong> (<em>ndarray</em>) &#8211; Wake trajectory if frame is &#8216;inertial&#8217;</li>
-<li><strong>xh_wake,xv_wake</strong> (<em>ndarray</em>) &#8211; Wake trajectory if frame is &#8216;rotor-aligned&#8217;</li>
-</ul>
-</p>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="waketracking.ContourWakeTracker.ConstantFlux">
-<em class="property">class </em><code class="descclassname">waketracking.ContourWakeTracker.</code><code class="descname">ConstantFlux</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.ContourWakeTracker.ConstantFlux" title="Permalink to this definition">¶</a></dt>
-<dd><p>Identifies a wake as a region outlined by a velocity deficit
-contour over which the integrated flux matches a specified target
-value, given a flux function.</p>
-<p>Inherits class contourwaketracker.</p>
-<dl class="method">
-<dt id="waketracking.ContourWakeTracker.ConstantFlux.findCenters">
-<code class="descname">findCenters</code><span class="sig-paren">(</span><em>refFlux</em>, <em>fluxFunction</em>, <em>fluxField='u_tot'</em>, <em>trajectoryFile=None</em>, <em>outlinesFile=None</em>, <em>weightedCenter=True</em>, <em>contourClosure=None</em>, <em>frame='rotor-aligned'</em>, <em>Ntest=21</em>, <em>tol=0.01</em>, <em>checkdeficit=True</em>, <em>debug=False</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.ContourWakeTracker.ConstantFlux.findCenters" title="Permalink to this definition">¶</a></dt>
-<dd><p>Uses a binary search algorithm (findContourCenter) to
-locate the contour with flux closest to the targetValue.</p>
-<p>Some candidate functions:</p>
-<ul class="simple">
-<li>mass flow, func = lambda u: u</li>
-<li>momentum flux, func = lambda u: u**2</li>
-</ul>
-<p>The contour area can be referenced as func = lambda u,A: ...</p>
-<p>Overrides the parent findCenters routine.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>refFlux</strong> (<em>float</em>) &#8211; Flux to attempt to match, e.g., the massflow rate.</li>
-<li><strong>fluxFunction</strong> (<em>function</em>) &#8211; A specified function of one (or two) variables, the velocity
-deficit (and the contour area).</li>
-<li><strong>fluxField</strong> (<em>string</em><em>, </em><em>optional</em>) &#8211; Name of the field to use as input to the fluxFunction; use
-the instantaneous velocity, &#8216;u_tot&#8217;, by default.</li>
-<li><strong>trajectoryFile</strong> (<em>string</em>) &#8211; Name of trajectory data file to attempt inputting and to
-write out to; set to None to skip I/O. Data are written out
-in the rotor-aligned frame.</li>
-<li><strong>outlinesFile</strong> (<em>string</em>) &#8211; Name of pickle archive file (*.pkl) to attempt input and to
-write out detected contour outlines; set to None to skip
-I/O.</li>
-<li><strong>weightedCenter</strong> (<em>boolean</em><em> or </em><em>function</em><em>, </em><em>optional</em>) &#8211; If True, calculate the velocity-deficit-weighted &#8220;center of
-mass&#8221;; if False, calculate the geometric center of the wake.
-This can also be a weighting function.</li>
-<li><strong>contourClosure</strong> (<em>string</em><em>, </em><em>optional</em>) &#8211; If &#8216;simple&#8217;, then open paths with endpoints on the same
-edge will be closed by connecting the endpoints; if
-&#8216;compound&#8217;, then open paths will be closed by adding
-segments along the domain boundaries to form closed
-contours.</li>
-<li><strong>frame</strong> (<em>string</em><em>, </em><em>optional</em>) &#8211; Reference frame, either &#8216;inertial&#8217; or &#8216;rotor-aligned&#8217;.</li>
-<li><strong>Ntest</strong> (<em>integer</em><em>, </em><em>optional</em>) &#8211; The number of initial test contours to calculate.</li>
-<li><strong>tol</strong> (<em>float</em><em>, </em><em>optional</em>) &#8211; Minimum spacing to test during the binary search.</li>
-<li><strong>checkdeficit</strong> (<em>boolean</em><em>, </em><em>optional</em>) &#8211; If True, only consider wake candidates in which the average
-velocity deficit is less than 0.</li>
-<li><strong>debug</strong> (<em>boolean</em><em>, </em><em>optional</em>) &#8211; Print out debugging information about the contour search
-routine.</li>
-</ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
-<li><strong>x_wake,y_wake,z_wake</strong> (<em>ndarray</em>) &#8211; Wake trajectory if frame is &#8216;inertial&#8217;</li>
-<li><strong>xh_wake,xv_wake</strong> (<em>ndarray</em>) &#8211; Wake trajectory if frame is &#8216;rotor-aligned&#8217;</li>
-</ul>
-</p>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-</dd></dl>
-
-</div>
+<span class="target" id="module-waketracking.gaussian"></span><span class="target" id="module-waketracking.contour"></span></div>
 <div class="section" id="contour-functions-module">
 <h2><code class="docutils literal"><span class="pre">contour_functions</span></code> module<a class="headerlink" href="#contour-functions-module" title="Permalink to this headline">¶</a></h2>
 <p>This is a helper module for processing contour paths identified by <code class="docutils literal"><span class="pre">matplotlib._cntr.Cntr</span></code>.</p>
@@ -691,9 +451,9 @@ routine.</li>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>Cdata</strong> (<em>contour object</em>) &#8211; Instance of matplotlib._cntr.Cntr</li>
-<li><strong>Clevel</strong> (<em>float</em>) &#8211; Contour level for which to identify paths</li>
-<li><strong>closePaths</strong> (<em>tuple</em><em>, </em><em>optional</em>) &#8211; If None, open contours will be ignored; if True, a simple
+<li><strong>Cdata</strong> (<em>contour object</em>) – Instance of matplotlib._cntr.Cntr</li>
+<li><strong>Clevel</strong> (<em>float</em>) – Contour level for which to identify paths</li>
+<li><strong>closePaths</strong> (<em>tuple</em><em>, </em><em>optional</em>) – If None, open contours will be ignored; if True, a simple
 closure will be attempted (assuming that the start and end
 points lie on the same edge); otherwise, specify a tuple with
 (xh_range,xv_range), i.e., the horizontal and vertical range
@@ -702,7 +462,7 @@ of coordinates is not needed)</li>
 </ul>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>pathList</strong> &#8211; List of closed contour paths</p>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>pathList</strong> – List of closed contour paths</p>
 </td>
 </tr>
 <tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">list</p>
@@ -715,7 +475,7 @@ of coordinates is not needed)</li>
 <dl class="function">
 <dt id="waketracking.contour_functions.calcArea">
 <code class="descclassname">waketracking.contour_functions.</code><code class="descname">calcArea</code><span class="sig-paren">(</span><em>path</em><span class="sig-paren">)</span><a class="headerlink" href="#waketracking.contour_functions.calcArea" title="Permalink to this definition">¶</a></dt>
-<dd><p>Calculate the area enclosed by an arbitrary path using Green&#8217;s
+<dd><p>Calculate the area enclosed by an arbitrary path using Green’s
 Theorem, assuming that the path is closed.</p>
 </dd></dl>
 
@@ -725,34 +485,34 @@ Theorem, assuming that the path is closed.</p>
 <dd><p>Integrate a specified function within an arbitrary region. This
 is a function of f(x,y) and optionally the contour area.</p>
 <p>The area of the enclosed cells is compared to the integrated area
-calculated using Green&#8217;s Theorem to obtain a correction for the
+calculated using Green’s Theorem to obtain a correction for the
 discretization error. The resulting integrated quantity is scaled
 by the ratio of the actual area divided by the enclosed cell areas.
-This correction is expected to be negligible if there are &#8220;enough&#8221;
+This correction is expected to be negligible if there are “enough”
 cells in the contour region.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>contourPts</strong> (<em>path</em>) &#8211; Output from matplotlib._cntr.Cntr object&#8217;s trace function</li>
-<li><strong>xg</strong><strong>,</strong><strong>yg</strong> (<em>ndarray</em>) &#8211; Sampling plane coordinates, in the rotor-aligned frame.</li>
-<li><strong>fg</strong> (<em>ndarray</em>) &#8211; Instantaneous velocity, including shear, used as the
+<li><strong>contourPts</strong> (<em>path</em>) – Output from matplotlib._cntr.Cntr object’s trace function</li>
+<li><strong>xg</strong><strong>,</strong><strong>yg</strong> (<em>ndarray</em>) – Sampling plane coordinates, in the rotor-aligned frame.</li>
+<li><strong>fg</strong> (<em>ndarray</em>) – Instantaneous velocity, including shear, used as the
 independent variable in the specificed function.</li>
-<li><strong>vd</strong> (<em>ndarray</em><em>, </em><em>optional</em>) &#8211; Velocity deficit; if not None, returns average deficit in the
+<li><strong>vd</strong> (<em>ndarray</em><em>, </em><em>optional</em>) – Velocity deficit; if not None, returns average deficit in the
 enclosed region.</li>
-<li><strong>func</strong> (<em></em><em>(</em><em>lambda</em><em>) </em><em>function</em>) &#8211; Function over which to integrate.</li>
-<li><strong>Nmin</strong> (<em>integer</em><em>, </em><em>optional</em>) &#8211; Minimum number of interior cells to compute; if the contour
+<li><strong>func</strong> (<em>(</em><em>lambda</em><em>) </em><em>function</em>) – Function over which to integrate.</li>
+<li><strong>Nmin</strong> (<em>integer</em><em>, </em><em>optional</em>) – Minimum number of interior cells to compute; if the contour
 region is too small, skip the contour for efficiency.</li>
 </ul>
 </td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
-<li><strong>fval</strong> (<em>float</em>) &#8211; Summation of the specified function values in the enclosed
+<li><strong>fval</strong> (<em>float</em>) – Summation of the specified function values in the enclosed
 region, with correction applied. Returns None if the path
 encloses less points than Nmin.</li>
-<li><strong>corr</strong> (<em>float</em>) &#8211; Scaling factor to correct for discrete integration error.</li>
-<li><strong>vdavg</strong> (<em>float</em>) &#8211; Average velocity deficit in the contour region.</li>
+<li><strong>corr</strong> (<em>float</em>) – Scaling factor to correct for discrete integration error.</li>
+<li><strong>vdavg</strong> (<em>float</em>) – Average velocity deficit in the contour region.</li>
 </ul>
 </p>
 </td>
@@ -774,14 +534,14 @@ values in the enclosed wake region.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>contourPts</strong> (<em>path</em>) &#8211; Output from matplotlib._cntr.Cntr object&#8217;s trace function</li>
-<li><strong>xg</strong><strong>,</strong><strong>yg</strong> (<em>ndarray</em>) &#8211; Sampling plane coordinates, in the rotor-aligned frame.</li>
-<li><strong>fg</strong> (<em>ndarray</em>) &#8211; Field function to use for weighting.</li>
-<li><strong>weightingFunc</strong> (<em></em><em>(</em><em>lambda</em><em>) </em><em>function</em>) &#8211; Univariate weighting function.</li>
+<li><strong>contourPts</strong> (<em>path</em>) – Output from matplotlib._cntr.Cntr object’s trace function</li>
+<li><strong>xg</strong><strong>,</strong><strong>yg</strong> (<em>ndarray</em>) – Sampling plane coordinates, in the rotor-aligned frame.</li>
+<li><strong>fg</strong> (<em>ndarray</em>) – Field function to use for weighting.</li>
+<li><strong>weightingFunc</strong> (<em>(</em><em>lambda</em><em>) </em><em>function</em>) – Univariate weighting function.</li>
 </ul>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>xc,yc</strong> &#8211; Coordinates of the weighted wake center in the rotor-aligned
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>xc,yc</strong> – Coordinates of the weighted wake center in the rotor-aligned
 frame.</p>
 </td>
 </tr>
@@ -805,7 +565,7 @@ frame.</p>
 
 
 
-<p class="blurb">A set of tools for rotor wake analysis</p>
+<p class="blurb">a set of python-based tools for rotor wake analysis</p>
 
 
 
@@ -852,8 +612,8 @@ frame.</p>
       &copy;2017, Eliot Quon.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5.1</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
       
       |
       <a href="_sources/code.rst.txt"

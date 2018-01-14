@@ -1,5 +1,6 @@
 .*
-
 *.pyc
+
+demo/*.png
 
 _build

@@ -1,16 +1,13 @@
+
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
     <title>Methodology &#8212; waketracking  documentation</title>
-    
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
@@ -24,11 +21,11 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Usage" href="usage.html" />
-    <link rel="prev" title="Python Wake Tracking" href="index.html" />
+    <link rel="prev" title="SAMWICH Box: Simulated And Measured Wake Identification and CHaracterization Toolbox" href="index.html" />
    
   <link rel="stylesheet" href="_static/custom.css" type="text/css" />
   
@@ -36,7 +33,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
   </head>
-  <body role="document">
+  <body>
   
 
     <div class="document">
@@ -56,20 +53,20 @@
 <span class="math">\(\sigma_y\)</span> and <span class="math">\(\sigma_z\)</span> are parameters describing the variances associated with the y- and z-directions.</p>
 <p>The magnitude <span class="math">\(u_{max}\)</span> is calculated from the largest absolute value of the x-velocity with the wind shear removed.
 The mean velocity profile can either be a specified array, the precursor inflow profile, or calculated on-the-fly as the time-averaged value from the fringes (y=min(y) and max(y)) of all sampled planes.
-<em>The on-the-fly method is not recommended; preliminary studies have shown inconsistency (overprediction) of the mean velocity profile when estimated based on fringe values compared to the reference inflow profile. This overprediction is likely due to naive averaging that doesn&#8217;t account for the transient flow at early times.</em></p>
+<em>The on-the-fly method is not recommended; preliminary studies have shown inconsistency (overprediction) of the mean velocity profile when estimated based on fringe values compared to the reference inflow profile. This overprediction is likely due to naive averaging that doesn’t account for the transient flow at early times.</em></p>
 <p>First, an idealized 2D wake field is calculated based on <span class="math">\(u_{max}\)</span>, <span class="math">\(\sigma_y\)</span>, and <span class="math">\(\sigma_z\)</span>. Then the idealized wake is translated to points in the sampled plane for comparison. This search only considers locations between 25% and 75% of the width and height of the sampling plane. A squared error is calculated between the u-velocity of the ideal wake and the actual sampled wake. The location with the least squared error is considered to be the wake center.</p>
-<p>Note that this approach will never &#8220;fail&#8221;; it will always return the best possible fit, which may or may not be valid.</p>
+<p>Note that this approach will never “fail”; it will always return the best possible fit, which may or may not be valid.</p>
 <dl class="docutils">
 <dt>Specific fit types:</dt>
 <dd><ul class="first last simple">
-<li>&#8220;simple&#8221;: 1-D Gaussian function (<span class="math">\(\sigma_y=\sigma_z\)</span>, least-squares fit of wake centers only)</li>
-<li>&#8220;elliptic&#8221;: Rotated 2-D Gaussian (fit of wake centers and the correlation parameter, only makes sense if <span class="math">\(\sigma_y\neq\sigma_z\)</span>)</li>
-<li>&#8220;general&#8221;: General 2-D Gaussian (fit of wake centers, correlation parameters, and width parameters)</li>
-<li>&#8220;double&#8221;: Double Gaussian, assuming both Gaussians have the same orientation (fit of both wake centers, a single correlation parameter, both sets of wake centers, and both function amplitudes)</li>
+<li>“simple”: 1-D Gaussian function (<span class="math">\(\sigma_y=\sigma_z\)</span>, least-squares fit of wake centers only)</li>
+<li>“elliptic”: Rotated 2-D Gaussian (fit of wake centers and the correlation parameter, only makes sense if <span class="math">\(\sigma_y\neq\sigma_z\)</span>)</li>
+<li>“general”: General 2-D Gaussian (fit of wake centers, correlation parameters, and width parameters)</li>
+<li>“double”: Double Gaussian, assuming both Gaussians have the same orientation (fit of both wake centers, a single correlation parameter, both sets of wake centers, and both function amplitudes)</li>
 </ul>
 </dd>
 </dl>
-<p>Least-squares optimization initial guesses and constraints...</p>
+<p>Least-squares optimization initial guesses and constraints…</p>
 </div>
 <div class="section" id="weighted-geometric-center-approach">
 <h2>Weighted Geometric-Center Approach<a class="headerlink" href="#weighted-geometric-center-approach" title="Permalink to this headline">¶</a></h2>
@@ -96,8 +93,8 @@ Requires specifying the number of test contours to identify.</p>
 </div>
 <div class="section" id="contour-momentum-approach">
 <h2>Contour-Momentum Approach<a class="headerlink" href="#contour-momentum-approach" title="Permalink to this headline">¶</a></h2>
-<p>The momentum deficit behind the rotor is estimated...</p>
-<p>Contours are selected with the same momentum deficit...</p>
+<p>The momentum deficit behind the rotor is estimated…</p>
+<p>Contours are selected with the same momentum deficit…</p>
 </div>
 </div>
 
@@ -111,7 +108,7 @@ Requires specifying the number of test contours to identify.</p>
 
 
 
-<p class="blurb">A set of tools for rotor wake analysis</p>
+<p class="blurb">a set of python-based tools for rotor wake analysis</p>
 
 
 
@@ -158,8 +155,8 @@ Requires specifying the number of test contours to identify.</p>
       &copy;2017, Eliot Quon.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5.1</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
       
       |
       <a href="_sources/methodology.rst.txt"
