@@ -484,7 +484,7 @@ class foam_ensight_array(sampled_data):
         # get time series
         try:
             datafile = self.prefix+'.000.U'
-            self.ts = TimeSeries(self.outputDir,datafile)
+            self.ts = TimeSeries(self.outputDir,datafile,verbose=False)
         except AssertionError:
             if self.dataReadFrom is not None:
                 print 'Note: Data read but time series information is unavailable.'
