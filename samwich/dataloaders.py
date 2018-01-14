@@ -10,7 +10,7 @@ class sampled_data(object):
     """Generic regularly sampled data object"""
 
     def __init__(self,
-            outputDir='.', prefix=None,
+            outputdir='.', prefix=None,
             NX=1, NY=None, NZ=None, datasize=3,
             npzdata='arrayData.npz',
             interpHoles=False
@@ -34,7 +34,7 @@ class sampled_data(object):
 
         Parameters
         ----------
-        outputDir : string
+        outputdir : string
             Path to directory containing time subdirectories.
         prefix : string, optional
             Data file prefix.
@@ -50,7 +50,7 @@ class sampled_data(object):
             the input data has sampling errors. This depends on the
             np.unique function to identify coordinates.
         """
-        self.outputDir = outputDir
+        self.outputdir = outputdir
         self.prefix = prefix
 
         self.Ntimes = 0
@@ -71,7 +71,7 @@ class sampled_data(object):
         if interpHoles and NX > 1:
             raise ValueError('Interpolation of holes only implemented for planar data')
 
-        savepath = os.path.join(outputDir,npzdata)
+        savepath = os.path.join(outputdir,npzdata)
         if not os.path.isfile(savepath):
             return
         # attempt to load previously processed data
@@ -233,7 +233,7 @@ class _template_sampled_data_format(sampled_data):
 
         # get time series
         datafile = 'FILENAME.DAT'
-        self.ts = TimeSeries(self.outputDir,datafile)
+        self.ts = TimeSeries(self.outputdir,datafile)
 
         # set convenience variables
         NX = self.NX
@@ -514,7 +514,7 @@ class foam_ensight_array(sampled_data):
     """
 
     def __init__(self,*args,**kwargs):
-        """Reads time series data from subdirectories in ${outputDir}.
+        """Reads time series data from subdirectories in ${outputdir}.
         Each time subdirectory should contain a file named
         '${prefix}.000.U'.
 
@@ -537,14 +537,14 @@ class foam_ensight_array(sampled_data):
         # get time series
         try:
             datafile = self.prefix+'.000.U'
-            self.ts = TimeSeries(self.outputDir,datafile,verbose=False)
+            self.ts = TimeSeries(self.outputdir,datafile,verbose=False)
         except AssertionError:
             if self.data_read_from is not None:
                 print('Note: Data read but time series information is unavailable.')
                 print('      Proceed at your own risk.')
                 return
             else:
-                raise IOError('Data not found in '+self.outputDir)
+                raise IOError('Data not found in '+self.outputdir)
 
         if self.data_read_from is not None:
             # Previously saved $npzdata was read in super().__init__
@@ -666,11 +666,11 @@ class foam_ensight_array(sampled_data):
 
         sys.stderr.write('\n')
         self.data = data
-        self.data_read_from = os.path.join(self.outputDir,'*',datafile)
+        self.data_read_from = os.path.join(self.outputdir,'*',datafile)
 
         # save data
         if self.npzdata:
-            savepath = os.path.join(self.outputDir,self.npzdata)
+            savepath = os.path.join(self.outputdir,self.npzdata)
             try:
                 np.savez_compressed(savepath,x=self.x,y=self.y,z=self.z,data=self.data)
                 print('Saved compressed array data to',savepath)
@@ -695,7 +695,7 @@ class foam_ensight_array_series(sampled_data):
     """
 
     def __init__(self,*args,**kwargs):
-        """Reads time series data from ${prefix}.case file ${outputDir}.
+        """Reads time series data from ${prefix}.case file ${outputdir}.
         The output directory should contain ${prefix}.mesh and solution
         samples named ${prefix}.#####.U
 
@@ -707,10 +707,10 @@ class foam_ensight_array_series(sampled_data):
         super(self.__class__,self).__init__(*args,**kwargs)
 
         if self.prefix is None:
-            self.prefix = os.path.split(self.outputDir)[-1] + '_U'
+            self.prefix = os.path.split(self.outputdir)[-1] + '_U'
 
         # get time series from case file (if available)
-        casefile = os.path.join(self.outputDir, self.prefix + '.case')
+        casefile = os.path.join(self.outputdir, self.prefix + '.case')
         Ntimes = -1
         if os.path.isfile(casefile):
             index_start = 0
@@ -737,7 +737,7 @@ class foam_ensight_array_series(sampled_data):
             self.t = np.array(tlist)
 
             assert(index_incr > 0)
-            filelist = [ os.path.join(self.outputDir, self.prefix + '.' + str(idx) + '.U')
+            filelist = [ os.path.join(self.outputdir, self.prefix + '.' + str(idx) + '.U')
                             for idx in index_start+index_incr*np.arange(Ntimes) ]
 
         if self.data_read_from is not None:
@@ -758,7 +758,7 @@ class foam_ensight_array_series(sampled_data):
         NZ = self.NZ
 
         # read mesh
-        with open(os.path.join(self.outputDir,meshfile),'r') as f:
+        with open(os.path.join(self.outputdir,meshfile),'r') as f:
             for _ in range(8):  # skip header
                 f.readline()
             N = int(f.readline())
@@ -840,7 +840,7 @@ class foam_ensight_array_series(sampled_data):
 
         # save data
         if self.npzdata:
-            savepath = os.path.join(self.outputDir,self.npzdata)
+            savepath = os.path.join(self.outputdir,self.npzdata)
             try:
                 np.savez_compressed(savepath,x=self.x,y=self.y,z=self.z,data=self.data)
                 print('Saved compressed array data to',savepath)
