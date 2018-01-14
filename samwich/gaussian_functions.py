@@ -31,10 +31,7 @@ class PorteAgel(object):
         return Uref*(
             1 - np.sqrt(
                 1 - self.CT
-                        / (8 * (self.kstar*x/self.d0
-                                + 0.2*np.sqrt(self.beta)
-                               )**2
-                        )
+                        / (8 * (self.sigma(x)/self.d0)**2)
             )
         )
 
