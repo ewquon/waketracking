@@ -13,7 +13,7 @@ class sampled_data(object):
             outputdir='.', prefix=None,
             NX=1, NY=None, NZ=None, datasize=3,
             npzdata='arrayData.npz',
-            interpHoles=False
+            interp_holes=False
             ):
         """Attempts to load processed data with shape
         (Ntimes,NX,NY,NZ,datasize).
@@ -45,7 +45,7 @@ class sampled_data(object):
             Describes the type of data (scalar=1, vector=3).
         npzdata : string
             The compressed numpy data file to load from and save to.
-        interpHoles : boolean, optional
+        interp_holes : boolean, optional
             Attempt to interpolate data onto a regular grid in case
             the input data has sampling errors. This depends on the
             np.unique function to identify coordinates.
@@ -67,8 +67,8 @@ class sampled_data(object):
         self.npzdata = npzdata
         self.data_read_from = None
 
-        self.interpHoles = interpHoles
-        if interpHoles and NX > 1:
+        self.interp_holes = interp_holes
+        if interp_holes and NX > 1:
             raise ValueError('Interpolation of holes only implemented for planar data')
 
         savepath = os.path.join(outputdir,npzdata)
@@ -476,18 +476,18 @@ def interp_holes_2d(y,z,verbose=True):
 
     # find holes
     if verbose: print('Looking for holes in mesh...')
-    holeIndices = [] # in new array
+    hole_indices = [] # in new array
     idx_old = 0
     Nholes = 0
     Ndup = 0
-    dataMap = np.zeros(Norig,dtype=int) # mapping of raveled input array (w/ holes) to new array
+    data_map = np.zeros(Norig,dtype=int) # mapping of raveled input array (w/ holes) to new array
     for idx_new in range(NY*NZ):
         if y[idx_new] != y0[idx_old] or z[idx_new] != z0[idx_old]:
             print('  hole at {} {}'.format(y[idx_new],z[idx_new]))
-            holeIndices.append(idx_new)
+            hole_indices.append(idx_new)
             Nholes += 1
         else:
-            dataMap[idx_old] = idx_new
+            data_map[idx_old] = idx_new
             idx_old += 1
             if idx_old >= Norig:
                 continue
@@ -495,15 +495,15 @@ def interp_holes_2d(y,z,verbose=True):
             while y[idx_new] == y0[idx_old] and z[idx_new] == z0[idx_old]:
                 Ndup += 1
                 print('  duplicate point at {} {}'.format(y[idx_new],z[idx_new]))
-                dataMap[idx_old] = idx_new # map to the same point in the new grid
+                data_map[idx_old] = idx_new # map to the same point in the new grid
                 idx_old += 1
     assert(idx_old == Norig) # all points mapped
     if verbose:
         print('  {} holes, {} duplicate points'.format(Nholes,Ndup))
 
-    holeLocations = np.stack((y[holeIndices],z[holeIndices])).T
+    hole_locations = np.stack((y[hole_indices],z[hole_indices])).T
 
-    return ynew, znew, dataMap, holeLocations, holeIndices
+    return ynew, znew, data_map, hole_locations, hole_indices
 
 #------------------------------------------------------------------------------
 
@@ -580,13 +580,10 @@ class foam_ensight_array(sampled_data):
         # detect NY,NZ if necessary for planar input
         if NY is None or NZ is None:
             assert(NX==1)
-            if self.interpHoles:
-                interpPoints = np.stack((
-                                        self.y.ravel(),
-                                        self.z.ravel()
-                                        )).T
+            if self.interp_holes:
+                interp_points = np.stack((self.y.ravel(),self.z.ravel())).T
                 Norig = N
-                self.y, self.z, dataMap, holeLocations, holeIndices = interp_holes_2d(self.y, self.z)
+                self.y, self.z, data_map, hole_locations, hole_indices = interp_holes_2d(self.y, self.z)
                 # at this point, self.y and self.z have changed
                 NX,NY,NZ = self.y.shape
                 N = NX*NY*NZ
@@ -594,14 +591,14 @@ class foam_ensight_array(sampled_data):
                 self.x = self.x[0] * np.ones((NY,NZ))
             else:
                 for NY in np.arange(2,N+1):
-                    NZ = N/NY
+                    NZ = int(N/NY)
                     if NZ == float(N)/NY:
                         if np.all(self.y[:NY] == self.y[NY:2*NY]):
                             break
                 print('Detected NY,NZ = {} {}'.format(NY,NZ))
-                if NZ == 1:
+                if (NZ == 1) or not (NZ == int(N/NY)):
                     print('  Warning: There may be holes in the mesh...')
-                    print('           Try running with interpHoles=True')
+                    print('           Try running with interp_holes=True')
                 assert(N == NX*NY*NZ)
             self.NY = NY
             self.NZ = NZ
@@ -616,21 +613,21 @@ class foam_ensight_array(sampled_data):
             sys.stderr.write('\rProcessing frame {:d}'.format(itime))
             #sys.stderr.flush()
 
-            if self.interpHoles and Norig < N:
+            if self.interp_holes and Norig < N:
                 from scipy.interpolate import LinearNDInterpolator
                 u = np.loadtxt(fname,skiprows=4).reshape((self.datasize,Norig))
-                interpValues = u.T
+                interp_values = u.T
                 u = np.zeros((self.datasize,N)) # raveled
                 # fill new array with known values
-                for idx_old,idx_new in enumerate(dataMap):
+                for idx_old,idx_new in enumerate(data_map):
                     # if duplicate points exist, the last recorded value at a
                     #   location will be used
-                    u[:,idx_new] = interpValues[idx_old,:]
+                    u[:,idx_new] = interp_values[idx_old,:]
                 # interpolate at holes
-                interpFunc = LinearNDInterpolator(interpPoints, interpValues)
-                uinterp = interpFunc(holeLocations)
+                interpfunc = LinearNDInterpolator(interp_points, interp_values)
+                uinterp = interpfunc(hole_locations)
                 for i in range(3):
-                    u[i,holeIndices] = uinterp[:,i]
+                    u[i,hole_indices] = uinterp[:,i]
                 # write out new ensight files for debugging
 #                pre = fname[:-len('.000.U')]
 #                with open(pre+'_NEW.mesh','w') as f:
@@ -776,13 +773,10 @@ class foam_ensight_array_series(sampled_data):
         # detect NY,NZ if necessary for planar input
         if NY is None or NZ is None:
             assert(NX==1)
-            if self.interpHoles:
-                interpPoints = np.stack((
-                                        self.y.ravel(),
-                                        self.z.ravel()
-                                        )).T
+            if self.interp_holes:
+                interp_points = np.stack((self.y.ravel(),self.z.ravel())).T
                 Norig = N
-                self.y, self.z, dataMap, holeLocations, holeIndices = interp_holes_2d(self.y, self.z)
+                self.y, self.z, data_map, hole_locations, hole_indices = interp_holes_2d(self.y, self.z)
                 # at this point, self.y and self.z have changed
                 NX,NY,NZ = self.y.shape
                 N = NX*NY*NZ
@@ -790,14 +784,14 @@ class foam_ensight_array_series(sampled_data):
                 self.x = self.x[0] * np.ones((NY,NZ))
             else:
                 for NY in np.arange(2,N+1):
-                    NZ = N/NY
+                    NZ = int(N/NY)
                     if NZ == float(N)/NY:
                         if np.all(self.y[:NY] == self.y[NY:2*NY]):
                             break
                 print('Detected NY,NZ = {} {}'.format(NY,NZ))
-                if NZ == 1:
+                if (NZ == 1) or not (NZ == int(N/NY)):
                     print('  Warning: There may be holes in the mesh...')
-                    print('           Try running with interpHoles=True')
+                    print('           Try running with interp_holes=True')
                 assert(N == NX*NY*NZ)
             self.NY = NY
             self.NZ = NZ
@@ -812,21 +806,21 @@ class foam_ensight_array_series(sampled_data):
             sys.stderr.write('\rProcessing frame {:d}'.format(itime))
             #sys.stderr.flush()
 
-            if self.interpHoles and Norig < N:
+            if self.interp_holes and Norig < N:
                 from scipy.interpolate import LinearNDInterpolator
                 u = np.loadtxt(fname,skiprows=4).reshape((self.datasize,Norig))
-                interpValues = u.T
+                interp_values = u.T
                 u = np.zeros((self.datasize,N)) # raveled
                 # fill new array with known values
-                for idx_old,idx_new in enumerate(dataMap):
+                for idx_old,idx_new in enumerate(data_map):
                     # if duplicate points exist, the last recorded value at a
                     #   location will be used
-                    u[:,idx_new] = interpValues[idx_old,:]
+                    u[:,idx_new] = interp_values[idx_old,:]
                 # interpolate at holes
-                interpFunc = LinearNDInterpolator(interpPoints, interpValues)
-                uinterp = interpFunc(holeLocations)
+                interpfunc = LinearNDInterpolator(interp_points, interp_values)
+                uinterp = interpfunc(hole_locations)
                 for i in range(3):
-                    u[i,holeIndices] = uinterp[:,i]
+                    u[i,hole_indices] = uinterp[:,i]
 
             else:
                 u = np.loadtxt(fname,skiprows=4).reshape((self.datasize,N))
