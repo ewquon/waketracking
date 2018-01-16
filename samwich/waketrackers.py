@@ -734,7 +734,7 @@ class waketracker(object):
             fname = os.path.join(self.prefix,fname)
         if not fname.endswith('.pkl'):
             fname += '.pkl'
-        pickle.dump(self.paths,open(fname,'w'))
+        pickle.dump(self.paths,open(fname,'wb'))
         if self.verbose:
             print('Wrote out pickled outlines to',fname)
 
