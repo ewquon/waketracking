@@ -46,8 +46,7 @@ class ConstantArea(contourwaketracker):
             in the rotor-aligned frame.
         outlines_file : string, optional
             Name of pickle archive file (\*.pkl) to attempt input and to
-            write out detected contour outlines; set to None to skip
-            I/O.
+            write out detected wake outlines; set to None to skip I/O.
         weighted_center : boolean or function, optional
             If True, calculate the velocity-deficit-weighted "center of
             mass"; if False, calculate the geometric center of the wake.

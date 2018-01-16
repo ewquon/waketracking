@@ -294,7 +294,8 @@ class waketracker(object):
         ----------
         Navg : integer, optional
             Number of snapshots over which to average. If Navg < 0,
-            average from end of series only.
+            average from end of series only, otherwise a sliding average
+            is used.
 
         Returns
         -------
@@ -335,7 +336,9 @@ class waketracker(object):
             instaneous average (when shear_removal=='default').
             If Navg < 0, average from end of series only, otherwise a
             sliding average is performed.
-        wind_profile : 
+        wind_profile : list-like
+            An array of mean velocities normal to the sampling plane,
+            at the same heights as the sampling grid.
         """
         if self.shear_removal is not None:
             print('remove_shear() was already called, doing nothing.')
