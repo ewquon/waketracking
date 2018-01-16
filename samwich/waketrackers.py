@@ -294,7 +294,8 @@ class waketracker(object):
         ----------
         Navg : integer, optional
             Number of snapshots over which to average. If Navg < 0,
-            average from end of series only.
+            average from end of series only, otherwise a sliding average
+            is used.
 
         Returns
         -------
