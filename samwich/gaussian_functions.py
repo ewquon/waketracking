@@ -9,7 +9,8 @@ class PorteAgel(object):
 
     def __init__(self,
                  CT,d0,kstar=None,
-                 TI=None,ka=0.3837,kb=0.003678):
+                 TI=None,ka=0.3837,kb=0.003678,
+                 verbose=True):
         """Initialize the 1-D Gaussian model, and calculate required
         parameters. The wake growth rate should either be directly 
         specified or calculated from a specified turbulence intensity.
@@ -34,6 +35,7 @@ class PorteAgel(object):
             raise ValueError('Need to specify wake growth rate ("kstar"),' \
                     ' or turbulence intensity ("TI") along with optional' \
                     ' "ka" and "kb" empirical parameters)')
+        self.verbose = verbose
         self.CT = CT
         self.d0 = d0
         if kstar is not None:
@@ -46,21 +48,29 @@ class PorteAgel(object):
             self.ka = ka
             self.kb = kb
             self.kstar = ka*TI + kb
-            print('Calculated k* = ',self.kstar)
+            if self.verbose: print('Calculated k* :',self.kstar)
         self.beta = (1 + np.sqrt(1-CT))/(2*np.sqrt(1-CT))  # Eqn. 6
 
-    def amplitude(self,x=0.0,Uref=1.0):
+    def amplitude(self,x,Uref=1.0,check_validity=True):
         """Returns the amplitude of the Porte-Agel 1-D Gaussian
         function. By default, this is the velocity deficit (positive
         by convention) normalized by the freestream velocity Uref.
         """
-        return Uref*(
-            1 - np.sqrt(
-                1 - self.CT
-                        / (8 * (self.sigma(x)/self.d0)**2)
-            )
-        )
+        radic = 1 - self.CT / (8 * (self.sigma(x)/self.d0)**2)
+        if check_validity:
+            # ensure that the radicand is >= 0
+            radic = max(radic,0)
+        A = Uref*(1 - np.sqrt(radic))
+        if self.verbose: print('Calculated Gaussian amplitude :',A,'m/s')
+        return A
 
-    def sigma(self,x=0.0):
-        return self.kstar*x + 0.2*self.d0*np.sqrt(self.beta)
+    def sigma(self,x=0.0,eps_coeff=0.2):
+        """Epsilon is the limit of the normalized wake width as x-->0.
+        The theoretical value is 0.25*sqrt(beta). However, Bastankhah
+        and Porte-Agel (2014) recommend epsilon = 0.2*sqrt(beta) for 
+        better correspondence with LES data.
+        """
+        sigma = self.kstar*x + eps_coeff*self.d0*np.sqrt(self.beta)
+        if self.verbose: print('Calculated Gaussian width :',sigma,'m')
+        return sigma
 
