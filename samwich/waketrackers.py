@@ -720,7 +720,7 @@ class waketracker(object):
             fname += '.pkl'
 
         try:
-            self.paths = pickle.load(open(fname,'r'))
+            self.paths = pickle.load(open(fname,'rb'))
         except IOError:
             print('Failed to read',fname)
             return None
