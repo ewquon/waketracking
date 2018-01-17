@@ -102,10 +102,12 @@ class Gaussian(waketracker):
         if hasattr(sigma,'__iter__'):
             # sigma is a specified list-like object
             self.sigma = np.array(sigma)
+            constant_sigma = False
             refarea = np.pi*self.sigma**2
             print('Mean/min/max reference Gaussian area:',
                     np.mean(refarea),np.min(refarea),np.max(refarea),'m^2')
         else:
+            constant_sigma = True
             try:
                 # sigma is a specified constnat
                 self.sigma = float(sigma) * np.ones(self.Ntimes)
@@ -172,7 +174,10 @@ class Gaussian(waketracker):
         self.wake_tracked = True
 
         # write out everything
-        self._write_trajectory(trajectory_file)
+        if constant_sigma:
+            self._write_trajectory(trajectory_file)
+        else:
+            self._write_trajectory(trajectory_file,self.sigma)
         self._write_outlines(outlines_file)
     
         return self.trajectory_in(frame)
