@@ -27,7 +27,7 @@ class Gaussian(waketracker):
 
     def find_centers(self,
                      umin=None,sigma=None,
-                     res=100,plotscale=1.0,
+                     res=100,plotscale=2.0,
                      trajectory_file=None,outlines_file=None,
                      frame='rotor-aligned',
                      verbosity=0):
@@ -49,7 +49,7 @@ class Gaussian(waketracker):
             Number of points to represent the wake outline as a circle.
         plotscale : float, optional
             Scaling factor in standard deviations for a representative
-            wake outline (==1.1774 for FWHM).
+            wake outline (==1.1774 for FWHM, 1.96 for a 95% CI).
         trajectory_file : string, optional
             Name of trajectory data file to attempt inputting and to
             write out to; set to None to skip I/O. Data are written out
