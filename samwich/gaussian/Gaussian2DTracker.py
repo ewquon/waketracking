@@ -152,7 +152,7 @@ class Gaussian2D(waketracker):
         # calculate trajectories for each time step
         y1 = self.xh.ravel()
         z1 = self.xv.ravel()
-        azi = np.linspace(0,2*np.pi,res)
+        azi = np.linspace(0,2*np.pi,res+1)
         for itime in range(self.Ntimes):
             u1 = self.u[itime,:,:].ravel()
             def func(x):
@@ -170,11 +170,8 @@ class Gaussian2D(waketracker):
                 yc,zc,theta,Aref,AR = result.x
                 sigma_z = np.sqrt(Aref / (np.pi*AR))
                 sigma_y = AR * sigma_z
-                #r = np.sqrt(2)*sigma_y*sigma_z
-                #    / np.sqrt(sigma_z**2*np.cos(azi)**2
-                #              + sigma_y**2*np.sin(azi)**2)
-                tmpy = plotscale * sigma_y*np.cos(azi)
-                tmpz = plotscale * sigma_z*np.sin(azi)
+                tmpy = plotscale*sigma_y*np.cos(azi) # unrotated ellipse
+                tmpz = plotscale*sigma_z*np.sin(azi)
                 yellipse = yc + tmpy*np.cos(theta) - tmpz*np.sin(theta)
                 zellipse = zc + tmpy*np.sin(theta) + tmpz*np.cos(theta)
                 self.paths[itime] = np.vstack((yellipse,zellipse)).T

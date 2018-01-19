@@ -124,7 +124,7 @@ class Gaussian(waketracker):
                 print('Reference Gaussian area =',np.pi*self.sigma[0]**2,'m^2')
 
         # approximate wake outline with specified wake width, sigma
-        azi = np.linspace(0,2*np.pi,res)
+        azi = np.linspace(0,2*np.pi,res+1)
         ycirc = plotscale*np.cos(azi)
         zcirc = plotscale*np.sin(azi)
 
