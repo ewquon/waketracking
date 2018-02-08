@@ -92,7 +92,7 @@ class CircularTestRegion(waketracker):
             print('Note: remove_shear has not been called')
 
         if self.verbose:
-            print(f'Searching within a region with radius={test_radius}')
+            print('Searching within a region with radius={}'.format(test_radius))
 
         # set up optimization parameters
         guess = [

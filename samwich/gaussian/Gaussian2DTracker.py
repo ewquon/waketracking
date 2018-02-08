@@ -191,11 +191,18 @@ class Gaussian2D(waketracker):
                 if verbosity > 0:
                     Aref = np.pi * self.sigma_y[itime] * self.sigma_z[itime]
                     plotlevel = self.umin[itime] * np.exp(-0.5*plotscale**2)
-                    print(f'yc,zc : {self.xh_wake[itime]:.1f},',
-                            f' {self.xv_wake[itime]:.1f};',
-                            f' rotation={self.rotation[itime]*180/np.pi} deg;',
-                            f' ref wake area={Aref} m^2'
-                            f' (outline level={plotlevel})')
+                    #print(f'yc,zc : {self.xh_wake[itime]:.1f},',
+                    #        f' {self.xv_wake[itime]:.1f};',
+                    #        f' rotation={self.rotation[itime]*180/np.pi} deg;',
+                    #        f' ref wake area={Aref} m^2'
+                    #        f' (outline level={plotlevel})')
+                    print(('yc,zc : {:.1f}, {:.1f};' \
+                          +' rotation={} deg; ref wake area={} m^2' \
+                          +' (outline level={})').format(self.xh_wake[itime],
+                                                         self.xv_wake[itime],
+                                                         self.rotation[itime]*180/np.pi,
+                                                         Aref,
+                                                         plotlevel))
                 sys.stderr.write('\rProcessed frame {:d}'.format(itime))
                 #sys.stderr.flush()
         if self.verbose: sys.stderr.write('\n')

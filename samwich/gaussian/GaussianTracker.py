@@ -162,9 +162,12 @@ class Gaussian(waketracker):
             if self.verbose:
                 if verbosity > 0:
                     plotlevel = self.umin[itime] * np.exp(-0.5*plotscale**2)
-                    print(f'yc,zc : {self.xh_wake[itime]:.1f},',
-                            f' {self.xv_wake[itime]:.1f}',
-                            f' (outline level={plotlevel})')
+                    #print(f'yc,zc : {self.xh_wake[itime]:.1f},',
+                    #        f' {self.xv_wake[itime]:.1f}',
+                    #        f' (outline level={plotlevel})')
+                    print('yc,zc : {:.1f}, {:.1f} (outline level={})'.format(self.xh_wake[itime],
+                                                                             self.xv_wake[itime],
+                                                                             plotlevel))
                 sys.stderr.write('\rProcessed frame {:d}'.format(itime))
                 #sys.stderr.flush()
         if self.verbose: sys.stderr.write('\n')
