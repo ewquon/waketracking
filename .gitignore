@@ -4,3 +4,7 @@
 demo/*.png
 
 _build
+
+MANIFEST
+build/
+dist/
