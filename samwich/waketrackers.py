@@ -819,7 +819,7 @@ class contourwaketracker(waketracker):
         level = []  # list of candidate contour values
         paths = []  # list of candidate contour paths
         success = True
-        converged = False
+        cur_opt_val = None
         while Nrefine == 0 or interval > tol:  # go through search at least once
             Nrefine += 1
             if debug: print('refinement cycle {}'.format(Nrefine))
@@ -893,6 +893,13 @@ class contourwaketracker(waketracker):
                 break
             #^^^^^^^^^^^^^^^^^^^^^^^^^^
             # END search loop
+
+            if Flist[idx] == cur_opt_val:
+                if debug:
+                    print('apparent convergence (optimum unchanged)')
+                break
+            else:
+                cur_opt_val = Flist[idx]
 
             # update the contour search range
             interval /= 2.
