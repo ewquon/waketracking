@@ -2,6 +2,7 @@
 *.pyc
 
 demo/*.png
+demo/log.*
 
 _build
 
