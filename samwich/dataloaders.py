@@ -524,6 +524,7 @@ class foam_ensight_array(sampled_data):
         The .mesh files are assumed identical (the mesh is only read
         once from the first directory)
         """
+        Nread = kwargs.pop('Nread',np.inf)
         super(self.__class__,self).__init__(*args,**kwargs)
 
         if self.prefix is None:
@@ -533,6 +534,7 @@ class foam_ensight_array(sampled_data):
                 return
             else:
                 raise AttributeError("'prefix' needs to be specified")
+
 
         # get time series
         try:
@@ -545,6 +547,7 @@ class foam_ensight_array(sampled_data):
                 return
             else:
                 raise IOError('Data not found in '+self.outputdir)
+        self.t = self.ts.outputTimes
 
         if self.data_read_from is not None:
             # Previously saved $npzdata was read in super().__init__
@@ -611,6 +614,9 @@ class foam_ensight_array(sampled_data):
         data = np.zeros((self.Ntimes,NX,NY,NZ,self.datasize))
         print(self.ts)
         for itime,fname in enumerate(self.ts):
+            if itime >= Nread:
+                print('Read {:d} snapshots, stopping...'.format(Nread))
+                break
             sys.stderr.write('\rProcessing frame {:d}'.format(itime))
             #sys.stderr.flush()
 
@@ -624,7 +630,7 @@ class foam_ensight_array(sampled_data):
                     # if duplicate points exist, the last recorded value at a
                     #   location will be used
                     u[:,idx_new] = interp_values[idx_old,:]
-                # interpolate at holes
+                # interpolate at holes (using linear barycentric interpolation)
                 interpfunc = LinearNDInterpolator(interp_points, interp_values)
                 uinterp = interpfunc(hole_locations)
                 for i in range(3):
