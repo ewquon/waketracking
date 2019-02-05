@@ -2,5 +2,10 @@
 *.pyc
 
 demo/*.png
+demo/log.*
 
 _build
+
+MANIFEST
+build/
+dist/

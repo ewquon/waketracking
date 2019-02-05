@@ -7,12 +7,13 @@ import pickle  # to archive path objects containing wake outlines
 
 import numpy as np
 from scipy.ndimage import uniform_filter1d  # to perform moving average
-from matplotlib._cntr import Cntr  # to process contour data
 import matplotlib.pyplot as plt
 import matplotlib.path as mpath
 import matplotlib.patches as mpatch
 
-import samwich.contour_functions as contour
+from samwich.contour_functions import Contours
+
+python_version = sys.version_info[0]
 
 #==============================================================================
 
@@ -749,7 +750,10 @@ class contourwaketracker(waketracker):
     """
 
     def __init__(self,*args,**kwargs):
-        super(contourwaketracker,self).__init__(*args,**kwargs)
+        if python_version < 3:
+            super(contourwaketracker,self).__init__(*args,**kwargs)
+        else:
+            super().__init__(*args,**kwargs)
 
         self.Clevels = np.zeros(self.Ntimes)
         self.Cfvals = np.zeros(self.Ntimes)
@@ -789,9 +793,9 @@ class contourwaketracker(waketracker):
         j0,j1 = self.jmin,self.jmax+1
         k0,k1 = self.kmin,self.kmax+1
         usearch = self.u[itime,j0:j1,k0:k1] # velocity deficit contours
-        Cdata = Cntr(self.xh[j0:j1,k0:k1],
-                     self.xv[j0:j1,k0:k1],
-                     usearch)  # contour data object
+        Cdata = Contours(self.xh[j0:j1,k0:k1],
+                         self.xv[j0:j1,k0:k1],
+                         usearch)
         Crange = np.linspace(np.min(usearch), 0, Ntest+1)[1:]
         interval = Crange[1] - Crange[0]
 
@@ -815,7 +819,7 @@ class contourwaketracker(waketracker):
         level = []  # list of candidate contour values
         paths = []  # list of candidate contour paths
         success = True
-        converged = False
+        cur_opt_val = None
         while Nrefine == 0 or interval > tol:  # go through search at least once
             Nrefine += 1
             if debug: print('refinement cycle {}'.format(Nrefine))
@@ -825,41 +829,40 @@ class contourwaketracker(waketracker):
             for Clevel in Crange:
                 if debug: print('  testing contour level {}'.format(Clevel))
 
-                cur_path_list = contour.get_paths(Cdata,Clevel,
-                                                  close_paths=contour_closure,
-                                                  min_points=min_contour_points)
+                cur_path_list = Cdata.get_closed_paths(Clevel,
+                                                close_paths=contour_closure,
+                                                min_points=min_contour_points)
                 if debug:
-                    print('  contour paths found: {}'.format(len(cur_path_list)))
+                    print('  contours found: {}'.format(len(cur_path_list)))
 
                 if func is None and not vdcheck:
                     # area contours without velocity deficit check
                     # Note: This is MUCH faster, since we don't have to search for interior pts!
                     paths += cur_path_list
                     level += len(cur_path_list)*[Clevel]
-                    Flist += [contour.calc_area(path) for path in cur_path_list]
+                    Flist += [Cdata.calc_area(path) for path in cur_path_list]
                 elif func is None:
                     # area contours with velocity deficit check
                     for path in cur_path_list:
-                        fval, corr, avgdeficit = \
-                                contour.integrate_function(path, None,
-                                                           self.xh, self.xv, None,
-                                                           vd=self.u[itime,:,:])
+                        fval, avgdeficit = \
+                                Cdata.integrate_function(path, func=None,
+                                                         fields=None,
+                                                         vd=self.u[itime,:,:])
                         if fval is not None and avgdeficit < 0:
                             paths.append(path)
                             level.append(Clevel)
                             Flist.append(fval)
-                else:  # specified function
-                    # flux contours
+                else:
+                    # specified function to calculate flux through contour
                     if vdcheck:
                         vd = self.u[itime,:,:]
                     else:
                         vd = None
                     for path in cur_path_list:
-                        fval, corr, avgdeficit = \
-                                contour.integrate_function(path, func,
-                                                           self.xh, self.xv,
-                                                           testfields,
-                                                           vd=vd)
+                        fval, avgdeficit = \
+                                Cdata.integrate_function(path, func,
+                                                         testfields,
+                                                         vd=vd)
                         #NfnEvals += 1
                         if fval is not None and (avgdeficit < 0 or vd is None):
                             paths.append(path)
@@ -891,6 +894,13 @@ class contourwaketracker(waketracker):
             #^^^^^^^^^^^^^^^^^^^^^^^^^^
             # END search loop
 
+            if Flist[idx] == cur_opt_val:
+                if debug:
+                    print('apparent convergence (optimum unchanged)')
+                break
+            else:
+                cur_opt_val = Flist[idx]
+
             # update the contour search range
             interval /= 2.
             Crange = np.linspace(cur_opt_level-interval, cur_opt_level+interval, Ntest)
@@ -909,20 +919,18 @@ class contourwaketracker(waketracker):
                }
 
         if success:
-            self.paths[itime] = paths[idx]  # save paths for plotting
-            self.Clevels[itime] = level[idx]  # save time-varying contour levels as reference data
-            self.Cfvals[itime] = Flist[idx]
+            self.paths[itime] = Cdata.to_coords(paths[idx],closed=True,array=True)
+            self.Clevels[itime] = level[idx]  # contour levels
+            self.Cfvals[itime] = Flist[idx]  # contour function value
 
             if not weighted_center == False:
                 if weighted_center == True:
+                    # absolute value of the velocity deficit
                     func = np.abs
-                else:  # specified weighting function
+                else:
+                    # specified weighting function
                     func = weighted_center
-                yc,zc = contour.calc_weighted_center(paths[idx],
-                                                     self.xh,
-                                                     self.xv,
-                                                     self.u[itime,:,:],
-                                                     weighting_function=func)
+                yc,zc = Cdata.calc_weighted_center(paths[idx], weighting_function=func)
             else:
                 # geometric center
                 yc = np.mean(paths[idx][:,0])
@@ -945,7 +953,10 @@ class contourwaketracker(waketracker):
         """Helper function to read trajectory history typically called
         at the beginning of find_centers
         """
-        data = super(contourwaketracker,self)._read_trajectory(fname)
+        if python_version < 3:
+            data = super(contourwaketracker,self)._read_trajectory(fname)
+        else:
+            data = super()._read_trajectory(fname)
         if data is not None:
             # assume load was successful
             self.Clevels = data[:,3]
