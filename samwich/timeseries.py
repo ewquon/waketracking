@@ -16,7 +16,6 @@ class TimeSeries(object):
         self.outputNames = []
         self.dirlist = []
         self.filelist = None
-        self.lastfile = -1  # for iterator
         self.verbose = verbose
 
         # process all subdirectories
@@ -53,7 +52,6 @@ class TimeSeries(object):
 
     def setFilename(self,filename):
         """Update file list for iteration"""
-        self.lastfile = -1  # reset iterator index
         self.filelist = []
         for path in self.dirlist:
             fpath = os.path.join(path,filename)
@@ -80,15 +78,5 @@ class TimeSeries(object):
         return self.filelist[i]
 
     def __iter__(self):
-        return self
-
-    def next(self):
-        if self.filelist is None:
-            raise StopIteration('Need to set filename before iterating')
-        self.lastfile += 1
-        if self.lastfile >= self.Ntimes:
-            raise StopIteration
-        else:
-            return self.filelist[self.lastfile]
-            
+        return iter(self.filelist)
 

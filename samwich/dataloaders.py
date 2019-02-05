@@ -562,7 +562,7 @@ class foam_ensight_array(sampled_data):
         NZ = self.NZ
 
         # read mesh
-        with open(os.path.join(self.ts.dirList[0],self.prefix+'.mesh'),'r') as f:
+        with open(os.path.join(self.ts.dirlist[0],self.prefix+'.mesh'),'r') as f:
             for _ in range(8):  # skip header
                 f.readline()
             N = int(f.readline())
@@ -609,6 +609,7 @@ class foam_ensight_array(sampled_data):
 
         # read data
         data = np.zeros((self.Ntimes,NX,NY,NZ,self.datasize))
+        print(self.ts)
         for itime,fname in enumerate(self.ts):
             sys.stderr.write('\rProcessing frame {:d}'.format(itime))
             #sys.stderr.flush()
