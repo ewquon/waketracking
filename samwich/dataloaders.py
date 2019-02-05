@@ -620,7 +620,7 @@ class foam_ensight_array(sampled_data):
             sys.stderr.write('\rProcessing frame {:d}'.format(itime))
             #sys.stderr.flush()
 
-            if self.interp_holes and Norig < N:
+            if self.interp_holes and len(hole_locations) > 0:
                 from scipy.interpolate import LinearNDInterpolator
                 u = np.loadtxt(fname,skiprows=4).reshape((self.datasize,Norig))
                 interp_values = u.T
