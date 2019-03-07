@@ -4,7 +4,8 @@ import matplotlib.path as mpath
 try:
     import cv2
 except ImportError:
-    print('Note: Install OpenCV package (cv2) to enable contour trackers')
+    print('Note: Install OpenCV library (cv2) to enable contour trackers, '
+          'e.g., `conda install opencv`')
     cv2 = None
 
 class Contours(object):
