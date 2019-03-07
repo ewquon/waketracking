@@ -44,7 +44,7 @@ def track(*args,**kwargs):
                     # can have more than one tracker class per module file
                     if cls.__module__ == mod.__name__:
                         tracker_list[name] = cls
-        
+
     method = kwargs.get('method',None)
     if method not in tracker_list.keys():
         print("Need to specify 'method' as one of:")
@@ -69,9 +69,9 @@ class waketracker(object):
     def __init__(self,*args,**kwargs):
         """Process structured data in rotor-aligned frames of reference.
         Arguments may be in the form:
-        
+
             waketracker(x, y, z, u, ...)
-        
+
         or
 
             waketracker((x,y,z,u), ...)
@@ -83,7 +83,7 @@ class waketracker(object):
         ----------
         x,y,z : ndarray
             Sampling grid coordinates in a Cartesian reference frame,
-            with shape (Nh,Nv). Used to calculate xh and xv, the 
+            with shape (Nh,Nv). Used to calculate xh and xv, the
             horizontal and vertical grid coordinates in the rotor-
             aligned frame.
         u : ndarray
@@ -178,6 +178,10 @@ class waketracker(object):
             print('  rotated to rotor-aligned axes (about z): {} deg'.format(ang*180./np.pi))
 
         self.xh_range = self.xh[:,0]
+        # throw an error if the data are not in the right order, which should be (y,z) and not (z,y)
+        if (len(np.unique(self.xh_range))==1):
+            print('WARNING: data appears to be of shape (z,y) which will not work! Transpose it to get (y,z).')
+            return
         self.xv_range = self.xv[0,:]
 
         # check plane yaw
@@ -188,7 +192,7 @@ class waketracker(object):
             print('  rotation error: {}'.format(xd_diff))
         if np.abs(xd_diff) > 1e-6:
             print('WARNING: problem with rotation to rotor-aligned frame?')
-        
+
         # set dummy values in case wake tracking algorithm breaks down
         self.xh_fail = self.xh_range[0]
         self.xv_fail = self.xv_range[0]
@@ -210,7 +214,7 @@ class waketracker(object):
 
         # check and calculate instantaneous velocities including shear,
         # u_tot
-        assert(len(udata.shape) in (3,4)) 
+        assert(len(udata.shape) in (3,4))
         assert((self.Nh,self.Nv) == udata.shape[1:3])
         self.Ntimes = udata.shape[0]
         if len(udata.shape)==3: # SCALAR data
@@ -223,7 +227,7 @@ class waketracker(object):
             assert(self.datasize == 3)
 
             # calculate horizontal velocity
-#            assert(self.datasize <= 3) 
+#            assert(self.datasize <= 3)
 #            self.u_tot = np.sqrt(u[:,:,:,0]**2 + u[:,:,:,1]**2)
 
             # calculate velocities in the sampling plane frame of reference
@@ -323,7 +327,7 @@ class waketracker(object):
 
         Current supported methods:
 
-        * "fringe": Estimate from fringes 
+        * "fringe": Estimate from fringes
         * "specified": Wind profile specified as either a function or an
             array of heights vs horizontal velocity
 
@@ -368,7 +372,7 @@ class waketracker(object):
                 self.Uprofile = wind_profile
             elif isinstance(wind_profile, str):
                 #zref,Uref = readRef(wind_profile)
-                #self.Uprofile = np.interp(self.z,zref,Uref) 
+                #self.Uprofile = np.interp(self.z,zref,Uref)
                 self.Uprofile = np.loadtxt(wind_profile)
                 print('Wind profile read from {}'.format(wind_profile))
 
@@ -418,7 +422,7 @@ class waketracker(object):
         (np.interp) is used.
 
         NOT TESTED IN THIS VERSION
-        
+
         Parameters
         ----------
         update : boolean, optional
@@ -451,7 +455,7 @@ class waketracker(object):
         if update:
             self.ywake = yw_fix
             self.zwake = zw_fix
-        
+
         return yw_fix, zw_fix
 
     def _write_data(self,fname,data):
@@ -528,7 +532,7 @@ class waketracker(object):
         self.zwake = self.xv_wake
 
     def _init_plot(self):
-        """Set up figure properties here""" 
+        """Set up figure properties here"""
         if self.verbose: print('Initializing plot')
 
         plt.rc('text', usetex=True)
@@ -572,7 +576,7 @@ class waketracker(object):
                     dpi=100):
         """Plot/update contour and center marker in the rotor-aligned
         frame at time ${itime}.
-        
+
         Parameters
         ----------
         itime : integer
@@ -687,7 +691,7 @@ class waketracker(object):
 
         try:
             path = mpath.Path(self.paths[itime])
-        except ValueError: 
+        except ValueError:
             if self.verbose:
                 print('No contour available to plot?')
             return
@@ -703,7 +707,7 @@ class waketracker(object):
         """Write out all snapshots to ${outdir}.
 
         See plot_contour for keyword arguments.
-        """ 
+        """
         if not self.wake_tracked:
             print('Note: wake tracking has not been performed; wake centers will not be plotted.')
         for itime in range(self.Ntimes):
@@ -745,7 +749,7 @@ class waketracker(object):
 
 class contourwaketracker(waketracker):
     """Class for wake tracking based on (velocity) contours
-    
+
     Inherits superclass waketracker
     """
 
@@ -962,4 +966,3 @@ class contourwaketracker(waketracker):
             self.Clevels = data[:,3]
             self.Cfvals = data[:,4]
         return data
-
