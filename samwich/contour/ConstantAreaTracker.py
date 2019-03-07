@@ -115,6 +115,9 @@ class ConstantArea(contourwaketracker):
             if not info['success']:
                 print('WARNING: find_contour_center was unsuccessful.')
                 print(info)
+                print('Try re-running with verbosity > 0;'
+                      ' if contours found were ~0, try re-running with'
+                      ' fewer min_contour_points')
             elif self.verbose and verbosity > 0:
                 print('itime={:.1f} : found contour (u={:.4f}) with area {:g}'.format(
                         itime,self.Clevels[itime],self.Cfvals[itime]))
