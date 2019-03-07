@@ -134,7 +134,7 @@ class Contours(object):
 
     def get_closed_paths(self, Clevel,
                          close_paths=False,
-                         min_points=50,
+                         min_points=None,
                          verbose=False):
         """Process all contour paths, returning closed paths only
 
@@ -156,7 +156,8 @@ class Contours(object):
         min_points : int, optional
             Minimum number of points a closed loop must contain for it
             to be considered a candidate path. This is indirectly
-            related to the smallest allowable contour region.
+            related to the smallest allowable contour region. Set to
+            None to return all contours.
 
         Returns
         -------
@@ -166,6 +167,8 @@ class Contours(object):
         path_list = []
         Clevel_uint8 = self._value_to_uint8(Clevel)
         all_contours, is_closed = self._get_all_contours(Clevel_uint8)
+        if min_points is None:
+            min_points = 1
         for path,closed in zip(all_contours,is_closed):
             if closed:
                 if len(path) >= min_points:

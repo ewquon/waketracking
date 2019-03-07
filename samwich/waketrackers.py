@@ -770,7 +770,7 @@ class contourwaketracker(waketracker):
                              target_value,
                              weighted_center=True,
                              contour_closure=False,
-                             min_contour_points=50,
+                             min_contour_points=None,
                              Ntest=11,
                              tol=0.01,
                              func=None,
