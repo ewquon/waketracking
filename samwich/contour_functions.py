@@ -366,3 +366,51 @@ class Contours(object):
         
         return xc,yc
 
+
+def resample_outline(outline,origin=(0,0),N=25):
+    """First attempt to smooth an arbitrary contour path using
+    resampling and cubic spline interpolation. This does _not_ work
+    well for smoothing. 
+    """
+    from scipy.interpolate import interp1d
+    x = outline[:,0] - origin[0]
+    y = outline[:,1] - origin[1]
+    # convert to polar coordinates and sort (for interp1d)
+    r0 = np.sqrt(x**2 + y**2)
+    theta0 = np.arctan2(y,x)
+    isort = np.argsort(theta0)
+    r0 = r0[isort]
+    theta0 = theta0[isort]
+    theta = np.unique(theta0)
+    # radially average to get rid of multiple radial values at the same azimuth
+    r = [ np.mean(r0[np.where(theta0 == the)]) for the in theta ]
+    assert(len(r) == len(theta))
+    # interpolate for evenly spaced azimuth angles
+    interpfun = interp1d(theta,r,kind='cubic')
+    theta = np.linspace(np.min(theta),np.max(theta),N) #np.linspace(-np.pi,np.pi,N)
+    r = interpfun(theta)
+    # recover coordinates
+    x = r*np.cos(theta) + origin[0]
+    y = r*np.sin(theta) + origin[1]
+    return np.stack((x,y),axis=-1)
+
+def smooth_outline(outline,origin=(0,0),window=3):
+    """Perform moving average in polar coordinates"""
+    # convert to polar coordinates
+    x = outline[:-1,0] - origin[0] # assume last point == first point
+    y = outline[:-1,1] - origin[1]
+    r0 = np.sqrt(x**2 + y**2)
+    the0 = np.arctan2(y,x)
+    # add points (since our data is cyclic) to handle convolution edge case
+    i = int(window/2)
+    r = np.concatenate((r0[-i:],r0,r0[:i]))
+    the = np.concatenate((the0[-i:],the0,the0[:i]))
+    # now, perform the moving average
+    w = np.ones(window)
+    w /= w.sum()
+    r = np.convolve(w,r,mode='valid')
+    assert(len(r)==len(r0))
+    # recover coordinates
+    x = r*np.cos(the0) + origin[0]
+    y = r*np.sin(the0) + origin[1]
+    return np.stack((x,y),axis=-1)
