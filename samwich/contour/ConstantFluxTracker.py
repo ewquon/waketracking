@@ -123,7 +123,7 @@ class ConstantFlux(contourwaketracker):
 
         # calculate trajectories for each time step
         if self.verbose:
-            print('Attempting to match integral:',ref_flux)
+            print('Attempting to match flux:',ref_flux)
         for itime in range(self.Ntimes):
             _,_,info = self._find_contour_center(itime,
                                              ref_flux,

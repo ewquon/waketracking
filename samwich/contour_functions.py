@@ -305,13 +305,12 @@ class Contours(object):
         """
         A = self.calc_area(path)
     
-        #inner = path.contains_points(gridPts)  # <-- most of the processing time is here!
         in_on_out = self._points_in_contour(path) # >0, 0, <0
         inner = (in_on_out >= 0).ravel()
         Ninner = np.count_nonzero(inner)
         if Ninner < Nmin:
             # contour path is too short
-            return None,None,None
+            return None,None
     
         # calculate average velocity deficit if needed (e.g., for more
         # rigorous identification of wake regions)
