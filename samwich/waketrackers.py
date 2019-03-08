@@ -816,7 +816,7 @@ class contourwaketracker(waketracker):
             except AttributeError:  # python 2
                 func_params = inspect.getargspec(func).args
             assert(len(fields) == len(func_params))
-            testfields = [ getattr(self,fieldname)[itime,:,:]
+            testfields = [ getattr(self,fieldname)[itime,j0:j1,k0:k1]
                             for fieldname in fields ]
 
         Flist = []  # list of evaluated function values
@@ -851,17 +851,14 @@ class contourwaketracker(waketracker):
                         fval, avgdeficit = \
                                 Cdata.integrate_function(path, func=None,
                                                          fields=None,
-                                                         vd=self.u[itime,:,:])
+                                                         vd=usearch)
                         if fval is not None and avgdeficit < 0:
                             paths.append(path)
                             level.append(Clevel)
                             Flist.append(fval)
                 else:
                     # specified function to calculate flux through contour
-                    if vdcheck:
-                        vd = self.u[itime,:,:]
-                    else:
-                        vd = None
+                    vd = usearch if vdcheck else None
                     for path in cur_path_list:
                         fval, avgdeficit = \
                                 Cdata.integrate_function(path, func,
