@@ -22,7 +22,7 @@ aref = 0.3  # induction, for estimating the momentum theory mass/momentum flux
 #kind = 'mean'  # sanity check, not very interesting
 #kind = 'instantaneous'
 
-def track_all(kind,verbose=False,tol=1e-13):
+def track_all(kind,verbose=False,tol=1e-4):
     """Test all trackers given sample data with label 'kind'"""
 
     # Preliminary calculations
@@ -123,7 +123,10 @@ def track_all(kind,verbose=False,tol=1e-13):
     all_zc = np.array([ zc[tracker][itime] for tracker in wake.keys() ])
 
     refpath = os.path.join('reg_tests','refdata','{}_detected_centers.csv'.format(kind))
-    trackers,yref,zref = np.genfromtxt(refpath,skip_header=1,delimiter=',',unpack=True)
+    refdata = np.genfromtxt(refpath,skip_header=1,delimiter=',',dtype=None,encoding=None)
+    trackers = [vals[0] for vals in refdata]
+    yref = [vals[1] for vals in refdata]
+    zref = [vals[2] for vals in refdata]
     yerr = np.abs(yref - all_yc)
     zerr = np.abs(zref - all_zc)
     for tracker,ye,ze in zip(trackers,yerr,zerr):
