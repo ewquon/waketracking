@@ -123,10 +123,22 @@ def track_all(kind,verbose=False,tol=1e-4):
     all_zc = np.array([ zc[tracker][itime] for tracker in wake.keys() ])
 
     refpath = os.path.join('reg_tests','refdata','{}_detected_centers.csv'.format(kind))
-    refdata = np.genfromtxt(refpath,skip_header=1,delimiter=',',dtype=None,encoding=None)
-    trackers = [vals[0] for vals in refdata]
-    yref = [vals[1] for vals in refdata]
-    zref = [vals[2] for vals in refdata]
+    #refdata = np.genfromtxt(refpath,skip_header=1,delimiter=',',dtype=None,encoding=None)
+    #trackers = [vals[0] for vals in refdata]
+    #yref = [vals[1] for vals in refdata]
+    #zref = [vals[2] for vals in refdata]
+    # unpythonic but guaranteed to load w/o error
+    trackers, yref, zref = [], [], []
+    with open(refpath,'r') as f:
+        f.readline()
+        for line in f:
+            line = line.split(',')
+            trackers.append(line[0])
+            yref.append(float(line[1]))
+            zref.append(float(line[2]))
+    yref = np.array(yref)
+    zref = np.array(zref)
+
     yerr = np.abs(yref - all_yc)
     zerr = np.abs(zref - all_zc)
     for tracker,ye,ze in zip(trackers,yerr,zerr):
