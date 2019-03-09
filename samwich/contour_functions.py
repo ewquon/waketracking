@@ -94,10 +94,16 @@ class Contours(object):
         # CV_CHAIN_APPROX_SIMPLE: compresses horizontal, vertical,
         #   diagonal segments
         # Note that this modifies the source img_bw
-        _, contour_uint8_list, hierarchy = cv2.findContours(
-                img_bw,
-                cv2.RETR_TREE,
-                cv2.CHAIN_APPROX_SIMPLE)
+        if cv2.__version__.startswith('3'):
+            _, contour_uint8_list, hierarchy = cv2.findContours(
+                    img_bw,
+                    cv2.RETR_TREE,
+                    cv2.CHAIN_APPROX_SIMPLE)
+        else:
+            contour_uint8_list, hierarchy = cv2.findContours(
+                    img_bw,
+                    cv2.RETR_TREE,
+                    cv2.CHAIN_APPROX_SIMPLE)
 
         # hierarchy has shape (1,Ncontours,4) -- expected (Ncontours,4)
         # TODO: may be possible to deduce open contours from the hierarchy
