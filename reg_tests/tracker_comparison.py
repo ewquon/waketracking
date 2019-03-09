@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # 
 # Based on demo/tracker_comparison.ipynb (from commit 92d79d3)
+# - this generates reference data
 # 
 import os
 import numpy as np
