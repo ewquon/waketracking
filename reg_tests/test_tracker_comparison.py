@@ -5,7 +5,6 @@
 #
 import os
 import numpy as np
-import pandas as pd
 
 from samwich.dataloaders import planar_data
 from samwich.waketrackers import track
@@ -120,15 +119,15 @@ def track_all(kind,verbose=False,tol=1e-13):
 
     # NOW, compare detected wake centers
     itime = 0
-    all_yc = [ yc[tracker][itime] for tracker in wake.keys() ]
-    all_zc = [ zc[tracker][itime] for tracker in wake.keys() ]
-    df = pd.DataFrame(index=wake.keys(), data={'y':all_yc, 'z':all_zc})
+    all_yc = np.array([ yc[tracker][itime] for tracker in wake.keys() ])
+    all_zc = np.array([ zc[tracker][itime] for tracker in wake.keys() ])
 
     refpath = os.path.join('reg_tests','refdata','{}_detected_centers.csv'.format(kind))
-    ref = pd.read_csv(refpath,index_col=0)
-    yerr = np.abs(ref['y'] - df['y'])
-    zerr = np.abs(ref['z'] - df['z'])
-    print(pd.DataFrame(index=wake.keys(), data={'y':yerr, 'z':zerr}))
+    trackers,yref,zref = np.genfromtxt(refpath,skip_header=1,delimiter=',',unpack=True)
+    yerr = np.abs(yref - all_yc)
+    zerr = np.abs(zref - all_zc)
+    for tracker,ye,ze in zip(trackers,yerr,zerr):
+        print(tracker,ye,ze)
 
     assert np.all(yerr < tol) and np.all(zerr < tol)
 
