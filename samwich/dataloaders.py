@@ -450,6 +450,55 @@ class pandas_dataframe(sampled_data):
 
 #------------------------------------------------------------------------------
 
+class xarray_dataset(sampled_data):
+    """Xarray dataset
+    
+    See superclass sampled_data for more information.
+    """
+
+    def __init__(self,xa):
+        """Reads a dataset with dimensions and coordinates time, x, y, and z.
+        The expected variables are:
+            U(time, x, y, z)
+            V(time, x, y, z)
+            W(time, x, y, z)
+        x is assumed to be aligned with the downstream direction.
+        """
+        print(xa)
+
+        self.ts = None # not a time series
+        self.t = xa.time.values
+        self.Ntimes = xa.dims['time']
+        assert(self.Ntimes == len(self.t))
+
+        self.NX = xa.dims['x']
+        self.NY = xa.dims['y']
+        self.NZ = xa.dims['z']
+        x = xa.x.values
+        y = xa.y.values
+        z = xa.z.values
+        self.x, self.y, self.z = np.meshgrid(x,y,z,indexing='ij')
+
+        U = xa.U.values
+        assert(U.shape == (self.Ntimes,self.NX,self.NY,self.NZ))
+        V,W = None,None
+        try:
+            V = xa.V.values
+            W = xa.W.values
+        except AttributeError:
+            self.datasize = 1
+            self.data = np.zeros((self.Ntimes,self.NX,self.NY,self.NZ,1))
+            self.data[:,:,:,:,0] = U
+        else:
+            self.datasize = 3
+            self.data = np.zeros((self.Ntimes,self.NX,self.NY,self.NZ,3))
+            self.data[:,:,:,:,0] = U
+            self.data[:,:,:,:,1] = V
+            self.data[:,:,:,:,2] = W
+
+
+#------------------------------------------------------------------------------
+
 class foam_ensight_array(sampled_data):
     """OpenFOAM array sampling data in Ensight format
     
