@@ -389,13 +389,20 @@ class waketracker(object):
             # Uprofile.shape==(Nv)
             for k,umean in enumerate(self.Uprofile):
                 self.u[:,:,k] -= umean
-        else:
+        elif len(self.Uprofile.shape)==2:
             if self.verbose:
                 print('  subtracting out time-varying profile')
             # Uprofile.shape==(Ntimes,Nv)
             for itime in range(self.Ntimes):
                 for k,umean in enumerate(self.Uprofile[itime,:]):
                     self.u[itime,:,k] -= umean
+        elif len(self.Uprofile.shape)==3:
+            if self.verbose:
+                print('  subtracting out time-varying field')
+            # Uprofile.shape==(Ntimes,Nh,Nv)
+            self.u -= self.Uprofile
+        else:
+            print('  unexpected Uprofile data shape--mean was not removed')
 
     def find_centers(self,
                     trajectory_file=None,
