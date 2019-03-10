@@ -94,6 +94,7 @@ class ConstantFlux(contourwaketracker):
 
         # done if read was successful
         if self.wake_tracked:
+            print('Note: wake tracking has already been performed')
             return self.trajectory_in(frame)
 
         # make sure we can get the requested field for calculating flux

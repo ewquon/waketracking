@@ -103,6 +103,7 @@ class Gaussian2D(waketracker):
 
         # done if read was successful
         if self.wake_tracked:
+            print('Note: wake tracking has already been performed')
             return self.trajectory_in(frame)
 
         # setup Gaussian parameters
