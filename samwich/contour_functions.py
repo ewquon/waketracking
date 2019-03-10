@@ -419,4 +419,6 @@ def smooth_outline(outline,origin=(0,0),window=3):
     # recover coordinates
     x = r*np.cos(the0) + origin[0]
     y = r*np.sin(the0) + origin[1]
-    return np.stack((x,y),axis=-1)
+    smoothed = np.stack((x,y),axis=-1)
+    smoothed = np.vstack((smoothed, smoothed[0,:]))
+    return smoothed
