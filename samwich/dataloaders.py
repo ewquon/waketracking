@@ -250,6 +250,9 @@ class _template_sampled_data_format(sampled_data):
         self.data_read_from = None
 
 
+#------------------------------------------------------------------------------
+# Basic input data types
+
 class rawdata(sampled_data):
     """Raw data, e.g., in csv format.
 
@@ -350,6 +353,9 @@ class planar_data(sampled_data):
         if center_y:
             self.y -= np.mean(self.y)
 
+
+#------------------------------------------------------------------------------
+
 class pandas_dataframe(sampled_data):
     """Raw data from pandas dataframe(s)
     
@@ -441,69 +447,6 @@ class pandas_dataframe(sampled_data):
             self.data[0,i,:,:,0] = ugrid
         self.datasize = 1
 
-
-#------------------------------------------------------------------------------
-# Sampled data cleanup
-#
-def interp_holes_2d(y,z,verbose=True):
-    y0 = y.ravel()
-    z0 = z.ravel()
-    Norig = len(y0)
-
-    # check for unique points, TODO: may need tolerance for nearly coincident values
-    y_uni = np.unique(y)
-    z_uni = np.unique(z)
-    NY = len(y_uni)
-    NZ = len(z_uni)
-    if verbose:
-        print('Found unique y: {} {}'.format(NY,y_uni))
-        print('Found unique z: {} {}'.format(NZ,z_uni))
-    # check spacings
-    dy = np.diff(y_uni)
-    dz = np.diff(z_uni)
-    assert(np.max(dy)-np.min(dy) < 0.1) # all spacings should be ~equal
-    assert(np.max(dz)-np.min(dz) < 0.1)
-
-    # create the grid we want
-    ynew = np.zeros((1,NY,NZ))
-    znew = np.zeros((1,NY,NZ))
-    ytmp,ztmp = np.meshgrid(y_uni, z_uni, indexing='ij')
-    ynew[0,:,:] = ytmp
-    znew[0,:,:] = ztmp
-    y = ynew.ravel(order='F') # points increase in y, then z
-    z = znew.ravel(order='F')
-    assert(y[1]-y[0] > 0)
-
-    # find holes
-    if verbose: print('Looking for holes in mesh...')
-    hole_indices = [] # in new array
-    idx_old = 0
-    Nholes = 0
-    Ndup = 0
-    data_map = np.zeros(Norig,dtype=int) # mapping of raveled input array (w/ holes) to new array
-    for idx_new in range(NY*NZ):
-        if y[idx_new] != y0[idx_old] or z[idx_new] != z0[idx_old]:
-            print('  hole at {} {}'.format(y[idx_new],z[idx_new]))
-            hole_indices.append(idx_new)
-            Nholes += 1
-        else:
-            data_map[idx_old] = idx_new
-            idx_old += 1
-            if idx_old >= Norig:
-                continue
-            # handle duplicate points (not sure why this happens in OpenFOAM sampling...)
-            while y[idx_new] == y0[idx_old] and z[idx_new] == z0[idx_old]:
-                Ndup += 1
-                print('  duplicate point at {} {}'.format(y[idx_new],z[idx_new]))
-                data_map[idx_old] = idx_new # map to the same point in the new grid
-                idx_old += 1
-    assert(idx_old == Norig) # all points mapped
-    if verbose:
-        print('  {} holes, {} duplicate points'.format(Nholes,Ndup))
-
-    hole_locations = np.stack((y[hole_indices],z[hole_indices])).T
-
-    return ynew, znew, data_map, hole_locations, hole_indices
 
 #------------------------------------------------------------------------------
 
@@ -855,4 +798,68 @@ class foam_ensight_array_series(sampled_data):
                     print('  path to use for temporary storage that has more available space.')
                     print('  (see https://github.com/numpy/numpy/issues/5336)')
 
+
+
+#------------------------------------------------------------------------------
+# Sampled data cleanup
+#
+def interp_holes_2d(y,z,verbose=True):
+    y0 = y.ravel()
+    z0 = z.ravel()
+    Norig = len(y0)
+
+    # check for unique points, TODO: may need tolerance for nearly coincident values
+    y_uni = np.unique(y)
+    z_uni = np.unique(z)
+    NY = len(y_uni)
+    NZ = len(z_uni)
+    if verbose:
+        print('Found unique y: {} {}'.format(NY,y_uni))
+        print('Found unique z: {} {}'.format(NZ,z_uni))
+    # check spacings
+    dy = np.diff(y_uni)
+    dz = np.diff(z_uni)
+    assert(np.max(dy)-np.min(dy) < 0.1) # all spacings should be ~equal
+    assert(np.max(dz)-np.min(dz) < 0.1)
+
+    # create the grid we want
+    ynew = np.zeros((1,NY,NZ))
+    znew = np.zeros((1,NY,NZ))
+    ytmp,ztmp = np.meshgrid(y_uni, z_uni, indexing='ij')
+    ynew[0,:,:] = ytmp
+    znew[0,:,:] = ztmp
+    y = ynew.ravel(order='F') # points increase in y, then z
+    z = znew.ravel(order='F')
+    assert(y[1]-y[0] > 0)
+
+    # find holes
+    if verbose: print('Looking for holes in mesh...')
+    hole_indices = [] # in new array
+    idx_old = 0
+    Nholes = 0
+    Ndup = 0
+    data_map = np.zeros(Norig,dtype=int) # mapping of raveled input array (w/ holes) to new array
+    for idx_new in range(NY*NZ):
+        if y[idx_new] != y0[idx_old] or z[idx_new] != z0[idx_old]:
+            print('  hole at {} {}'.format(y[idx_new],z[idx_new]))
+            hole_indices.append(idx_new)
+            Nholes += 1
+        else:
+            data_map[idx_old] = idx_new
+            idx_old += 1
+            if idx_old >= Norig:
+                continue
+            # handle duplicate points (not sure why this happens in OpenFOAM sampling...)
+            while y[idx_new] == y0[idx_old] and z[idx_new] == z0[idx_old]:
+                Ndup += 1
+                print('  duplicate point at {} {}'.format(y[idx_new],z[idx_new]))
+                data_map[idx_old] = idx_new # map to the same point in the new grid
+                idx_old += 1
+    assert(idx_old == Norig) # all points mapped
+    if verbose:
+        print('  {} holes, {} duplicate points'.format(Nholes,Ndup))
+
+    hole_locations = np.stack((y[hole_indices],z[hole_indices])).T
+
+    return ynew, znew, data_map, hole_locations, hole_indices
 
