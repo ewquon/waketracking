@@ -137,17 +137,17 @@ class Gaussian2D(waketracker):
         #   plane already
         # note: sigma_y = AR*sigmaz
         #       sigma_z = sqrt(A/(pi*AR))
-        guess = [
-                (self.xh_min+self.xh_max)/2,    # 0: yc
-                (self.xv_min+self.xv_max)/2,    # 1: zc
-                0.0,                            # 2: theta
-                A_min,                          # 3: A == pi * sigma_y * sigma_z
-                1.0,                            # 4: AR == sigma_y/sigma_z
+        x0 = [
+            None,  # 0: yc
+            None,  # 1: zc
+            0.0,   # 2: theta
+            A_min, # 3: A == pi * sigma_y * sigma_z
+            1.0,   # 4: AR == sigma_y/sigma_z
         ]
         minmax = (
-                # y range,    z range,     rotation range, wake size, wake stretching
-                [self.xh_min, self.xv_min, -np.pi/2,       A_min,        1.0],
-                [self.xh_max, self.xv_max,  np.pi/2,       A_max,     AR_max],
+            # y range,    z range,     rotation range, wake size, wake stretching
+            [self.xh_min, self.xv_min, -np.pi/2,       A_min,        1.0],
+            [self.xh_max, self.xv_max,  np.pi/2,       A_max,     AR_max],
         )
 
         # calculate trajectories for each time step
@@ -179,6 +179,13 @@ class Gaussian2D(waketracker):
                 jac[:,3] = coef/Aref**2 * (delta_y**2/AR + AR*delta_z**2)
                 jac[:,4] = coef/Aref * (delta_y**2/AR**2 - delta_z**2)
                 return jac
+
+            #guess = [(self.xh_min+self.xh_max)/2, (self.xv_min+self.xv_max)/2]
+            i,j = np.unravel_index(np.argmin(u1), (self.Nh,self.Nv))
+            guess = [self.xh[i,j], self.xv[i,j]]
+            x0[0:2] = guess
+            if self.verbose:
+                print('Guess:',guess)
 
             result = least_squares(fun, x0, jac=jac,
                                    ftol=1e-16,
