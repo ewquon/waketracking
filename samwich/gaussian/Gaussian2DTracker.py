@@ -156,8 +156,9 @@ class Gaussian2D(waketracker):
         azi = np.linspace(0,2*np.pi,res+1)
         for itime in range(self.Ntimes):
             u1 = self.u[itime,:,:].ravel()
-            def func(x):
-                """objective function for x=[yc,zc,theta,Aref,AR]"""
+            def fun(x):
+                """Residuals given x=[yc,zc,theta,Aref,AR], for m DOFs and n=5
+                variables"""
                 yc,zc,theta,Aref,AR = x
                 sigz2 = Aref / (np.pi*AR)  # sigma_z**2
                 delta_y =  (y1-yc)*np.cos(theta) + (z1-zc)*np.sin(theta)
@@ -165,7 +166,26 @@ class Gaussian2D(waketracker):
                 return self.umin[itime] \
                         * np.exp(-0.5*((delta_y/AR)**2 + delta_z**2)/sigz2) \
                         - u1
-            result = least_squares(func, guess, bounds=minmax)
+            def jac(x):
+                """Exact jacobian (m by n) matrix"""
+                yc,zc,theta,Aref,AR = x
+                delta_y =  (y1-yc)*np.cos(theta) + (z1-zc)*np.sin(theta)
+                delta_z = -(y1-yc)*np.sin(theta) + (z1-zc)*np.cos(theta)
+                coef = -np.pi/2 * fun(x)
+                jac = np.zeros((len(u1),5))
+                jac[:,0] = 2*coef/Aref * (delta_y/AR*np.cos(theta) - AR*delta_z*np.sin(theta))
+                jac[:,1] = 2*coef/Aref * (delta_y/AR*np.sin(theta) + AR*delta_z*np.cos(theta))
+                jac[:,2] = 2*coef/Aref * delta_y * delta_z * (AR - 1./AR)
+                jac[:,3] = coef/Aref**2 * (delta_y**2/AR + AR*delta_z**2)
+                jac[:,4] = coef/Aref * (delta_y**2/AR**2 - delta_z**2)
+                return jac
+
+            result = least_squares(fun, x0, jac=jac,
+                                   ftol=1e-16,
+                                   bounds=minmax,
+                                   verbose=verbosity)
+            if self.verbose:
+                print(result)
             if result.success:
                 # calculate elliptical wake outline
                 yc,zc,theta,Aref,AR = result.x
