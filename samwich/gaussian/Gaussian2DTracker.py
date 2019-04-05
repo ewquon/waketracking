@@ -158,39 +158,72 @@ class Gaussian2D(waketracker):
         azi = np.linspace(0,2*np.pi,res+1)
         for itime in range(self.Ntimes):
             u1 = self.u[itime,:,:].ravel()
-            def fun(x):
-                """Residuals given x=[yc,zc,theta,Aref,AR], for m DOFs and n=5
+            sigma = np.sqrt(A_min/np.pi)
+            def fun1(x):
+                """Residuals for x=[yc,zc]"""
+                delta_y = y1 - x[0]
+                delta_z = z1 - x[1]
+                return self.umin[itime] \
+                        * np.exp(-0.5*(delta_y**2 + delta_z**2)/sigma**2
+                                ) - u1
+            def fun2(x):
+                """Residuals for x=[yc,zc,theta,Aref,AR], with m DOFs and n=5
                 variables"""
                 yc,zc,theta,Aref,AR = x
                 sigz2 = Aref / (np.pi*AR)  # sigma_z**2
                 delta_y =  (y1-yc)*np.cos(theta) + (z1-zc)*np.sin(theta)
                 delta_z = -(y1-yc)*np.sin(theta) + (z1-zc)*np.cos(theta)
-                return self.umin[itime] \
-                        * np.exp(-0.5*((delta_y/AR)**2 + delta_z**2)/sigz2) \
-                        - u1
-            def jac(x):
-                """Exact jacobian (m by n) matrix"""
-                yc,zc,theta,Aref,AR = x
-                delta_y =  (y1-yc)*np.cos(theta) + (z1-zc)*np.sin(theta)
-                delta_z = -(y1-yc)*np.sin(theta) + (z1-zc)*np.cos(theta)
-                coef = -np.pi/2 * fun(x)
-                jac = np.zeros((len(u1),5))
-                jac[:,0] = 2*coef/Aref * (delta_y/AR*np.cos(theta) - AR*delta_z*np.sin(theta))
-                jac[:,1] = 2*coef/Aref * (delta_y/AR*np.sin(theta) + AR*delta_z*np.cos(theta))
-                jac[:,2] = 2*coef/Aref * delta_y * delta_z * (AR - 1./AR)
-                jac[:,3] = coef/Aref**2 * (delta_y**2/AR + AR*delta_z**2)
-                jac[:,4] = coef/Aref * (delta_y**2/AR**2 - delta_z**2)
-                return jac
+                expfun = np.exp(-0.5*((delta_y/AR)**2 + delta_z**2)/sigz2)
+                W = np.sqrt(expfun)
+                r = u1 - self.umin[itime]*expfun
+                #W = np.sqrt(
+                #    # spread out the weighting function more (2 x sigma)
+                #    np.exp(-0.5*((delta_y/AR)**2 + delta_z**2)/(2*sigz2))
+                #)
+                #r = u1 - self.umin[itime]*np.exp(-0.5*((delta_y/AR)**2 + delta_z**2)/sigz2)
+                return W*r
+#            def jac(x):
+#                """Exact jacobian (m by n) matrix"""
+#                yc,zc,theta,Aref,AR = x
+#                delta_y =  (y1-yc)*np.cos(theta) + (z1-zc)*np.sin(theta)
+#                delta_z = -(y1-yc)*np.sin(theta) + (z1-zc)*np.cos(theta)
+#                coef = -np.pi/2 * fun2(x)
+#                jac = np.empty((len(u1),5))
+#                jac[:,0] =  2*coef/Aref * (-delta_y/AR*np.cos(theta) + AR*delta_z*np.sin(theta))
+#                jac[:,1] = -2*coef/Aref * ( delta_y/AR*np.sin(theta) + AR*delta_z*np.cos(theta))
+#                jac[:,2] =  2*coef/Aref * delta_y * delta_z * (-AR + 1./AR)
+#                jac[:,3] = -coef/Aref**2 * (delta_y**2/AR + AR*delta_z**2)
+#                jac[:,4] =  coef/Aref * (-delta_y**2/AR**2 + delta_z**2)
+#                return jac
 
-            #guess = [(self.xh_min+self.xh_max)/2, (self.xv_min+self.xv_max)/2]
-            i,j = np.unravel_index(np.argmin(u1), (self.Nh,self.Nv))
-            guess = [self.xh[i,j], self.xv[i,j]]
+            # start at center of plane
+            guess = [(self.xh_min+self.xh_max)/2, (self.xv_min+self.xv_max)/2]
+
+            # perform 1-D Gaussian to get a better guess for 2-D
+            minmax_1d = (
+                    [self.xh_min,self.xv_min],
+                    [self.xh_max,self.xv_max],
+            )
+            result1 = least_squares(fun1, guess,bounds=minmax_1d)
+            if result1.success:
+                guess = result1.x
+                if self.verbose:
+                    print('1D-Gaussian guess:',guess)
+            else:
+                # if the 1-D Gaussian wake identificaiont failed, fall back on
+                # the next best thing--the location of the largest velocity
+                # deficit
+                i,j = np.unravel_index(np.argmin(u1), (self.Nh,self.Nv))
+                guess = [self.xh[i,j], self.xv[i,j]]
+                if self.verbose:
+                    print('Falling back on u_min guess:',guess)
+
+            # now solve the harder optimization problem
             x0[0:2] = guess
-            if self.verbose:
-                print('Guess:',guess)
-
-            result = least_squares(fun, x0, jac=jac,
-                                   ftol=1e-16,
+            result = least_squares(fun2, x0, #jac=jac,
+                                   ftol=1e-14,
+                                   xtol=1e-14,
+                                   gtol=1e-14,
                                    bounds=minmax,
                                    verbose=verbosity)
             if self.verbose:
