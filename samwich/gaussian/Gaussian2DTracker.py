@@ -107,11 +107,13 @@ class Gaussian2D(waketracker):
             return self.trajectory_in(frame)
 
         # setup Gaussian parameters
+        u_in_range = self.u[:,self.jmin:self.jmax+1,self.kmin:self.kmax+1]
         if self.shear_removal is None:
             print('Note: remove_shear has not been called')
         if umin is None:
             # calculate umin available data
-            self.umin = np.min(self.u,axis=(1,2))
+            #self.umin = np.min(self.u,axis=(1,2))
+            self.umin = np.min(u_in_range,axis=(1,2))
         elif isinstance(umin,np.ndarray):
             # specified umin as array with length Ntimes
             self.umin = umin
