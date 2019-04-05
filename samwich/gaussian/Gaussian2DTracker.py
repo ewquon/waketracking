@@ -61,12 +61,12 @@ class Gaussian2D(waketracker):
             Max velocity deficit (i.e., should be < 0). If None, then
             this is detected from the field.
         A_min : float, optional
-            The minimum approximate wake area, estimated to be the
-            pi times the product of the wake widths.
+            The minimum approximate wake area, where wake area is
+            estimated to be the pi times the product of the wake widths.
         A_max : float, optional
-            The maximum approximate wake area, estimated to be the
-            pi times the product of the wake widths. If None, then there
-            is no limit on the "optimal" wake size.
+            The maximum approximate wake area, where wake area is
+            estimated to be the pi times the product of the wake widths.
+            If None, then there is no limit on the "optimal" wake size.
         AR_max : float, optional
             The maximum aspect ratio between the wake widths in two
             directions (analogous to the semi-major and -minor axes in
@@ -137,7 +137,7 @@ class Gaussian2D(waketracker):
         # set up optimization parameters
         # note: origin of the rotor-aligned frame is at the center of the sampling
         #   plane already
-        # note: sigma_y = AR*sigmaz
+        # note: sigma_y = AR*sigma_z
         #       sigma_z = sqrt(A/(pi*AR))
         x0 = [
             None,  # 0: yc
