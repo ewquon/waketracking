@@ -145,7 +145,7 @@ class Gaussian(waketracker):
         for itime in range(self.Ntimes):
             u1 = self.u[itime,:,:].ravel()
             def func(x):
-                """objective function for x=[yc,zc]"""
+                """Residuals for x=[yc,zc]"""
                 delta_y = y1 - x[0]
                 delta_z = z1 - x[1]
                 return self.umin[itime] \

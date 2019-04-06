@@ -44,8 +44,10 @@ class Gaussian2D(waketracker):
     def find_centers(self,
                      umin=None,
                      A_min=100.0,A_max=np.inf,
+                     A_ref=np.pi*63.**2,
                      AR_max=10.0,
                      rho=None,
+                     weighting=None,
                      res=100,plotscale=2.0,
                      trajectory_file=None,outlines_file=None,
                      frame='rotor-aligned',
@@ -143,7 +145,7 @@ class Gaussian2D(waketracker):
             None,  # 0: yc
             None,  # 1: zc
             0.0,   # 2: theta
-            A_min, # 3: A == pi * sigma_y * sigma_z
+            A_ref, # 3: A == pi * sigma_y * sigma_z
             1.0,   # 4: AR == sigma_y/sigma_z
         ]
         minmax = (
@@ -158,7 +160,7 @@ class Gaussian2D(waketracker):
         azi = np.linspace(0,2*np.pi,res+1)
         for itime in range(self.Ntimes):
             u1 = self.u[itime,:,:].ravel()
-            sigma = np.sqrt(A_min/np.pi)
+            sigma = np.sqrt(A_ref/np.pi) # R = (A/pi)**0.5
             def fun1(x):
                 """Residuals for x=[yc,zc]"""
                 delta_y = y1 - x[0]
@@ -167,33 +169,39 @@ class Gaussian2D(waketracker):
                         * np.exp(-0.5*(delta_y**2 + delta_z**2)/sigma**2
                                 ) - u1
             def fun2(x):
-                """Residuals for x=[yc,zc,theta,Aref,AR], with m DOFs and n=5
+                """Residuals for x=[yc,zc,theta,A,AR], with m DOFs and n=5
                 variables"""
-                yc,zc,theta,Aref,AR = x
-                sigz2 = Aref / (np.pi*AR)  # sigma_z**2
+                yc,zc,theta,A,AR = x
+                sigz2 = A / (np.pi*AR)  # sigma_z**2
                 delta_y =  (y1-yc)*np.cos(theta) + (z1-zc)*np.sin(theta)
                 delta_z = -(y1-yc)*np.sin(theta) + (z1-zc)*np.cos(theta)
-                expfun = np.exp(-0.5*((delta_y/AR)**2 + delta_z**2)/sigz2)
-                W = np.sqrt(expfun)
-                r = u1 - self.umin[itime]*expfun
-                #W = np.sqrt(
-                #    # spread out the weighting function more (2 x sigma)
-                #    np.exp(-0.5*((delta_y/AR)**2 + delta_z**2)/(2*sigz2))
-                #)
-                #r = u1 - self.umin[itime]*np.exp(-0.5*((delta_y/AR)**2 + delta_z**2)/sigz2)
+                #expfun = np.exp(-0.5*((delta_y/AR)**2 + delta_z**2)/sigz2)
+                #W = np.sqrt(expfun)
+                #r = u1 - self.umin[itime]*expfun
+                if weighting is None:
+                    # no weighting
+                    W = 1
+                else:
+                    # "weighting" determines the width of the exponential
+                    # weighting function
+                    W = np.sqrt(
+                        # spread out the weighting function more (2 x sigma)
+                        np.exp(-0.5*(((y1-yc)/AR)**2 + (z1-zc)**2)/(sigma*weighting)**2)
+                    )
+                r = u1 - self.umin[itime]*np.exp(-0.5*((delta_y/AR)**2 + delta_z**2)/sigz2)
                 return W*r
 #            def jac(x):
 #                """Exact jacobian (m by n) matrix"""
-#                yc,zc,theta,Aref,AR = x
+#                yc,zc,theta,A,AR = x
 #                delta_y =  (y1-yc)*np.cos(theta) + (z1-zc)*np.sin(theta)
 #                delta_z = -(y1-yc)*np.sin(theta) + (z1-zc)*np.cos(theta)
 #                coef = -np.pi/2 * fun2(x)
 #                jac = np.empty((len(u1),5))
-#                jac[:,0] =  2*coef/Aref * (-delta_y/AR*np.cos(theta) + AR*delta_z*np.sin(theta))
-#                jac[:,1] = -2*coef/Aref * ( delta_y/AR*np.sin(theta) + AR*delta_z*np.cos(theta))
-#                jac[:,2] =  2*coef/Aref * delta_y * delta_z * (-AR + 1./AR)
-#                jac[:,3] = -coef/Aref**2 * (delta_y**2/AR + AR*delta_z**2)
-#                jac[:,4] =  coef/Aref * (-delta_y**2/AR**2 + delta_z**2)
+#                jac[:,0] =  2*coef/A * (-delta_y/AR*np.cos(theta) + AR*delta_z*np.sin(theta))
+#                jac[:,1] = -2*coef/A * ( delta_y/AR*np.sin(theta) + AR*delta_z*np.cos(theta))
+#                jac[:,2] =  2*coef/A * delta_y * delta_z * (-AR + 1./AR)
+#                jac[:,3] = -coef/A**2 * (delta_y**2/AR + AR*delta_z**2)
+#                jac[:,4] =  coef/A * (-delta_y**2/AR**2 + delta_z**2)
 #                return jac
 
             # start at center of plane
@@ -207,7 +215,7 @@ class Gaussian2D(waketracker):
             result1 = least_squares(fun1, guess,bounds=minmax_1d)
             if result1.success:
                 guess = result1.x
-                if self.verbose:
+                if verbosity > 0:
                     print('1D-Gaussian guess:',guess)
             else:
                 # if the 1-D Gaussian wake identificaiont failed, fall back on
@@ -226,12 +234,12 @@ class Gaussian2D(waketracker):
                                    gtol=1e-14,
                                    bounds=minmax,
                                    verbose=verbosity)
-            if self.verbose:
+            if verbosity > 0:
                 print(result)
             if result.success:
                 # calculate elliptical wake outline
-                yc,zc,theta,Aref,AR = result.x
-                sigma_z = np.sqrt(Aref / (np.pi*AR))
+                yc,zc,theta,A,AR = result.x
+                sigma_z = np.sqrt(A / (np.pi*AR))
                 sigma_y = AR * sigma_z
                 tmpy = plotscale*sigma_y*np.cos(azi) # unrotated ellipse
                 tmpz = plotscale*sigma_z*np.sin(azi)
@@ -252,19 +260,19 @@ class Gaussian2D(waketracker):
 
             if self.verbose:
                 if verbosity > 0:
-                    Aref = np.pi * self.sigma_y[itime] * self.sigma_z[itime]
+                    A = np.pi * self.sigma_y[itime] * self.sigma_z[itime]
                     plotlevel = self.umin[itime] * np.exp(-0.5*plotscale**2)
                     #print(f'yc,zc : {self.xh_wake[itime]:.1f},',
                     #        f' {self.xv_wake[itime]:.1f};',
                     #        f' rotation={self.rotation[itime]*180/np.pi} deg;',
-                    #        f' ref wake area={Aref} m^2'
+                    #        f' ref wake area={A} m^2'
                     #        f' (outline level={plotlevel})')
                     print(('yc,zc : {:.1f}, {:.1f};' \
                           +' rotation={} deg; ref wake area={} m^2' \
                           +' (outline level={})').format(self.xh_wake[itime],
                                                          self.xv_wake[itime],
                                                          self.rotation[itime]*180/np.pi,
-                                                         Aref,
+                                                         A,
                                                          plotlevel))
                 sys.stderr.write('\rProcessed frame {:d}'.format(itime))
                 #sys.stderr.flush()
