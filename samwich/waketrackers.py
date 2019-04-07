@@ -538,13 +538,13 @@ class waketracker(object):
         self.ywake = self.y0 + np.sin(ang)*xd + np.cos(ang)*self.xh_wake
         self.zwake = self.xv_wake
 
-    def _init_plot(self):
+    def _init_plot(self,figsize):
         """Set up figure properties here"""
         if self.verbose: print('Initializing plot')
 
-        plt.rc('text', usetex=True)
-        plt.rc('font', family='serif')
-        self.fig = plt.figure(figsize=(8,6))
+        #plt.rc('text', usetex=True)
+        #plt.rc('font', family='serif')
+        self.fig = plt.figure(figsize=figsize)
 
         def handle_close(event):
             self.plot_initialized = False
@@ -557,11 +557,9 @@ class waketracker(object):
         self.ax.set_autoscale_on(False)
         self.ax.set_aspect('equal',adjustable='box',anchor='C')
 
-        self.ax.xaxis.set_tick_params(size=10)
-        self.ax.yaxis.set_tick_params(size=10)
-
-        self.ax.set_xlabel(r'$y (m)$', fontsize=14)
-        self.ax.set_ylabel(r'$z (m)$', fontsize=14)
+        self.ax.tick_params(axis='both', labelsize=12, size=10)
+        self.ax.set_xlabel(r'$y$ [m]', fontsize=14)
+        self.ax.set_ylabel(r'$z$ [m]', fontsize=14)
 
     def clear_plot(self):
         """Resets all saved plot handles and requires reinitialization
@@ -579,6 +577,7 @@ class waketracker(object):
                     cmap='viridis',
                     markercolor='w',
                     outline=False,
+                    figsize=(8,6),
                     writepng=False,outdir='.',seriesname='U',
                     dpi=100):
         """Plot/update contour and center marker in the rotor-aligned
@@ -613,7 +612,7 @@ class waketracker(object):
         outline = outline and self.wake_tracked
 
         if not self.plot_initialized:
-            self._init_plot()  # first time
+            self._init_plot(figsize)  # first time
 
             if vmin is None:
                 vmin = np.min(self.u[itime,:,:])
@@ -643,8 +642,9 @@ class waketracker(object):
 
             # add colorbar
             cb_ticks = np.linspace(vmin, vmax, 11)
-            cb = self.fig.colorbar(self.plotobj_filledcontours,
-                                   ticks=cb_ticks, label=r'$U \ (m/s)$')
+            cb = self.fig.colorbar(self.plotobj_filledcontours, ticks=cb_ticks)
+            cb.set_label(label=r'$U$ [m/s]',fontsize=14)
+            cb.ax.tick_params(labelsize=12)
 
             # add time annotation
             #self.plotobj_txt = self.ax.text(0.98, 0.97,'t={:.1f}'.format(self.t[itime]),
