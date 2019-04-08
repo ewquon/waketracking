@@ -153,6 +153,7 @@ class Gaussian2D(waketracker):
             [self.xh_min, self.xv_min, -np.pi/2,       A_min,        1.0],
             [self.xh_max, self.xv_max,  np.pi/2,       A_max,     AR_max],
         )
+        sigma0_sq = A_ref/np.pi # R = (A/pi)**0.5
 
         # calculate trajectories for each time step
         y1 = self.xh.ravel()
@@ -160,13 +161,12 @@ class Gaussian2D(waketracker):
         azi = np.linspace(0,2*np.pi,res+1)
         for itime in range(self.Ntimes):
             u1 = self.u[itime,:,:].ravel()
-            sigma = np.sqrt(A_ref/np.pi) # R = (A/pi)**0.5
             def fun1(x):
                 """Residuals for x=[yc,zc]"""
                 delta_y = y1 - x[0]
                 delta_z = z1 - x[1]
                 return self.umin[itime] \
-                        * np.exp(-0.5*(delta_y**2 + delta_z**2)/sigma**2
+                        * np.exp(-0.5*(delta_y**2 + delta_z**2)/sigma0_sq
                                 ) - u1
             def fun2(x):
                 """Residuals for x=[yc,zc,theta,A,AR], with m DOFs and n=5
@@ -184,12 +184,16 @@ class Gaussian2D(waketracker):
                 else:
                     # "weighting" determines the width of the exponential
                     # weighting function
+                    # - changing in time
+                    #sigma_sq = max(sigma0_sq,sigz2,sigz2*AR)
+                    #sigma_sq *= weighting**2
+                    # - constant in time
+                    sigma_sq = sigma0_sq * weighting**2
                     W = np.sqrt(
-                        # spread out the weighting function more (2 x sigma)
-                        np.exp(-0.5*(((y1-yc)/AR)**2 + (z1-zc)**2)/(sigma*weighting)**2)
+                        np.exp(-0.5*((y1-yc)**2 + (z1-zc)**2)/sigma_sq)
                     )
-                r = u1 - self.umin[itime]*np.exp(-0.5*((delta_y/AR)**2 + delta_z**2)/sigz2)
-                return W*r
+                resid = u1 - self.umin[itime]*np.exp(-0.5*((delta_y/AR)**2 + delta_z**2)/sigz2)
+                return W*resid
 #            def jac(x):
 #                """Exact jacobian (m by n) matrix"""
 #                yc,zc,theta,A,AR = x
