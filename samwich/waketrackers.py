@@ -681,7 +681,7 @@ class waketracker(object):
             print('Saved',fname)
 
 
-    def plot_outline(self,itime=0,
+    def plot_outline(self,itime=0,ax=None,
             lw=2,ls='-',facecolor='none',edgecolor='w',
             **kwargs):
         """Helper function for plotting a representation of the wake
@@ -707,7 +707,9 @@ class waketracker(object):
                                                     facecolor=facecolor,
                                                     edgecolor=edgecolor,
                                                     **kwargs)
-        plt.gca().add_patch(self.plotobj_wakeoutline)
+        if ax is None:
+            ax = plt.gca()
+        ax.add_patch(self.plotobj_wakeoutline)
 
 
     def save_snapshots(self,**kwargs):
