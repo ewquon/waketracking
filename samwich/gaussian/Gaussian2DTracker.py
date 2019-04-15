@@ -47,7 +47,7 @@ class Gaussian2D(waketracker):
                      A_ref=np.pi*63.**2,
                      AR_max=10.0,
                      rho=None,
-                     weighting=None,
+                     weighting=1.0,
                      res=100,plotscale=2.0,
                      trajectory_file=None,outlines_file=None,
                      frame='rotor-aligned',
@@ -62,19 +62,26 @@ class Gaussian2D(waketracker):
         umin : float or ndarray
             Max velocity deficit (i.e., should be < 0). If None, then
             this is detected from the field.
-        A_min : float, optional
+        A_min : float
             The minimum approximate wake area, where wake area is
             estimated to be the pi times the product of the wake widths.
-        A_max : float, optional
+        A_max : float
             The maximum approximate wake area, where wake area is
             estimated to be the pi times the product of the wake widths.
             If None, then there is no limit on the "optimal" wake size.
+        A_ref : float
+            Reference area used to provide an initial guess and scale
+            the least-squares optimization weighting function.
         AR_max : float, optional
             The maximum aspect ratio between the wake widths in two
             directions (analogous to the semi-major and -minor axes in
             an ellipse); this dictates the maximum amount of stretching.
         rho : float, optional
             The cross-correlation parameter--CURRENTLY UNTESTED.
+        weighting : float, optional
+            The width of the exponential weighting function, specified
+            as the number of reference radii (calculated from the 
+            reference area).
         res : integer, optional
             Number of points to represent the wake outline as a circle
         plotscale : float, optional
@@ -177,21 +184,14 @@ class Gaussian2D(waketracker):
                 delta_z = -(y1-yc)*np.sin(theta) + (z1-zc)*np.cos(theta)
                 #expfun = np.exp(-0.5*((delta_y/AR)**2 + delta_z**2)/sigz2)
                 #W = np.sqrt(expfun)
-                #r = u1 - self.umin[itime]*expfun
-                if weighting is None:
-                    # no weighting
-                    W = 1
-                else:
-                    # "weighting" determines the width of the exponential
-                    # weighting function
-                    # - changing in time
-                    #sigma_sq = max(sigma0_sq,sigz2,sigz2*AR)
-                    #sigma_sq *= weighting**2
-                    # - constant in time
-                    sigma_sq = sigma0_sq * weighting**2
-                    W = np.sqrt(
-                        np.exp(-0.5*((y1-yc)**2 + (z1-zc)**2)/sigma_sq)
-                    )
+                # weighting function changes in time
+                #sigma_sq = max(sigma0_sq,sigz2,sigz2*AR)
+                #sigma_sq *= weighting**2
+                # weighting function is constant in time
+                sigma_sq = sigma0_sq * weighting**2
+                W = np.sqrt(
+                    np.exp(-0.5*((y1-yc)**2 + (z1-zc)**2)/sigma_sq)
+                )
                 resid = u1 - self.umin[itime]*np.exp(-0.5*((delta_y/AR)**2 + delta_z**2)/sigz2)
                 return W*resid
 #            def jac(x):
