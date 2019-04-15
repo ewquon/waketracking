@@ -48,6 +48,7 @@ class Gaussian2D(waketracker):
                      AR_max=10.0,
                      rho=None,
                      weighting=1.0,
+                     multiple_guess=False,
                      res=100,plotscale=2.0,
                      trajectory_file=None,outlines_file=None,
                      frame='rotor-aligned',
@@ -82,6 +83,10 @@ class Gaussian2D(waketracker):
             The width of the exponential weighting function, specified
             as the number of reference radii (calculated from the 
             reference area).
+        multiple_guess : bool, optional
+            Perform optimization problem for the 2D Gaussian using
+            multiple guesses: 1) center of sampled wake plane, and 2)
+            location of the maximum velocity deficit.
         res : integer, optional
             Number of points to represent the wake outline as a circle
         plotscale : float, optional
@@ -208,39 +213,86 @@ class Gaussian2D(waketracker):
 #                jac[:,4] =  coef/A * (-delta_y**2/AR**2 + delta_z**2)
 #                return jac
 
-            # start at center of plane
-            guess = [(self.xh_min+self.xh_max)/2, (self.xv_min+self.xv_max)/2]
-
             # perform 1-D Gaussian to get a better guess for 2-D
             minmax_1d = (
                     [self.xh_min,self.xv_min],
                     [self.xh_max,self.xv_max],
             )
-            result1 = least_squares(fun1, guess,bounds=minmax_1d)
+
+            results = []
+
+            # FIRST PASS: start at center of plane
+            guess = [(self.xh_min+self.xh_max)/2, (self.xv_min+self.xv_max)/2]
+
+            # perform 1-D Gaussian to get a better guess for 2-D
+            result1 = least_squares(fun1, guess, bounds=minmax_1d)
             if result1.success:
                 guess = result1.x
                 if verbosity > 0:
                     print('1D-Gaussian guess:',guess)
-            else:
+
+            if (not multiple_guess) and (not result1.success):
                 # if the 1-D Gaussian wake identificaiont failed, fall back on
                 # the next best thing--the location of the largest velocity
                 # deficit
-                i,j = np.unravel_index(np.argmin(u1), (self.Nh,self.Nv))
+                i,j = np.unravel_index(np.argmin(u_in_range[itime,:,:]),
+                                       (self.jmax-self.jmin, self.kmax-self.kmin))
+                i += self.jmin
+                j += self.kmin
                 guess = [self.xh[i,j], self.xv[i,j]]
-                if self.verbose:
-                    print('Falling back on u_min guess:',guess)
 
             # now solve the harder optimization problem
             x0[0:2] = guess
-            result = least_squares(fun2, x0, #jac=jac,
-                                   ftol=1e-14,
-                                   xtol=1e-14,
-                                   gtol=1e-14,
-                                   bounds=minmax,
-                                   verbose=verbosity)
+            result1 = least_squares(fun2, x0, #jac=jac,
+                                    ftol=1e-14,
+                                    xtol=1e-14,
+                                    gtol=1e-14,
+                                    bounds=minmax,
+                                    verbose=verbosity)
+            results.append(result1)
+
+            if multiple_guess:
+                # SECOND PASS: start at velocity minimum
+                #i,j = np.unravel_index(np.argmin(u1), (self.Nh,self.Nv))
+                i,j = np.unravel_index(np.argmin(u_in_range[itime,:,:]),
+                                       (self.jmax-self.jmin, self.kmax-self.kmin))
+                i += self.jmin
+                j += self.kmin
+                guess = [self.xh[i,j], self.xv[i,j]]
+
+                # perform 1-D Gaussian to get a better guess for 2-D
+                result2 = least_squares(fun1, guess, bounds=minmax_1d)
+                if result2.success:
+                    guess = result2.x
+                    if verbosity > 0:
+                        print('1D-Gaussian guess:',guess)
+
+                # now solve the harder optimization problem
+                x0[0:2] = guess
+                result2 = least_squares(fun2, x0, #jac=jac,
+                                        ftol=1e-14,
+                                        xtol=1e-14,
+                                        gtol=1e-14,
+                                        bounds=minmax,
+                                        verbose=verbosity)
+                results.append(result2)
+
             if verbosity > 0:
-                print(result)
-            if result.success:
+                for i,res in enumerate(results):
+                    print('pass',i,':',res)
+            results_success = [res.success for res in results]
+            results_fval = [res.cost for res in results]
+                
+            if any(results_success):
+                if all(results_success):
+                    if verbosity > 0:
+                        print('Selected best of',results_fval)
+                    result = results[np.argmin(results_fval)]
+                else:
+                    result = results[0] if results_success[0] else results[1]
+                    assert(result.success)
+                    if self.verbose:
+                        print('Selected valid result:',result.message)
                 # calculate elliptical wake outline
                 yc,zc,theta,A,AR = result.x
                 sigma_z = np.sqrt(A / (np.pi*AR))
@@ -255,7 +307,7 @@ class Gaussian2D(waketracker):
                 self.sigma_y[itime] = sigma_y
                 self.sigma_z[itime] = sigma_z
                 self.rotation[itime] = theta
-            else:
+            elif any(results_success):
                 self.xh_wake[itime] = self.xh_fail
                 self.xv_wake[itime] = self.xv_fail
                 self.sigma_y[itime] = np.nan
