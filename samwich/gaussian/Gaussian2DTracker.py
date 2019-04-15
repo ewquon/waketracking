@@ -231,7 +231,7 @@ class Gaussian2D(waketracker):
                 if verbosity > 0:
                     print('1D-Gaussian guess:',guess)
 
-            if (not multiple_guess) and (not result1.success):
+            if not result1.success:
                 # if the 1-D Gaussian wake identificaiont failed, fall back on
                 # the next best thing--the location of the largest velocity
                 # deficit
@@ -253,7 +253,6 @@ class Gaussian2D(waketracker):
 
             if multiple_guess:
                 # SECOND PASS: start at velocity minimum
-                #i,j = np.unravel_index(np.argmin(u1), (self.Nh,self.Nv))
                 i,j = np.unravel_index(np.argmin(u_in_range[itime,:,:]),
                                        (self.jmax-self.jmin, self.kmax-self.kmin))
                 i += self.jmin
@@ -261,11 +260,11 @@ class Gaussian2D(waketracker):
                 guess = [self.xh[i,j], self.xv[i,j]]
 
                 # perform 1-D Gaussian to get a better guess for 2-D
-                result2 = least_squares(fun1, guess, bounds=minmax_1d)
-                if result2.success:
-                    guess = result2.x
-                    if verbosity > 0:
-                        print('1D-Gaussian guess:',guess)
+#                result2 = least_squares(fun1, guess, bounds=minmax_1d)
+#                if result2.success:
+#                    guess = result2.x
+#                    if verbosity > 0:
+#                        print('1D-Gaussian guess:',guess)
 
                 # now solve the harder optimization problem
                 x0[0:2] = guess
