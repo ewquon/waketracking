@@ -4,6 +4,7 @@ import importlib
 
 import numpy as np
 from scipy.optimize import least_squares
+from scipy import ndimage
 
 from samwich.waketrackers import waketracker
 
@@ -48,6 +49,7 @@ class Gaussian2D(waketracker):
                      AR_max=10.0,
                      rho=None,
                      weighting=1.0,
+                     uniform_filter=None,
                      multiple_guess=False,
                      res=100,plotscale=2.0,
                      trajectory_file=None,outlines_file=None,
@@ -87,6 +89,14 @@ class Gaussian2D(waketracker):
             Perform optimization problem for the 2D Gaussian using
             multiple guesses: 1) center of sampled wake plane, and 2)
             location of the maximum velocity deficit.
+        uniform_filter : bool, int, optional
+            Use scipy.ndimage.uniform_filter to smooth each wake
+            snapshot, which changes the detected u_min (i.e., the
+            Gaussian amplitude) and the velocity minima guess (only
+            applicable if multiple_guess is True). If True, then the 
+            filter size is estimated as the 1/5 of the reference 
+            diameter (calculated from A_ref); otherwise, the filter
+            size may be directly specified.
         res : integer, optional
             Number of points to represent the wake outline as a circle
         plotscale : float, optional
@@ -120,13 +130,29 @@ class Gaussian2D(waketracker):
             print('Note: wake tracking has already been performed')
             return self.trajectory_in(frame)
 
-        # setup Gaussian parameters
+        # get velocity deficit within search range for u_min and guess
         u_in_range = self.u[:,self.jmin:self.jmax+1,self.kmin:self.kmax+1]
+        if uniform_filter is not None:
+            if uniform_filter == True:
+                # guesstimate filter size as D/5
+                dy = np.diff(self.xh_range)[0]
+                dz = np.diff(self.xv_range)[0]
+                ds = (dy + dz) / 2
+                D = 2*(A_ref/np.pi)**0.5  # R = (A/pi)**0.5
+                if verbosity > 0:
+                    print('dy,dz,ds ~=',dy,dz,ds)
+                size = max(int((D/5)/ds),2)
+            else:
+                size = int(uniform_filter)
+            if verbosity > 0:
+                print('size =',size)
+            u_in_range = ndimage.uniform_filter(u_in_range,size)
+
+        # setup Gaussian parameters
         if self.shear_removal is None:
             print('Note: remove_shear has not been called')
         if umin is None:
             # calculate umin available data
-            #self.umin = np.min(self.u,axis=(1,2))
             self.umin = np.min(u_in_range,axis=(1,2))
         elif isinstance(umin,np.ndarray):
             # specified umin as array with length Ntimes
