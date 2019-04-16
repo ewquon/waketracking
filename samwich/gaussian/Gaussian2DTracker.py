@@ -51,6 +51,7 @@ class Gaussian2D(waketracker):
                      weighting=1.0,
                      uniform_filter=None,
                      multiple_guess=False,
+                     tol=1e-8,
                      res=100,plotscale=2.0,
                      trajectory_file=None,outlines_file=None,
                      frame='rotor-aligned',
@@ -97,6 +98,10 @@ class Gaussian2D(waketracker):
             filter size is estimated as the 1/5 of the reference 
             diameter (calculated from A_ref); otherwise, the filter
             size may be directly specified.
+        tol : float, optional
+            Tolerances for the change in cost function (fnorm), change
+            in independent variables (xnorm), and norm of the gradient
+            (gnorm) used as input to `scipy.optimize.least_squares`.
         res : integer, optional
             Number of points to represent the wake outline as a circle
         plotscale : float, optional
@@ -145,8 +150,11 @@ class Gaussian2D(waketracker):
             else:
                 size = int(uniform_filter)
             if verbosity > 0:
-                print('size =',size)
-            u_in_range = ndimage.uniform_filter(u_in_range,size)
+                print('uniform filter size :',size)
+            u_in_range = np.stack([
+                ndimage.uniform_filter(u_in_range[itime,:,:],size)
+                for itime in range(self.Ntimes)
+            ])
 
         # setup Gaussian parameters
         if self.shear_removal is None:
@@ -192,12 +200,16 @@ class Gaussian2D(waketracker):
             [self.xh_max, self.xv_max,  np.pi/2,       A_max,     AR_max],
         )
         sigma0_sq = A_ref/np.pi # R = (A/pi)**0.5
+        lsq_verbosity = max(verbosity-1,0)
 
         # calculate trajectories for each time step
         y1 = self.xh.ravel()
         z1 = self.xv.ravel()
         azi = np.linspace(0,2*np.pi,res+1)
         for itime in range(self.Ntimes):
+            if verbosity > 0:
+                print('\nitime = {:d}'.format(itime))
+                print('-------------')
             u1 = self.u[itime,:,:].ravel()
             def fun1(x):
                 """Residuals for x=[yc,zc]"""
@@ -262,7 +274,7 @@ class Gaussian2D(waketracker):
                 # the next best thing--the location of the largest velocity
                 # deficit
                 i,j = np.unravel_index(np.argmin(u_in_range[itime,:,:]),
-                                       (self.jmax-self.jmin, self.kmax-self.kmin))
+                                       u_in_range[itime,:,:].shape)
                 i += self.jmin
                 j += self.kmin
                 guess = [self.xh[i,j], self.xv[i,j]]
@@ -270,20 +282,22 @@ class Gaussian2D(waketracker):
             # now solve the harder optimization problem
             x0[0:2] = guess
             result1 = least_squares(fun2, x0, #jac=jac,
-                                    ftol=1e-14,
-                                    xtol=1e-14,
-                                    gtol=1e-14,
+                                    ftol=tol,
+                                    xtol=tol,
+                                    gtol=tol,
                                     bounds=minmax,
-                                    verbose=verbosity)
+                                    verbose=lsq_verbosity)
             results.append(result1)
 
             if multiple_guess:
                 # SECOND PASS: start at velocity minimum
                 i,j = np.unravel_index(np.argmin(u_in_range[itime,:,:]),
-                                       (self.jmax-self.jmin, self.kmax-self.kmin))
+                                       u_in_range[itime,:,:].shape)
                 i += self.jmin
                 j += self.kmin
                 guess = [self.xh[i,j], self.xv[i,j]]
+                if verbosity > 0:
+                    print('velocity-minimum guess:',guess)
 
                 # perform 1-D Gaussian to get a better guess for 2-D
 #                result2 = least_squares(fun1, guess, bounds=minmax_1d)
@@ -295,14 +309,14 @@ class Gaussian2D(waketracker):
                 # now solve the harder optimization problem
                 x0[0:2] = guess
                 result2 = least_squares(fun2, x0, #jac=jac,
-                                        ftol=1e-14,
-                                        xtol=1e-14,
-                                        gtol=1e-14,
+                                        ftol=tol,
+                                        xtol=tol,
+                                        gtol=tol,
                                         bounds=minmax,
-                                        verbose=verbosity)
+                                        verbose=lsq_verbosity)
                 results.append(result2)
 
-            if verbosity > 0:
+            if verbosity > 1:
                 for i,res in enumerate(results):
                     print('pass',i,':',res)
             results_success = [res.success for res in results]
