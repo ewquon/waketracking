@@ -343,7 +343,11 @@ class waketracker(object):
             sliding average is performed.
         wind_profile : list-like
             An array of mean velocities normal to the sampling plane,
-            at the same heights as the sampling grid.
+            at the same heights as the sampling grid. The array may have
+            the following shape:
+            - 1D: constant U(z)
+            - 2D: time-varying profile U(t,z)
+            - 3D: time-varying inflow U(t,y,z)
         """
         if self.shear_removal is not None:
             print('remove_shear() was already called, doing nothing.')
