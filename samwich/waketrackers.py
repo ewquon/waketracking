@@ -407,6 +407,38 @@ class waketracker(object):
         else:
             print('  unexpected Uprofile data shape--mean was not removed')
 
+    def apply_filter(self, filtertype='gaussian', N=None, size=None, minsize=2):
+        """Apply specified filter to the velocity deficit field
+
+        Parameters
+        ----------
+        filtertype : str, optional
+            Name of scipy.ndimage filter to use
+        N : int, optional
+            Number of points to include in each dimension
+        size : float, optional
+            Width of the filter in physical dimensions
+        """
+        if (N is None) and (size is None):
+            raise ValueError('Specify N or size')
+        elif size is not None:
+            dy = np.diff(self.xh_range)
+            dz = np.diff(self.xv_range)
+            assert(all(np.abs(dy-dy[0]) < 1e-8))
+            assert(all(np.abs(dz-dz[0]) < 1e-8))
+            dy = dy[0]
+            dz = dz[0]
+            ds = (dy + dz) / 2
+            N = max(int(size/ds), minsize)
+        assert(N is not None)
+        if self.verbose:
+            print('filter size:',N)
+        self.u_orig = self.u.copy()
+        filterfun = getattr(ndimage,filtertype+'_filter')
+        self.u = np.stack([
+            filterfun(self.u[itime,:,:], N) for itime in range(self.Ntimes)
+        ])
+
     def find_centers(self,
                     trajectory_file=None,
                     frame='rotor-aligned'):
