@@ -815,7 +815,7 @@ class contourwaketracker(waketracker):
                              weighted_center=True,
                              contour_closure=False,
                              min_contour_points=None,
-                             Ntest=11,
+                             Ntest=10,
                              tol=0.01,
                              func=None,
                              fields=('u_tot'),
@@ -838,6 +838,7 @@ class contourwaketracker(waketracker):
         * self.Clevels[itime]
         * self.Cfvals[itime]
         """
+        Ntest = int(Ntest/2)*2 # even numbers guarantees that the same levels aren't reevaluated
         j0,j1 = self.jmin,self.jmax+1
         k0,k1 = self.kmin,self.kmax+1
         usearch = self.u[itime,j0:j1,k0:k1] # velocity deficit contours
