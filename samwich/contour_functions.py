@@ -16,7 +16,7 @@ class Contours(object):
     process contours. This involves converting the planar data into
     a grayscale image.
     """
-    def __init__(self,x,y,u):
+    def __init__(self,x,y,u,umin=None,umax=None):
         """Setup an image for manipulation with OpenCV
         x,y,u should be uniformly spaced 2-D arrays
         """
@@ -25,14 +25,19 @@ class Contours(object):
         self.x = x
         self.y = y
         self.u = u
-        self.u0 = np.min(self.u)
-        self.urange = np.max(self.u) - self.u0
+        umin0 = np.min(self.u)
+        umax0 = np.max(self.u)
+        self.umin = umin0 if (umin is None) else max(umin,umin0)
+        self.umax = umax0 if (umax is None) else min(umax,umax0)
+        self.urange = self.umax - self.umin
         # create single-channel grayscale image, values ranging from 0..255
-        self.img = np.array((u-self.u0)/self.urange * 255, dtype=np.uint8)
+        tmp = (u-self.umin)/self.urange
+        tmp = np.minimum(np.maximum(tmp, 0), 1)
+        self.img = np.array(255*tmp, dtype=np.uint8)
 
     def _value_to_uint8(self,val):
         """Convert value to grayscale integer value"""
-        return np.uint8((val - self.u0)/self.urange * 255)
+        return np.uint8((val - self.umin)/self.urange * 255)
 
     def to_coords(self,path,closed=False,array=False):
         """Convert contour path to coordinates
