@@ -842,9 +842,6 @@ class contourwaketracker(waketracker):
         j0,j1 = self.jmin,self.jmax+1
         k0,k1 = self.kmin,self.kmax+1
         usearch = self.u[itime,j0:j1,k0:k1] # velocity deficit contours
-        Cdata = Contours(self.xh[j0:j1,k0:k1],
-                         self.xv[j0:j1,k0:k1],
-                         usearch)
         Crange = np.linspace(np.min(usearch), 0, Ntest+1)[1:]
         interval = Crange[1] - Crange[0]
         if debug: print('starting interval:',interval)
@@ -875,6 +872,12 @@ class contourwaketracker(waketracker):
         while Nrefine == 0 or interval > tol:  # go through search at least once
             Nrefine += 1
             if debug: print('refinement cycle {}'.format(Nrefine))
+
+            Cdata = Contours(self.xh[j0:j1,k0:k1],
+                             self.xv[j0:j1,k0:k1],
+                             usearch,
+                             umin=Crange[0], umax=Crange[-1],
+                             )
 
             # BEGIN search loop
             #vvvvvvvvvvvvvvvvvvvvvvvvvvvv

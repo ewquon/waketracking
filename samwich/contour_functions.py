@@ -27,8 +27,8 @@ class Contours(object):
         self.u = u
         umin0 = np.min(self.u)
         umax0 = np.max(self.u)
-        self.umin = umin0 if (umin is None) else max(umin,umin0)
-        self.umax = umax0 if (umax is None) else min(umax,umax0)
+        self.umin = umin if (umin is not None) else umin0
+        self.umax = umax if (umax is not None) else umax0
         self.urange = self.umax - self.umin
         # create single-channel grayscale image, values ranging from 0..255
         tmp = (u-self.umin)/self.urange
