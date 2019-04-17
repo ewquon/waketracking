@@ -847,6 +847,7 @@ class contourwaketracker(waketracker):
                          usearch)
         Crange = np.linspace(np.min(usearch), 0, Ntest+1)[1:]
         interval = Crange[1] - Crange[0]
+        if debug: print('starting interval:',interval)
 
         # search statistics:
         #NtraceCalls = 0
@@ -861,6 +862,8 @@ class contourwaketracker(waketracker):
             except AttributeError:  # python 2
                 func_params = inspect.getargspec(func).args
             assert(len(fields) == len(func_params))
+            for fieldname in fields:
+                assert(hasattr(self,fieldname))
             testfields = [ getattr(self,fieldname)[itime,j0:j1,k0:k1]
                             for fieldname in fields ]
 
