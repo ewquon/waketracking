@@ -43,6 +43,7 @@ class Contours(object):
         If array is true, return 2-D array with shape (N,2)
         Otherwise, return x and y components
         """
+        # Note: i/j indices switched in contour path from cv2
         x = [ self.x[j,i] for i,j in zip(path[:,0,0],path[:,0,1]) ]
         y = [ self.y[j,i] for i,j in zip(path[:,0,0],path[:,0,1]) ]
         if closed:

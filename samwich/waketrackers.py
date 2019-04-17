@@ -6,7 +6,7 @@ import inspect
 import pickle  # to archive path objects containing wake outlines
 
 import numpy as np
-from scipy.ndimage import uniform_filter1d  # to perform moving average
+from scipy import ndimage  # to perform moving average, filtering
 import matplotlib.pyplot as plt
 import matplotlib.path as mpath
 import matplotlib.patches as mpatch
@@ -312,7 +312,10 @@ class waketracker(object):
         if Navg < 0:
             self.uavg = np.mean(self.u_tot[-Navg:,:,:], axis=0)  # shape=(Nh,Nv)
         elif Navg > 0:
-            self.uavg = uniform_filter1d(self.u_tot, size=Navg, axis=0, mode='mirror')  # see http://stackoverflow.com/questions/22669252/how-exactly-does-the-reflect-mode-for-scipys-ndimage-filters-work
+            # see http://stackoverflow.com/questions/22669252/how-exactly-does-the-reflect-mode-for-scipys-ndimage-filters-work
+            self.uavg = ndimage.uniform_filter1d(self.u_tot,
+                                                 size=Navg, axis=0,
+                                                 mode='mirror')
         else:
             # no averaging performed
             Navg = 1
