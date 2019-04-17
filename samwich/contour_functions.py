@@ -123,8 +123,8 @@ class Contours(object):
             # check if any points are on the boundary; if so, then assume that
             # those contours are open
             if np.any(ptsvec[:,0,0] == 0) or np.any(ptsvec[:,0,1] == 0) or \
-                    np.any(ptsvec[:,0,0] == self.Nx) or \
-                    np.any(ptsvec[:,0,1] == self.Ny):
+                    np.any(ptsvec[:,0,0] == self.Ny-1) or \
+                    np.any(ptsvec[:,0,1] == self.Nx-1):
                 is_closed.append(False)
             else:
                 #contx.append(contx[0])
