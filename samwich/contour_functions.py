@@ -321,11 +321,15 @@ class Contours(object):
                     ignored,len(all_contours),min_points))
         return path_list
 
-    def calc_area(self, path):
+    def calc_area(self, path=None, coords=None):
         """Calculate the area enclosed by an arbitrary path using Green's
         Theorem, assuming that the path is closed.
         """
-        xp,yp = self.to_coords(path,closed=True)
+        if coords is None:
+            xp,yp = self.to_coords(path,closed=True)
+        else:
+            xp = coords[:,0]
+            yp = coords[:,1]
         dx = np.diff(xp)
         dy = np.diff(yp)
         return 0.5*np.abs(np.sum(yp[:-1]*dx - xp[:-1]*dy))

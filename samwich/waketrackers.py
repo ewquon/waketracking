@@ -459,6 +459,17 @@ class waketracker(object):
         else:
             print('output frame not recognized')
 
+    def calculate_areas(self):
+        """Calculate the area enclosed by all paths (whether they be
+        identified contours or approximate wake shapes) after the wake
+        trajectory has been identified.
+        """
+        assert(self.wake_tracked)
+        cntr = Contours(self.xh[self.jmin:self.jmax+1, self.kmin:self.kmax+1],
+                        self.xv[self.jmin:self.jmax+1, self.kmin:self.kmax+1])
+        self.Careas = np.array([ cntr.calc_area(coords=path)
+                                 for path in self.paths ])
+
     def fix_trajectory_errors(self,update=False,istart=0,iend=None):
         """Some wake detection algorithms are not guaranteed to provide
         a valid trajectory. By default, the coordinates of failed
