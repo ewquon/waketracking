@@ -16,24 +16,25 @@ class Contours(object):
     process contours. This involves converting the planar data into
     a grayscale image.
     """
-    def __init__(self,x,y,u,umin=None,umax=None):
+    def __init__(self,x,y,u=None,umin=None,umax=None):
         """Setup an image for manipulation with OpenCV
         x,y,u should be uniformly spaced 2-D arrays
         """
-        assert(x.shape == y.shape == u.shape)
+        assert(x.shape == y.shape)
         self.Nx, self.Ny = x.shape
         self.x = x
         self.y = y
-        self.u = u
-        umin0 = np.min(self.u)
-        umax0 = np.max(self.u)
-        self.umin = umin if (umin is not None) else umin0
-        self.umax = umax if (umax is not None) else umax0
-        self.urange = self.umax - self.umin
-        # create single-channel grayscale image, values ranging from 0..255
-        tmp = (u-self.umin)/self.urange
-        tmp = np.minimum(np.maximum(tmp, 0), 1)
-        self.img = np.array(255*tmp, dtype=np.uint8)
+        if u is not None:
+            self.u = u
+            umin0 = np.min(self.u)
+            umax0 = np.max(self.u)
+            self.umin = umin if (umin is not None) else umin0
+            self.umax = umax if (umax is not None) else umax0
+            self.urange = self.umax - self.umin
+            # create single-channel grayscale image, values ranging from 0..255
+            tmp = (u-self.umin)/self.urange
+            tmp = np.minimum(np.maximum(tmp, 0), 1)
+            self.img = np.array(255*tmp, dtype=np.uint8)
 
     def _value_to_uint8(self,val):
         """Convert value to grayscale integer value"""
@@ -49,8 +50,8 @@ class Contours(object):
         Otherwise, return x and y components
         """
         # Note: i/j indices switched in contour path from cv2
-        x = [ self.x[j,i] for i,j in zip(path[:,0,0],path[:,0,1]) ]
-        y = [ self.y[j,i] for i,j in zip(path[:,0,0],path[:,0,1]) ]
+        x = [ self.x[i,j] for j,i in zip(path[:,0],path[:,1]) ]
+        y = [ self.y[i,j] for j,i in zip(path[:,0],path[:,1]) ]
         if closed:
             if (not x[-1] == x[0]) or (not y[-1] == y[0]):
                 x.append(x[0])
@@ -119,18 +120,20 @@ class Contours(object):
         #   h[2] : first child contour
         #   h[3] : parent contour
 
+        # get rid of extra dimension
+        contour_list = [ path[:,0,:] for path in contour_uint8_list ]
+
         # convert list of points in uint8 space to actual coordinates
-#        contour_list = []
         is_closed = []
-        for ptsvec in contour_uint8_list:
+        for ptsvec in contour_list:
             # ptsvec is a "vector" (from C++) of points representing a single
-            # contour, with shape (Npts,1,2)
+            # contour, with shape (Npts,2)
 #            contx, conty = self.to_coords(ptsvec)
             # check if any points are on the boundary; if so, then assume that
             # those contours are open
-            if np.any(ptsvec[:,0,0] == 0) or np.any(ptsvec[:,0,1] == 0) or \
-                    np.any(ptsvec[:,0,0] == self.Ny-1) or \
-                    np.any(ptsvec[:,0,1] == self.Nx-1):
+            if np.any(ptsvec[:,0] == 0) or np.any(ptsvec[:,1] == 0) or \
+                    np.any(ptsvec[:,0] == self.Ny-1) or \
+                    np.any(ptsvec[:,1] == self.Nx-1):
                 is_closed.append(False)
             else:
                 #contx.append(contx[0])
@@ -141,8 +144,7 @@ class Contours(object):
 #            conty = np.array(conty)
 #            contour_list.append(np.stack((contx,conty)).T)
 
-#        return contour_list, is_closed
-        return contour_uint8_list, is_closed
+        return contour_list, is_closed
 
 
     def _split_open_path(self,path,min_points):
@@ -152,8 +154,8 @@ class Contours(object):
         """
         if len(path) < min_points: return []
         on_boundary = np.where(
-            (path[:,0,0] == 0) | (path[:,0,0] == self.Ny-1) |
-            (path[:,0,1] == 0) | (path[:,0,1] == self.Nx-1)
+            (path[:,0] == 0) | (path[:,0] == self.Ny-1) |
+            (path[:,1] == 0) | (path[:,1] == self.Nx-1)
         )
         assert(len(on_boundary[0]) > 0)
         #print('boundary points',on_boundary[0])
@@ -165,7 +167,7 @@ class Contours(object):
         for i0,i1 in zip(istart,iend):
             if i1-i0 > min_points:
                 #print('- add',i0,i1)
-                newpaths.append(path[i0:i1+1,:,:])
+                newpaths.append(path[i0:i1+1,:])
             #else:
             #    print('- ignore',i0,i1)
         #print('split into',len(newpaths),'paths')
@@ -226,8 +228,8 @@ class Contours(object):
                 #   to first split the single path into multiple paths (if any)
                 newpaths = self._split_open_path(path,min_points)
                 for path in newpaths:
-                    xstart = path[0,0,:]
-                    xend = path[-1,0,:]
+                    xstart = path[0,:]
+                    xend = path[-1,:]
                     if (xstart[0] == xend[0]) or (xstart[1] == xend[1]):
                         # simplest case: both ends point on same edge
                         path_list.append(path)
@@ -235,8 +237,8 @@ class Contours(object):
                     print('  - found',len(newpaths),'new path(s) by splitting')
             elif closure == 'compound':
                 # TODO: need to test this for opencv contours
-                xstart = path[0,0,:]
-                xend = path[-1,0,:]
+                xstart = path[0,:]
+                xend = path[-1,:]
                 if (xstart[0] == xend[0]) or (xstart[1] == xend[1]):
                     # simplest case: both ends point on same edge
                     path_list.append(path)
