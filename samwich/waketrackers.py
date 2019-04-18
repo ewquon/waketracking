@@ -6,7 +6,7 @@ import inspect
 import pickle  # to archive path objects containing wake outlines
 
 import numpy as np
-from scipy.ndimage import uniform_filter1d  # to perform moving average
+from scipy import ndimage  # to perform moving average, filtering
 import matplotlib.pyplot as plt
 import matplotlib.path as mpath
 import matplotlib.patches as mpatch
@@ -312,7 +312,10 @@ class waketracker(object):
         if Navg < 0:
             self.uavg = np.mean(self.u_tot[-Navg:,:,:], axis=0)  # shape=(Nh,Nv)
         elif Navg > 0:
-            self.uavg = uniform_filter1d(self.u_tot, size=Navg, axis=0, mode='mirror')  # see http://stackoverflow.com/questions/22669252/how-exactly-does-the-reflect-mode-for-scipys-ndimage-filters-work
+            # see http://stackoverflow.com/questions/22669252/how-exactly-does-the-reflect-mode-for-scipys-ndimage-filters-work
+            self.uavg = ndimage.uniform_filter1d(self.u_tot,
+                                                 size=Navg, axis=0,
+                                                 mode='mirror')
         else:
             # no averaging performed
             Navg = 1
@@ -407,6 +410,38 @@ class waketracker(object):
             self.u -= self.Uprofile
         else:
             print('  unexpected Uprofile data shape--mean was not removed')
+
+    def apply_filter(self, filtertype='gaussian', N=None, size=None, minsize=2):
+        """Apply specified filter to the velocity deficit field
+
+        Parameters
+        ----------
+        filtertype : str, optional
+            Name of scipy.ndimage filter to use
+        N : int, optional
+            Number of points to include in each dimension
+        size : float, optional
+            Width of the filter in physical dimensions
+        """
+        if (N is None) and (size is None):
+            raise ValueError('Specify N or size')
+        elif size is not None:
+            dy = np.diff(self.xh_range)
+            dz = np.diff(self.xv_range)
+            assert(all(np.abs(dy-dy[0]) < 1e-8))
+            assert(all(np.abs(dz-dz[0]) < 1e-8))
+            dy = dy[0]
+            dz = dz[0]
+            ds = (dy + dz) / 2
+            N = max(int(size/ds), minsize)
+        assert(N is not None)
+        if self.verbose:
+            print('filter size:',N)
+        self.u_orig = self.u.copy()
+        filterfun = getattr(ndimage,filtertype+'_filter')
+        self.u = np.stack([
+            filterfun(self.u[itime,:,:], N) for itime in range(self.Ntimes)
+        ])
 
     def find_centers(self,
                     trajectory_file=None,
@@ -784,7 +819,7 @@ class contourwaketracker(waketracker):
                              weighted_center=True,
                              contour_closure=False,
                              min_contour_points=None,
-                             Ntest=11,
+                             Ntest=10,
                              tol=0.01,
                              func=None,
                              fields=('u_tot'),
@@ -807,14 +842,13 @@ class contourwaketracker(waketracker):
         * self.Clevels[itime]
         * self.Cfvals[itime]
         """
+        Ntest = int(Ntest/2)*2 # even numbers guarantees that the same levels aren't reevaluated
         j0,j1 = self.jmin,self.jmax+1
         k0,k1 = self.kmin,self.kmax+1
         usearch = self.u[itime,j0:j1,k0:k1] # velocity deficit contours
-        Cdata = Contours(self.xh[j0:j1,k0:k1],
-                         self.xv[j0:j1,k0:k1],
-                         usearch)
         Crange = np.linspace(np.min(usearch), 0, Ntest+1)[1:]
         interval = Crange[1] - Crange[0]
+        if debug: print('starting interval:',interval)
 
         # search statistics:
         #NtraceCalls = 0
@@ -829,6 +863,8 @@ class contourwaketracker(waketracker):
             except AttributeError:  # python 2
                 func_params = inspect.getargspec(func).args
             assert(len(fields) == len(func_params))
+            for fieldname in fields:
+                assert(hasattr(self,fieldname))
             testfields = [ getattr(self,fieldname)[itime,j0:j1,k0:k1]
                             for fieldname in fields ]
 
@@ -841,14 +877,21 @@ class contourwaketracker(waketracker):
             Nrefine += 1
             if debug: print('refinement cycle {}'.format(Nrefine))
 
+            Cdata = Contours(self.xh[j0:j1,k0:k1],
+                             self.xv[j0:j1,k0:k1],
+                             usearch,
+                             umin=Crange[0], umax=Crange[-1],
+                             )
+
             # BEGIN search loop
             #vvvvvvvvvvvvvvvvvvvvvvvvvvvv
             for Clevel in Crange:
                 if debug: print('  testing contour level {}'.format(Clevel))
 
                 cur_path_list = Cdata.get_closed_paths(Clevel,
-                                                close_paths=contour_closure,
-                                                min_points=min_contour_points)
+                                                closure=contour_closure,
+                                                min_points=min_contour_points,
+                                                verbose=debug)
                 if debug:
                     print('  contours found: {}'.format(len(cur_path_list)))
 

@@ -92,13 +92,6 @@ class ConstantArea(contourwaketracker):
             print('Note: wake tracking has already been performed')
             return self.trajectory_in(frame)
 
-        if contour_closure is None or contour_closure=='none':
-            closure = False
-        elif contour_closure=='simple':
-            closure = True
-        elif contour_closure=='compound':
-            closure = (self.xh_range,self.xv_range)
-
         # calculate trajectories for each time step
         if self.verbose:
             print('Attempting to match area:',ref_area,'m^2')
@@ -106,7 +99,7 @@ class ConstantArea(contourwaketracker):
             _,_,info = self._find_contour_center(itime,
                                              ref_area,
                                              weighted_center=weighted_center,
-                                             contour_closure=closure,
+                                             contour_closure=contour_closure,
                                              min_contour_points=min_contour_points,
                                              Ntest=Ntest,
                                              tol=tol,

@@ -115,13 +115,6 @@ class ConstantFlux(contourwaketracker):
             #    print('Sample function evaluation: f(u={:g},1.0) = {:g}'.format(
             #            Utest,flux_function(Utest,1)))
 
-        if contour_closure is None or contour_closure=='none':
-            closure = False
-        elif contour_closure=='simple':
-            closure = True
-        elif contour_closure=='compound':
-            closure = (self.xh_range,self.xv_range)
-
         # calculate trajectories for each time step
         if self.verbose:
             print('Attempting to match flux:',ref_flux)
@@ -129,7 +122,7 @@ class ConstantFlux(contourwaketracker):
             _,_,info = self._find_contour_center(itime,
                                              ref_flux,
                                              weighted_center=weighted_center,
-                                             contour_closure=closure,
+                                             contour_closure=contour_closure,
                                              min_contour_points=min_contour_points,
                                              Ntest=Ntest,
                                              tol=tol,
