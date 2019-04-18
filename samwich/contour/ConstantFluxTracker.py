@@ -20,6 +20,7 @@ class ConstantFlux(contourwaketracker):
 
     def find_centers(self,ref_flux,
                      flux_function,field_names=('u_tot',),
+                     calc_area=True,
                      trajectory_file=None,outlines_file=None,
                      weighted_center=True,
                      contour_closure=None,
@@ -29,7 +30,7 @@ class ConstantFlux(contourwaketracker):
                      check_deficit=True,
                      verbosity=0):
         """Uses a binary search algorithm (find_contour_center) to
-        locate the contour with flux closest to the targetValue.
+        locate the contour with flux closest to 'ref_flux'.
 
         Overrides the parent find_centers routine.
         
@@ -45,6 +46,9 @@ class ConstantFlux(contourwaketracker):
             of this list. The instantaneous velocity, 'u_tot', is used
             by default. Other possibilities include 'u' ('u_tot' minus
             freestream shear), 'v', 'w', etc.
+        calc_area : bool, optional
+            After the wake trajectory has been identified, calculate
+            (and output to trajectory_file) the wake areas.
         trajectory_file : string
             Name of trajectory data file to attempt inputting and to
             write out to; set to None to skip I/O. Data are written out
@@ -150,7 +154,12 @@ class ConstantFlux(contourwaketracker):
         self.wake_tracked = True
 
         # write out everything
-        self._write_trajectory(trajectory_file, self.Clevels, self.Cfvals)
+        if calc_area:
+            self.calculate_areas()
+            self._write_trajectory(trajectory_file,
+                                   self.Clevels, self.Cfvals, self.Careas)
+        else:
+            self._write_trajectory(trajectory_file, self.Clevels, self.Cfvals)
         self._write_outlines(outlines_file)
     
         return self.trajectory_in(frame)
