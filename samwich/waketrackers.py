@@ -392,7 +392,7 @@ class waketracker(object):
 
         if len(self.Uprofile.shape)==1:
             if self.verbose:
-                print('  subtracting out constant profile')
+                print('  subtracting out profile (constant in time)')
             # Uprofile.shape==(Nv)
             for k,umean in enumerate(self.Uprofile):
                 self.u[:,:,k] -= umean
