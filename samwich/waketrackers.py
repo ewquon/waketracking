@@ -665,9 +665,9 @@ class waketracker(object):
             self._init_plot(figsize)  # first time
 
             if vmin is None:
-                vmin = np.min(self.u[itime,:,:])
+                vmin = np.nanmin(self.u[itime,:,:])
             if vmax is None:
-                vmax = np.max(self.u[itime,:,:])
+                vmax = np.nanmax(self.u[itime,:,:])
             self.plot_clevels = np.linspace(vmin, vmax, 100)
 
             self.plotobj_filledcontours = self.ax.contourf(self.xh, self.xv, self.u[itime,:,:],
@@ -857,7 +857,7 @@ class contourwaketracker(waketracker):
         j0,j1 = self.jmin,self.jmax+1
         k0,k1 = self.kmin,self.kmax+1
         usearch = self.u[itime,j0:j1,k0:k1] # velocity deficit contours
-        Crange = np.linspace(np.min(usearch), 0, Ntest+1)[1:]
+        Crange = np.linspace(np.nanmin(usearch), 0, Ntest+1)[1:]
         interval = Crange[1] - Crange[0]
         if debug: print('starting interval:',interval)
 

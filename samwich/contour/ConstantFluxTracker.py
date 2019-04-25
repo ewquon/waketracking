@@ -107,7 +107,7 @@ class ConstantFlux(contourwaketracker):
 
         # some sanity checks if needed
         if self.verbose:
-            Utest = [ np.min(testfield[-1,self.jmin:self.jmax,self.kmin:self.kmax])
+            Utest = [ np.nanmin(testfield[-1,self.jmin:self.jmax,self.kmin:self.kmax])
                         for testfield in test_fields ]
             input_string = '{}={}'.format(field_names[0],Utest[0])
             for fieldname, fieldvalue in zip(field_names[1:],Utest[1:]):

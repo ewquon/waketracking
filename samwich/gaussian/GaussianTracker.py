@@ -83,7 +83,7 @@ class Gaussian(waketracker):
             print('Note: remove_shear has not been called')
         if umin is None:
             # calculate umin available data
-            self.umin = np.min(self.u,axis=(1,2))
+            self.umin = np.nanmin(self.u,axis=(1,2))
             print('Calculated umin=',self.umin)
         elif isinstance(umin,np.ndarray):
             # specified umin as array with length Ntimes
