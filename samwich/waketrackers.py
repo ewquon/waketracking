@@ -323,15 +323,17 @@ class waketracker(object):
         self.Navg = Navg
         return self.uavg
 
-    def remove_shear(self,method='fringe',Navg=None,wind_profile=None):
+    def remove_shear(self,method='fringe',Navg=None,wind_profile=None,
+                     alpha=None,Uref=None,zref=None):
         """Removes wind shear from data.
 
         Calculates self.u from self.u_tot.
 
         Current supported methods:
 
-        * "fringe": Estimate from fringes
-        * "specified": Wind profile specified as either a function or an
+        - "fringe": Estimate from fringes
+        - "powerlaw": Generic wind profile with specified shear
+        - "specified": Wind profile specified as either a function or an
             array of heights vs horizontal velocity
 
         Parameters
@@ -344,13 +346,21 @@ class waketracker(object):
             instaneous average (when shear_removal=='default').
             If Navg < 0, average from end of series only, otherwise a
             sliding average is performed.
-        wind_profile : list-like
+        wind_profile : array-like or str, optional
             An array of mean velocities normal to the sampling plane,
             at the same heights as the sampling grid. The array may have
             the following shape:
             - 1D: constant U(z)
             - 2D: time-varying profile U(t,z)
             - 3D: time-varying inflow U(t,y,z)
+            Alternatively, a filename may be specified from which the
+            wind profile will be loaded.
+        alpha : float, optional
+            Shear exponent for power-law wind profile.
+        Uref : float, optional
+            Reference velocity for power-law wind profile.
+        zref : float, optional
+            Reference height for power-law wind profile.
         """
         if self.shear_removal is not None:
             print('remove_shear() was already called, doing nothing.')
@@ -358,6 +368,8 @@ class waketracker(object):
 
         if wind_profile is not None:
             method = 'specified'
+        elif (alpha is not None) and (Uref is not None) and (zref is not None):
+            method = 'powerlaw'
         self.shear_removal = method
 
         # determine the wind profile
@@ -382,6 +394,11 @@ class waketracker(object):
                 #self.Uprofile = np.interp(self.z,zref,Uref)
                 self.Uprofile = np.loadtxt(wind_profile)
                 print('Wind profile read from {}'.format(wind_profile))
+
+        elif method == 'powerlaw':
+            assert (alpha is not None) and (Uref is not None) and (zref is not None)
+            z = np.mean(self.z, axis=0)
+            self.Uprofile = Uref * (z/zref)**alpha
 
         elif method is not None:
             print('Shear removal method ({}) not supported.'.format(method))
