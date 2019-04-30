@@ -2,6 +2,7 @@ from __future__ import print_function
 import sys
 
 import numpy as np
+from scipy.signal import convolve2d
 
 from samwich.waketrackers import contourwaketracker
 
@@ -27,10 +28,10 @@ class ConstantArea(contourwaketracker):
                      weighted_center=True,
                      contour_closure=None,
                      min_contour_points=50,
-                     frame='rotor-aligned',
                      Ntest0=20,Ntest=4,tol=0.01,
                      umax=0,
-                     check_deficit=False,
+                     check_deficit=False,uniform_filter=None,
+                     frame='rotor-aligned',
                      verbosity=0):
         """Uses a binary search algorithm (find_contour_center) to
         locate the contour with flux closest to the targetValue.
@@ -71,6 +72,13 @@ class ConstantArea(contourwaketracker):
         Ntest : integer, optional
             The number of test contours to calculate in each refinement
             cycle.
+        uniform_filter : bool, int, optional
+            Use scipy.signal.convolve2d to smooth each wake snapshot,
+            which changes the detected u_min used if 'check_deficit' is
+            True. If 'uniform_filter' is True, then the filter size is
+            estimated as the 1/5 of the reference diameter (calculated
+            from ref_area); otherwise, the filter size may be directly
+            specified.
         tol : float, optional
             Minimum spacing to test during the binary search.
         umax : float, optional
@@ -98,6 +106,34 @@ class ConstantArea(contourwaketracker):
         if self.wake_tracked:
             print('Note: wake tracking has already been performed')
             return self.trajectory_in(frame)
+
+        # filter velocity field 
+        if check_deficit and (uniform_filter is not None):
+            if uniform_filter == True:
+                # guesstimate filter size as D/5
+                dy = np.diff(self.xh_range)[0]
+                dz = np.diff(self.xv_range)[0]
+                ds = (dy + dz) / 2
+                D = 2*(ref_area/np.pi)**0.5  # R = (A/pi)**0.5
+                if verbosity > 0:
+                    print('dy,dz,ds ~=',dy,dz,ds)
+                size = max(int((D/5)/ds),3)
+            else:
+                size = int(uniform_filter)
+            if uniform_filter % 2 == 0:
+                # make sure filter size is odd
+                uniform_filter += 1
+            if verbosity > 0:
+                print('uniform filter size :',size)
+            filterarray = np.ones((size,size))
+            filterarray /= np.sum(filterarray)
+            off = int(size/2)
+            utest = np.stack([
+                convolve2d(self.u[itime,:,:],filterarray,mode='full')[off:-off,off:-off]
+                for itime in range(self.Ntimes)
+            ])
+            assert utest.shape==self.u.shape
+            check_deficit = utest
 
         # calculate trajectories for each time step
         if self.verbose:

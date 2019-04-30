@@ -927,7 +927,7 @@ class contourwaketracker(waketracker):
                 if debug:
                     print('  contours found: {}'.format(len(cur_path_list)))
 
-                if (func is None) and (not vdcheck):
+                if (func is None) and (vdcheck is False):
                     # area contours _without_ checking the velocity deficit by 
                     # integrating velocities within contours 
                     # - Note: This is MUCH faster, since we don't have to search
@@ -944,7 +944,10 @@ class contourwaketracker(waketracker):
                         rdist2 = (geoctr[0]-self.xh)**2 + (geoctr[1]-self.xv)**2
                         jnear,knear = np.unravel_index(np.argmin(rdist2),
                                                        (self.Nh, self.Nv))
-                        vd_est = np.mean(usearch[jnear-1:jnear+2,knear-1:knear+2])
+                        if isinstance(vdcheck, np.ndarray):
+                            vd_est = vdcheck[itime,jnear,knear]
+                        else:
+                            vd_est = np.mean(usearch[jnear-1:jnear+2,knear-1:knear+2])
                         if debug:
                             print('  velocity deficit near',
                                   self.xh[jnear,knear], self.xv[jnear,knear],
