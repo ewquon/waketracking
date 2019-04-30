@@ -31,6 +31,7 @@ class ConstantArea(contourwaketracker):
                      Ntest0=20,Ntest=4,tol=0.01,
                      umax=0,
                      check_deficit=False,uniform_filter=None,
+                     vdcutoff=0.7,
                      frame='rotor-aligned',
                      verbosity=0):
         """Uses a binary search algorithm (find_contour_center) to
@@ -128,6 +129,8 @@ class ConstantArea(contourwaketracker):
             filterarray = np.ones((size,size))
             filterarray /= np.sum(filterarray)
             off = int(size/2)
+            if self.verbose:
+                print('Applying uniform filter')
             utest = np.stack([
                 convolve2d(self.u[itime,:,:],filterarray,mode='full')[off:-off,off:-off]
                 for itime in range(self.Ntimes)
@@ -146,9 +149,10 @@ class ConstantArea(contourwaketracker):
                                              min_contour_points=min_contour_points,
                                              Ntest=Ntest,Ntest0=Ntest0,
                                              umax=umax,
-                                             tol=tol,
-                                             func=None,
                                              vdcheck=check_deficit,
+                                             vdcutoff=vdcutoff,
+                                             func=None,
+                                             tol=tol,
                                              debug=(verbosity > 0))
             if not info['success']:
                 print('WARNING: find_contour_center was unsuccessful.')

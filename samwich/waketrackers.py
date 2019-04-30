@@ -855,6 +855,7 @@ class contourwaketracker(waketracker):
                              func=None,
                              fields=('u_tot'),
                              vdcheck=True,quick_vdcheck=True,
+                             vdcutoff=0,
                              debug=True):
         """Helper function that returns the coordinates of the detected
         wake center. Iteration continues in a binary search fashion
@@ -881,6 +882,17 @@ class contourwaketracker(waketracker):
         Crange = np.linspace(np.nanmin(usearch), umax, Ntest0+1)[1:]
         interval = Crange[1] - Crange[0]
         if debug: print('starting interval:',interval)
+
+        if vdcheck is not False:
+            # need reference velocity deficit value
+            if isinstance(vdcheck, np.ndarray):
+                umin = np.nanmin(vdcheck[itime,:,:])
+            else:
+                umin = Crange[0]
+            vdcutoff *= umin
+            assert (vdcutoff <= 0)
+            if debug:
+                print('reference/cutoff velocity deficit value:',umin,vdcutoff)
 
         # search statistics:
         #NtraceCalls = 0
@@ -925,7 +937,7 @@ class contourwaketracker(waketracker):
                                                 min_points=min_contour_points,
                                                 verbose=debug)
                 if debug:
-                    print('  contours found: {}'.format(len(cur_path_list)))
+                    print('    contours found: {}'.format(len(cur_path_list)))
 
                 if (func is None) and (vdcheck is False):
                     # area contours _without_ checking the velocity deficit by 
@@ -949,24 +961,25 @@ class contourwaketracker(waketracker):
                         else:
                             vd_est = np.mean(usearch[jnear-1:jnear+2,knear-1:knear+2])
                         if debug:
-                            print('  velocity deficit near',
+                            print('    velocity deficit near',
                                   self.xh[jnear,knear], self.xv[jnear,knear],
                                   '~=',vd_est)
-                        if vd_est < 0:
+                        if vd_est < vdcutoff:
                             paths.append(path)
                             level.append(Clevel)
-                            Flist.append(Cdata.calc_area(path))
+                            area = Cdata.calc_area(path)
+                            Flist.append(area)
                 elif func is None:
                     # area contours with rigorous velocity deficit check
                     for path in cur_path_list:
-                        fval, avgdeficit = \
+                        area, avgdeficit = \
                                 Cdata.integrate_function(path, func=None,
                                                          fields=None,
                                                          vd=usearch)
-                        if fval is not None and avgdeficit < 0:
+                        if area is not None and avgdeficit < vdcutoff:
                             paths.append(path)
                             level.append(Clevel)
-                            Flist.append(fval)
+                            Flist.append(area)
                 else:
                     # specified function to calculate flux through contour
                     vd = usearch if vdcheck else None
