@@ -28,7 +28,7 @@ class ConstantArea(contourwaketracker):
                      contour_closure=None,
                      min_contour_points=50,
                      frame='rotor-aligned',
-                     Ntest=21,tol=0.01,
+                     Ntest0=20,Ntest=4,tol=0.01,
                      check_deficit=False,
                      verbosity=0):
         """Uses a binary search algorithm (find_contour_center) to
@@ -64,8 +64,12 @@ class ConstantArea(contourwaketracker):
             related to the smallest allowable contour region.
         frame : string, optional
             Reference frame, either 'inertial' or 'rotor-aligned'.
+        Ntest0 : integer, optional
+            The number of initial test contours to calculate; should be
+            relatively large to ensure that a global optimum is found.
         Ntest : integer, optional
-            The number of initial test contours to calculate.
+            The number of test contours to calculate in each refinement
+            cycle.
         tol : float, optional
             Minimum spacing to test during the binary search.
         check_deficit : boolean, optional
@@ -101,7 +105,7 @@ class ConstantArea(contourwaketracker):
                                              weighted_center=weighted_center,
                                              contour_closure=contour_closure,
                                              min_contour_points=min_contour_points,
-                                             Ntest=Ntest,
+                                             Ntest=Ntest,Ntest0=Ntest0,
                                              tol=tol,
                                              func=None,
                                              vdcheck=check_deficit,
