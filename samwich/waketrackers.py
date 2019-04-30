@@ -850,6 +850,7 @@ class contourwaketracker(waketracker):
                              contour_closure=False,
                              min_contour_points=None,
                              Ntest0=20,Ntest=4,
+                             umax=0,
                              tol=0.01,
                              func=None,
                              fields=('u_tot'),
@@ -877,7 +878,7 @@ class contourwaketracker(waketracker):
         j0,j1 = self.jmin,self.jmax+1
         k0,k1 = self.kmin,self.kmax+1
         usearch = self.u[itime,j0:j1,k0:k1] # velocity deficit contours
-        Crange = np.linspace(np.nanmin(usearch), 0, Ntest0+1)[1:]
+        Crange = np.linspace(np.nanmin(usearch), umax, Ntest0+1)[1:]
         interval = Crange[1] - Crange[0]
         if debug: print('starting interval:',interval)
 

@@ -29,6 +29,7 @@ class ConstantArea(contourwaketracker):
                      min_contour_points=50,
                      frame='rotor-aligned',
                      Ntest0=20,Ntest=4,tol=0.01,
+                     umax=0,
                      check_deficit=False,
                      verbosity=0):
         """Uses a binary search algorithm (find_contour_center) to
@@ -72,6 +73,8 @@ class ConstantArea(contourwaketracker):
             cycle.
         tol : float, optional
             Minimum spacing to test during the binary search.
+        umax : float, optional
+            Maximum contour level to consider as a wake edge.
         check_deficit : boolean, optional
             If True, only consider wake candidates in which the average
             velocity deficit is less than 0.
@@ -106,6 +109,7 @@ class ConstantArea(contourwaketracker):
                                              contour_closure=contour_closure,
                                              min_contour_points=min_contour_points,
                                              Ntest=Ntest,Ntest0=Ntest0,
+                                             umax=umax,
                                              tol=tol,
                                              func=None,
                                              vdcheck=check_deficit,
