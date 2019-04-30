@@ -739,6 +739,8 @@ class waketracker(object):
         if outline:
             self.plot_outline(itime)
 
+        self.ax.set_title('itime = {:d}'.format(itime))
+
         if writepng:
             fname = os.path.join(
                     outdir,
