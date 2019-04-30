@@ -853,7 +853,7 @@ class contourwaketracker(waketracker):
                              tol=0.01,
                              func=None,
                              fields=('u_tot'),
-                             vdcheck=True,
+                             vdcheck=True,quick_vdcheck=True,
                              debug=True):
         """Helper function that returns the coordinates of the detected
         wake center. Iteration continues in a binary search fashion
@@ -926,14 +926,34 @@ class contourwaketracker(waketracker):
                 if debug:
                     print('  contours found: {}'.format(len(cur_path_list)))
 
-                if func is None and not vdcheck:
-                    # area contours without velocity deficit check
-                    # Note: This is MUCH faster, since we don't have to search for interior pts!
+                if (func is None) and (not vdcheck):
+                    # area contours _without_ checking the velocity deficit by 
+                    # integrating velocities within contours 
+                    # - Note: This is MUCH faster, since we don't have to search
+                    #   for interior pts!
                     paths += cur_path_list
                     level += len(cur_path_list)*[Clevel]
                     Flist += [Cdata.calc_area(path) for path in cur_path_list]
+                elif (func is None) and quick_vdcheck:
+                    # area contours with quick velocity deficit check
+                    for path in cur_path_list:
+                        # - locate geometric center
+                        coords = Cdata.to_coords(path,closed=False,array=True)
+                        geoctr = coords.mean(axis=0)
+                        rdist2 = (geoctr[0]-self.xh)**2 + (geoctr[1]-self.xv)**2
+                        jnear,knear = np.unravel_index(np.argmin(rdist2),
+                                                       (self.Nh, self.Nv))
+                        vd_est = np.mean(usearch[jnear-1:jnear+2,knear-1:knear+2])
+                        if debug:
+                            print('  velocity deficit near',
+                                  self.xh[jnear,knear], self.xv[jnear,knear],
+                                  '~=',vd_est)
+                        if vd_est < 0:
+                            paths.append(path)
+                            level.append(Clevel)
+                            Flist.append(Cdata.calc_area(path))
                 elif func is None:
-                    # area contours with velocity deficit check
+                    # area contours with rigorous velocity deficit check
                     for path in cur_path_list:
                         fval, avgdeficit = \
                                 Cdata.integrate_function(path, func=None,
