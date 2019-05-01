@@ -27,10 +27,10 @@ class ConstantArea(contourwaketracker):
                      trajectory_file=None,outlines_file=None,
                      weighted_center=True,
                      contour_closure=None,
-                     min_contour_points=50,
-                     Ntest0=20,Ntest=4,tol=0.01,
+                     min_contour_points=10,
+                     Ntest0=50,Ntest=4,tol=0.01,
                      umax=0,
-                     check_deficit=False,uniform_filter=None,
+                     check_deficit=False,uniform_filter=3,
                      vdcutoff=0.7,
                      frame='rotor-aligned',
                      verbosity=0):
