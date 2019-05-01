@@ -1086,4 +1086,8 @@ class contourwaketracker(waketracker):
             # assume load was successful
             self.Clevels = data[:,3]
             self.Cfvals = data[:,4]
+            try:
+                self.Careas = data[:,5]
+            except IndexError:
+                pass
         return data
