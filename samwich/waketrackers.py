@@ -45,7 +45,7 @@ def track(*args,**kwargs):
                     if cls.__module__ == mod.__name__:
                         tracker_list[name] = cls
 
-    method = kwargs.get('method',None)
+    method = kwargs.pop('method',None)
     if method not in tracker_list.keys():
         print("Need to specify 'method' as one of:")
         for name,tracker in tracker_list.items():
@@ -55,7 +55,10 @@ def track(*args,**kwargs):
         tracker = tracker_list[method]
         if kwargs.get('verbose',True):
             print('Selected Tracker: {}\n'.format(tracker.__name__))
-        return tracker(*args,**kwargs)
+        if len(args) > 0:
+            return tracker(*args,**kwargs)
+        else:
+            return tracker
 
 #==============================================================================
 
