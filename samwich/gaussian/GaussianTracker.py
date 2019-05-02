@@ -143,7 +143,8 @@ class Gaussian(waketracker):
         y1 = self.xh.ravel()
         z1 = self.xv.ravel()
         for itime in range(self.Ntimes):
-            u1 = np.ma.masked_invalid(self.u[itime,:,:].ravel())
+            u1 = self.u[itime,:,:]
+            u1[u1==np.nan] = 0.
             def func(x):
                 """Residuals for x=[yc,zc]"""
                 delta_y = y1 - x[0]
@@ -151,7 +152,7 @@ class Gaussian(waketracker):
                 resid = self.umin[itime] \
                         * np.exp(-0.5*(delta_y**2 + delta_z**2)/self.sigma[itime]**2
                                 ) - u1
-                return resid.filled(0)
+                return resid
             result = least_squares(func, guess, bounds=minmax)
             if result.success:
                 self.xh_wake[itime], self.xv_wake[itime] = result.x[:2]

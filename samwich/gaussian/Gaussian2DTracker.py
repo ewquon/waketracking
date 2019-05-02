@@ -210,7 +210,8 @@ class Gaussian2D(waketracker):
             if verbosity > 0:
                 print('\nitime = {:d}'.format(itime))
                 print('-------------')
-            u1 = np.ma.masked_invalid(self.u[itime,:,:].ravel())
+            u1 = self.u[itime,:,:]
+            u1[u1==np.nan] = 0.
             def fun1(x):
                 """Residuals for x=[yc,zc]"""
                 delta_y = y1 - x[0]
@@ -218,7 +219,7 @@ class Gaussian2D(waketracker):
                 resid = self.umin[itime] \
                         * np.exp(-0.5*(delta_y**2 + delta_z**2)/sigma0_sq
                                 ) - u1
-                return resid.filled(0)
+                return resid
             def fun2(x):
                 """Residuals for x=[yc,zc,theta,A,AR], with m DOFs and n=5
                 variables"""
@@ -237,7 +238,7 @@ class Gaussian2D(waketracker):
                     np.exp(-0.5*((y1-yc)**2 + (z1-zc)**2)/sigma_sq)
                 )
                 resid = u1 - self.umin[itime]*np.exp(-0.5*((delta_y/AR)**2 + delta_z**2)/sigz2)
-                return W*resid.filled(0)
+                return W*resid
 #            def jac(x):
 #                """Exact jacobian (m by n) matrix"""
 #                yc,zc,theta,A,AR = x
