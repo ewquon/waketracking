@@ -325,6 +325,8 @@ class Contours(object):
         """Calculate the area enclosed by an arbitrary path using Green's
         Theorem, assuming that the path is closed.
         """
+        if path is None:
+            return 0
         if coords is None:
             xp,yp = self.to_coords(path,closed=True)
         else:
