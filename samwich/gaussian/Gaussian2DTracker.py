@@ -210,8 +210,8 @@ class Gaussian2D(waketracker):
             if verbosity > 0:
                 print('\nitime = {:d}'.format(itime))
                 print('-------------')
-            u1 = self.u[itime,:,:]
-            u1[u1==np.nan] = 0.
+            u1 = self.u[itime,:,:].ravel()
+            u1[np.isnan(u1)] = 0.
             def fun1(x):
                 """Residuals for x=[yc,zc]"""
                 delta_y = y1 - x[0]
