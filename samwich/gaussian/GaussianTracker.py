@@ -143,7 +143,7 @@ class Gaussian(waketracker):
         y1 = self.xh.ravel()
         z1 = self.xv.ravel()
         for itime in range(self.Ntimes):
-            u1 = self.u[itime,:,:].ravel()
+            u1 = self.u[itime,:,:].ravel().copy()
             u1[np.isnan(u1)] = 0.
             def func(x):
                 """Residuals for x=[yc,zc]"""
