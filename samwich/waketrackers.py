@@ -1132,6 +1132,10 @@ class Plotter(object):
         self.fig, self.ax = plt.subplots(figsize=figsize,dpi=dpi)
         blank = np.empty(y.shape)
         blank.fill(np.nan)
+        if vmin is None:
+            vmin = np.nanmin(self.u)
+        if vmax is None:
+            vmax = np.nanmax(self.u)
         self.bkg = self.ax.pcolormesh(self.y, self.z, blank,
                                       cmap=cmap,vmin=vmin,vmax=vmax,)
         self.cbar = self.fig.colorbar(self.bkg)
@@ -1166,6 +1170,10 @@ class Plotter(object):
                                                 label=name)
         else:
             self.outlines[name] = None
+
+    def set_range(self,minmax):
+        """Set the contour level limits"""
+        self.bkg.set_clim(minmax)
 
     def init_plot(self):
         """For FuncAnimation init_func, to clear axes objects"""
