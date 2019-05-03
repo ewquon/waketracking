@@ -4,9 +4,9 @@ import sys
 import numpy as np
 from scipy.signal import convolve2d
 
-from samwich.waketrackers import contourwaketracker
+from samwich.waketrackers import ContourWakeTracker
 
-class ConstantArea(contourwaketracker):
+class ConstantArea(ContourWakeTracker):
     """Identifies a wake as a region with velocity deficit contour
     enclosing an area closest to the rotor (or another specified
     reference area).
@@ -15,7 +15,7 @@ class ConstantArea(contourwaketracker):
     it does not necessarily depend on the 'contain_pts' function (unless
     check_deficit is set to True).
 
-    Inherits class contourwaketracker.
+    Inherits class ContourWakeTracker.
     """
 
     def __init__(self,*args,**kwargs):

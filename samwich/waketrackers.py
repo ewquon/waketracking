@@ -65,7 +65,7 @@ def track(*args,**kwargs):
 
 #==============================================================================
 
-class waketracker(object):
+class WakeTracker(object):
     """A general class for wake tracking operations.
 
     Tracking algorithms are expected to be implemented as children of
@@ -76,11 +76,11 @@ class waketracker(object):
         """Process structured data in rotor-aligned frames of reference.
         Arguments may be in the form:
 
-            waketracker(x, y, z, u, ...)
+            WakeTracker(x, y, z, u, ...)
 
         or
 
-            waketracker((x,y,z,u), ...)
+            WakeTracker((x,y,z,u), ...)
 
         The latter form is useful if the datatracker object's slice
         function is called inline.
@@ -267,7 +267,7 @@ class waketracker(object):
 
         if self.verbose:
             print('Number of time frames to process: {}'.format(self.Ntimes))
-            print('\n...finished initializing waketracker')
+            print('\n...finished initializing WakeTracker')
 
     def __repr__(self):
         s = 'Tracking '+str(self.Ntimes)+' sampled planes of '
@@ -831,15 +831,15 @@ class waketracker(object):
             print('Wrote out pickled outlines to',fname)
 
 
-class contourwaketracker(waketracker):
+class ContourWakeTracker(WakeTracker):
     """Class for wake tracking based on (velocity) contours
 
-    Inherits superclass waketracker
+    Inherits superclass WakeTracker
     """
 
     def __init__(self,*args,**kwargs):
         if python_version < 3:
-            super(contourwaketracker,self).__init__(*args,**kwargs)
+            super(ContourWakeTracker,self).__init__(*args,**kwargs)
         else:
             super().__init__(*args,**kwargs)
 
@@ -847,7 +847,7 @@ class contourwaketracker(waketracker):
         self.Cfvals = np.zeros(self.Ntimes)
 
         if self.verbose:
-            print('\n...finished initializing contourwaketracker')
+            print('\n...finished initializing ContourWakeTracker')
 
     def _find_contour_center(self,
                              itime,
@@ -866,7 +866,7 @@ class contourwaketracker(waketracker):
         """Helper function that returns the coordinates of the detected
         wake center. Iteration continues in a binary search fashion
         until the difference in contour values is < 'tol'. This *should*
-        be called from contourwaketracker.
+        be called from ContourWakeTracker.
 
         NOTE: This not guaranteed to find a global optimum.
 
@@ -1085,7 +1085,7 @@ class contourwaketracker(waketracker):
         at the beginning of find_centers
         """
         if python_version < 3:
-            data = super(contourwaketracker,self)._read_trajectory(fname)
+            data = super(ContourWakeTracker,self)._read_trajectory(fname)
         else:
             data = super()._read_trajectory(fname)
         if data is not None:

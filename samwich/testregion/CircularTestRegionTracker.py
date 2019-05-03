@@ -6,9 +6,9 @@ import numpy as np
 from scipy.interpolate import RegularGridInterpolator
 from scipy.optimize import least_squares
 
-from samwich.waketrackers import waketracker
+from samwich.waketrackers import WakeTracker
 
-class CircularTestRegion(waketracker):
+class CircularTestRegion(WakeTracker):
     """Identifies a wake as the circular region that minimizes a given
     function. For instance, this is used to apply the minimum-power 
     method proposed by Vollmer et al in Wind Energ. Sci. 2016. 
@@ -16,7 +16,7 @@ class CircularTestRegion(waketracker):
     Least-squares optimization is performed to identify the wake center.
     Sampling is assumed to be on a uniformly spaced grid.
 
-    Inherits class waketracker.
+    Inherits class WakeTracker.
     """
 
     def __init__(self,*args,**kwargs):

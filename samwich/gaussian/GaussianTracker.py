@@ -5,9 +5,9 @@ import importlib
 import numpy as np
 from scipy.optimize import least_squares
 
-from samwich.waketrackers import waketracker
+from samwich.waketrackers import WakeTracker
 
-class Gaussian(waketracker):
+class Gaussian(WakeTracker):
     """Identifies a wake as the best fit to a univariate Gaussian
     distribution described by:
 
@@ -17,7 +17,7 @@ class Gaussian(waketracker):
             -\\frac{1}{2} \\frac{(y-y_c)^2 + (z-z_c)^2}{\sigma^2}
         \\right)
 
-    Inherits class waketracker.
+    Inherits class WakeTracker.
     """
 
     def __init__(self,*args,**kwargs):

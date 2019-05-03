@@ -3,14 +3,14 @@ import sys
 
 import numpy as np
 
-from samwich.waketrackers import contourwaketracker
+from samwich.waketrackers import ContourWakeTracker
 
-class ConstantFlux(contourwaketracker):
+class ConstantFlux(ContourWakeTracker):
     """Identifies a wake as a region outlined by a velocity deficit
     contour over which the integrated flux matches a specified target
     value, given a flux function.
 
-    Inherits class contourwaketracker.
+    Inherits class ContourWakeTracker.
     """
 
     def __init__(self,*args,**kwargs):

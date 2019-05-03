@@ -6,9 +6,9 @@ import numpy as np
 from scipy.optimize import least_squares
 from scipy import ndimage
 
-from samwich.waketrackers import waketracker
+from samwich.waketrackers import WakeTracker
 
-class Gaussian2D(waketracker):
+class Gaussian2D(WakeTracker):
     """Identifies a wake as the best fit to a bivariate (elliptical)
     Gaussian distribution described by:
 
@@ -34,7 +34,7 @@ class Gaussian2D(waketracker):
     Least-squares optimization is performed to simultaneously identify
     the wake center along with the additional Gaussian parameters.
 
-    Inherits class waketracker.
+    Inherits class WakeTracker.
     """
 
     def __init__(self,*args,**kwargs):
