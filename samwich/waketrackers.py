@@ -1175,6 +1175,14 @@ class Plotter(object):
         """Set the contour level limits"""
         self.bkg.set_clim(minmax)
 
+    def legend(self,markers=True,**kwargs):
+        """Display legend based on markers or outlines"""
+        if markers:
+            handles = [h for _,h in self.centers.items()]
+        else:
+            handles = [h for _,h in self.outlines.items()]
+        self.lgd = self.ax.legend(handles, self.wakes.keys(), **kwargs)
+
     def init_plot(self):
         """For FuncAnimation init_func, to clear axes objects"""
         for name,wake in self.wakes.items():
@@ -1192,7 +1200,6 @@ class Plotter(object):
         """
         bkgdata = np.ma.masked_invalid(self.u[itime,:-1,:-1])
         self.bkg.set_array(bkgdata.ravel())
-        print(self.u[itime,:-1,:-1])
         updated = [self.bkg]
         for name,wake in self.wakes.items():
             if self.centers[name] is not None:
