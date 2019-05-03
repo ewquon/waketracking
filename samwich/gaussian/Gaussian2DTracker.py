@@ -177,7 +177,7 @@ class Gaussian2D(waketracker):
                     len(np.nonzero(self.umin > 0)[0]),'of',self.Ntimes,'times')
         if self.verbose:
             print('average Gaussian function amplitude =',
-                    np.mean(self.umin),'m/s (over',self.Ntimes,'times)')
+                    np.nanmean(self.umin),'m/s (over',self.Ntimes,'times)')
 
         if rho is not None:
             print('Note: cross-correlation parameter is not yet implemented')
@@ -210,8 +210,8 @@ class Gaussian2D(waketracker):
             if verbosity > 0:
                 print('\nitime = {:d}'.format(itime))
                 print('-------------')
-            u1 = self.u[itime,:,:]
-            u1[u1==np.nan] = 0.
+            u1 = self.u[itime,:,:].ravel().copy()
+            u1[np.isnan(u1)] = 0.
             def fun1(x):
                 """Residuals for x=[yc,zc]"""
                 delta_y = y1 - x[0]
