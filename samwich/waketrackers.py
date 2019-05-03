@@ -1094,3 +1094,46 @@ class contourwaketracker(waketracker):
             except IndexError:
                 pass
         return data
+
+
+class Plotter(object):
+    """Class for plotting wakes and their identified centers and
+    outlines.
+    """
+    def __init__(self,y,z,u,
+                 figsize=(8,6),dpi=100,
+                 vmin=None,vmax=None,
+                 cmap='gray',
+                ):
+        """
+        figsize : tuple, optional
+            Figure size (width,height)
+        dpi : int, optional
+            Image resolution
+        vmin,vmax : float, optional
+            Range of contour values to plot; if None, then set to min
+            and max field values.
+        cmap : string, optional
+            Colormap for the contour plot.
+        """
+        self.wakes = {}
+        self.colors = {}
+        self.markers = {}
+        self.plot_center = {}
+        self.plot_outline = {}
+        self.y = y
+        self.z = z
+        if len(u.shape) == 4:
+            self.u = u[:,:,:,0] # (Nt,Ny,Nz,3)
+        else:
+            self.u = u
+        # create basic plot elements
+        self.fig, self.ax = plt.subplots(figsize=figsize,dpi=dpi)
+        self.bkg = self.ax.pcolormesh(self.y, self.z, self.u[0,:,:],
+                                      cmap=cmap,vmin=vmin,vmax=vmax,)
+        self.cbar = self.fig.colorbar(self.bkg)
+        self.cbar.set_label(label=r'$U$ [m/s]',fontsize='x-large')
+        self.cbar.ax.tick_params(labelsize='x-large')
+        self.ax.axis('equal')
+        self.ax.set_xlabel('y [m]')
+        self.ax.set_ylabel('z [m]')
