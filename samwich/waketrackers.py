@@ -1185,6 +1185,7 @@ class Plotter(object):
 
     def init_plot(self):
         """For FuncAnimation init_func, to clear axes objects"""
+        updated = []
         for name,wake in self.wakes.items():
             if self.centers[name] is not None:
                 self.centers[name].set_data([],[]) 
@@ -1213,3 +1214,9 @@ class Plotter(object):
         self.ax.set_title('itime = {:d}'.format(itime))
         return tuple(updated)
 
+    def animate(self,frames=None):
+        """Wrapper around FuncAnimation"""
+        if frames is None:
+            frames = len(self.u)
+        return FuncAnimation(self.fig, self.plot, frames=frames,
+                             init_func=self.init_plot, blit=True)
