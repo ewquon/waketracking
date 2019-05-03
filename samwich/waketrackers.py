@@ -4,12 +4,15 @@ import sys
 import importlib
 import inspect
 import pickle  # to archive path objects containing wake outlines
+from collections import OrderedDict
 
 import numpy as np
 from scipy import ndimage  # to perform moving average, filtering
 import matplotlib.pyplot as plt
 import matplotlib.path as mpath
 import matplotlib.patches as mpatch
+from matplotlib.animation import FuncAnimation
+colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
 
 from samwich.contour_functions import Contours
 
@@ -1116,11 +1119,9 @@ class Plotter(object):
         cmap : string, optional
             Colormap for the contour plot.
         """
-        self.wakes = {}
-        self.colors = {}
-        self.markers = {}
-        self.plot_center = {}
-        self.plot_outline = {}
+        self.wakes = OrderedDict()
+        self.centers = OrderedDict()
+        self.outlines = OrderedDict()
         self.y = y
         self.z = z
         if len(u.shape) == 4:
@@ -1129,7 +1130,9 @@ class Plotter(object):
             self.u = u
         # create basic plot elements
         self.fig, self.ax = plt.subplots(figsize=figsize,dpi=dpi)
-        self.bkg = self.ax.pcolormesh(self.y, self.z, self.u[0,:,:],
+        blank = np.empty(y.shape)
+        blank.fill(np.nan)
+        self.bkg = self.ax.pcolormesh(self.y, self.z, blank,
                                       cmap=cmap,vmin=vmin,vmax=vmax,)
         self.cbar = self.fig.colorbar(self.bkg)
         self.cbar.set_label(label=r'$U$ [m/s]',fontsize='x-large')
@@ -1137,3 +1140,61 @@ class Plotter(object):
         self.ax.axis('equal')
         self.ax.set_xlabel('y [m]')
         self.ax.set_ylabel('z [m]')
+
+    def add(self,name,wake,color=None,center=True,outline=True,
+            marker='+',markersize=14,markerwidth=2,markeralpha=1.0,
+            outlinewidth=3,outlinealpha=0.5,
+           ):
+        """Add wake object to visualize"""
+        # set up styles
+        self.wakes[name] = wake
+        if color is None:
+            color = colors[len(self.wakes.keys())-1]
+        # add plot objects
+        if center:
+            self.centers[name], = self.ax.plot([],[],marker,color=color,
+                                               markersize=markersize,
+                                               markeredgewidth=markerwidth,
+                                               alpha=markeralpha,
+                                               label=name)
+        else:
+            self.centers[name] = None
+        if outline:
+            self.outlines[name], = self.ax.plot([],[],color=color,
+                                                lw=outlinewidth,
+                                                alpha=outlinealpha,
+                                                label=name)
+        else:
+            self.outlines[name] = None
+
+    def init_plot(self):
+        """For FuncAnimation init_func, to clear axes objects"""
+        for name,wake in self.wakes.items():
+            if self.centers[name] is not None:
+                self.centers[name].set_data([],[]) 
+                updated.append(self.centers[name])
+            if self.outlines[name] is not None:
+                self.outlines[name].set_data([],[]) 
+                updated.append(self.outlines[name])
+        return tuple(updated)
+
+    def plot(self,itime):
+        """Updates plot with axes objects corresponding to the specified
+        time frame (can be used with FuncAnimation).
+        """
+        bkgdata = np.ma.masked_invalid(self.u[itime,:-1,:-1])
+        self.bkg.set_array(bkgdata.ravel())
+        print(self.u[itime,:-1,:-1])
+        updated = [self.bkg]
+        for name,wake in self.wakes.items():
+            if self.centers[name] is not None:
+                self.centers[name].set_data(wake.xh_wake[itime],
+                                            wake.xv_wake[itime]) 
+                updated.append(self.centers[name])
+            if self.outlines[name] is not None:
+                self.outlines[name].set_data(wake.paths[itime][:,0],
+                                             wake.paths[itime][:,1]) 
+                updated.append(self.outlines[name])
+        self.ax.set_title('itime = {:d}'.format(itime))
+        return tuple(updated)
+
