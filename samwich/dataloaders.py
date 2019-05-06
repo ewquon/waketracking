@@ -368,9 +368,14 @@ class SpinnerLidarMatlab(SampledData):
     
     File format: MATLAB 5.0 MAT-file, format updated April 2019
     """
-    def __init__(self,matfile,verbose=True):
+    def __init__(self,matfile,
+                 focaldist=5.0, D=27.0,
+                 horzrange=(-100,100), vertrange=(0,120), ds=2.5,
+                 verbose=True):
         from scipy.io import loadmat
         import naturalneighbor
+        self.D = D
+        self.focaldist = focaldist
         data = loadmat(matfile,
                        struct_as_record=False,
                        squeeze_me=True, # don't need to index properties by [0][0] or [0,0]
@@ -379,6 +384,7 @@ class SpinnerLidarMatlab(SampledData):
         self.scan_avg = data['scan_avg']
         self.variables = data['variables']
         self._parse_variables()
+        self._setup_grid(horzrange,vertrange,ds)
         if verbose:
             print('Loaded',matfile)
             print(data['__header__'])
@@ -397,6 +403,17 @@ class SpinnerLidarMatlab(SampledData):
                 self.units[datastruct][dataname] = units
             except KeyError:
                 self.units[datastruct] = { dataname: units }
+
+    def _setup_grid(self,horzrange,vertrange,ds):
+        assert (self.focaldist in self.scan_avg.focus_dist_set_D)
+        xD = self.focaldist * self.D
+        # natural neighbor interpolation will interpolate to cell centers
+        # - the interpolation grid defines the points of the output mesh
+        # - the x-dimension is 1 cell thick
+        self.interp_grid_def = [[xD-ds/2,xD+ds,ds], [*horzrange,ds], [*vertrange,ds]]
+        self.x1 = np.arange(self.interp_grid_def[0][0], self.interp_grid_def[0][1]+0.001, ds)
+        self.y1 = np.arange(self.interp_grid_def[1][0], self.interp_grid_def[1][1]+0.001, ds)
+        self.z1 = np.arange(self.interp_grid_def[2][0], self.interp_grid_def[2][1]+0.001, ds)
 
 
 #------------------------------------------------------------------------------
