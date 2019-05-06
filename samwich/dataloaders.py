@@ -130,7 +130,7 @@ class SampledData(object):
             x1 = self.y[i0,j0:j1,k0:k1]
             x2 = self.z[i0,j0:j1,k0:k1]
             if self.datasize==1:
-                u = self.data[:,i0,:,:,0]
+                u = self.data[:,i0,:,:]
             else:
                 u = self.data[:,i0,:,:,:]
         elif j0 is not None and j0==j1:
@@ -428,6 +428,7 @@ class SpinnerLidarMatlab(SampledData):
                                              (y1[:-1]+y1[1:])/2,
                                              (z1[:-1]+z1[1:])/2,
                                              indexing='ij')
+        self.NX, self.NY, self.NZ = self.x.shape
 
     def interpolate(self,itime=None,coordsys='streamwiseCS'):
         """Interpolate sampled velocity field in the specified
@@ -447,6 +448,7 @@ class SpinnerLidarMatlab(SampledData):
         zs = scan_cs.z
         vlos = self.scan.vlos
         proj = scan_cs.vlos_projection
+        self.datasize = 1
         self.vproj = np.empty([len(times),*self.x.shape])
         for itime in times:
             xi = xs[itime][np.isfinite(xs[itime])]
