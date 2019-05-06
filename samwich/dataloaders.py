@@ -452,6 +452,7 @@ class SpinnerLidarMatlab(SampledData):
         proj = scan_cs.vlos_projection
         self.datasize = 1
         self.vproj = np.empty([len(times),*self.x.shape])
+        # interpolate to regular grid for all times
         for itime in times:
             xi = xs[itime][np.isfinite(xs[itime])]
             yi = ys[itime][np.isfinite(ys[itime])]
@@ -464,11 +465,17 @@ class SpinnerLidarMatlab(SampledData):
             points = np.stack((xi,yi,zi),axis=-1)
             self.vproj[itime,:,:,:] = naturalneighbor.griddata(points, ui, self.interp_grid_def)
             if self.verbose:
-                sys.stderr.write('\rProcessed vlos [{:s}] at t={:g} s ({:d}/{:d})'.format(
+                sys.stderr.write('\rProcessed vlos [{:s}] at {:s} ({:d}/{:d})'.format(
                                  self.var_units['scan']['vlos'],
-                                 self.t[itime], itime+1, self.Ntimes))
-        if self.verbose:
-            sys.stderr.write('\n')
+                                 str(self.t[itime]), itime+1, self.Ntimes))
+        if self.verbose: sys.stderr.write('\n')
+        # at this point, vproj is the projected velocity for the full
+        # plane, but we haven't attempted to mark the parts of the
+        # velocity field that lie outside the scan region
+        # - set data attribute at this point so we can proceed with
+        #   the wake tracking anyway
+        # - TODO: optional masking step to add nans
+        self.data = self.vproj
 
 
 #------------------------------------------------------------------------------
