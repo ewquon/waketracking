@@ -91,9 +91,11 @@ class SampledData(object):
             try:
                 self.Ntimes = self.data.shape[0]
                 self.NX, self.NY, self.NZ = self.x.shape
-                self.datasize = self.data.shape[4]
-                if self.data.shape[4] == datasize \
-                        and self.data.shape[1] == self.NX \
+                try:
+                    self.datasize = self.data.shape[4]
+                except IndexError:
+                    self.datasize = 1
+                if self.data.shape[1] == self.NX \
                         and self.data.shape[2] == self.NY \
                         and self.data.shape[3] == self.NZ:
                     print('Loaded compressed array data from',savepath)
@@ -139,7 +141,7 @@ class SampledData(object):
             x1 = self.y[i0:i1,j0,k0:k1]
             x2 = self.z[i0:i1,j0,k0:k1]
             if self.datasize==1:
-                u = self.data[:,:,j0,:,0]
+                u = self.data[:,:,j0,:]
             else:
                 u = self.data[:,:,j0,:,:]
         elif k0 is not None and k0==k1:
@@ -148,7 +150,7 @@ class SampledData(object):
             x1 = self.y[i0:i1,j0:j1,k0]
             x2 = self.z[i0:i1,j0:j1,k0]
             if self.datasize==1:
-                u = self.data[:,:,:,k0,0]
+                u = self.data[:,:,:,k0]
             else:
                 u = self.data[:,:,:,k0,:]
         else:
@@ -301,7 +303,7 @@ class RawData(SampledData):
         self.x = np.zeros((1,NY,NZ))
         self.y = y[order].reshape((1,NY,NZ))
         self.z = z[order].reshape((1,NY,NZ))
-        self.data = u[order].reshape((1,1,NY,NZ,1))  # shape == (Ntimes,NX,NY,NZ,datasize)
+        self.data = u[order].reshape((1,1,NY,NZ))  # shape == (Ntimes,NX,NY,NZ[,datasize])
         self.data_read_from = None
 
 class PlanarData(SampledData):
@@ -540,7 +542,7 @@ class PandasData(SampledData):
         udata = [ df.u.as_matrix() for df in frames ]
         self.y = np.zeros((self.NX,self.NY,self.NZ))
         self.z = np.zeros((self.NX,self.NY,self.NZ))
-        self.data = np.zeros((1,self.NX,self.NY,self.NZ,1))  # shape == (Ntimes,NX,NY,NZ,datasize)
+        self.data = np.zeros((1,self.NX,self.NY,self.NZ))  # shape == (Ntimes,NX,NY,NZ,datasize)
         for i in range(self.NX):
             order = np.lexsort((zdata[i],ydata[i]))
             ygrid = ydata[i][order].reshape((NY,NZ))
@@ -558,7 +560,7 @@ class PandasData(SampledData):
                 ugrid = interpGrid(ygrid[:,0],zgrid[0,:])
             self.y[i,:,:] = ygrid
             self.z[i,:,:] = zgrid
-            self.data[0,i,:,:,0] = ugrid
+            self.data[0,i,:,:] = ugrid
         self.datasize = 1
 
 
@@ -600,8 +602,8 @@ class XarrayData(SampledData):
             W = xa.W.values
         except AttributeError:
             self.datasize = 1
-            self.data = np.zeros((self.Ntimes,self.NX,self.NY,self.NZ,1))
-            self.data[:,:,:,:,0] = U
+            self.data = np.zeros((self.Ntimes,self.NX,self.NY,self.NZ))
+            self.data[:,:,:,:] = U
         else:
             self.datasize = 3
             self.data = np.zeros((self.Ntimes,self.NX,self.NY,self.NZ,3))
