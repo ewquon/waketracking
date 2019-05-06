@@ -1,6 +1,7 @@
 from __future__ import print_function
 import sys
 import os
+from datetime import datetime
 
 import numpy as np
 
@@ -373,7 +374,7 @@ class SpinnerLidarMatlab(SampledData):
                  horzrange=(-100,100), vertrange=(0,120), ds=2.5,
                  verbose=True):
         from scipy.io import loadmat
-        import naturalneighbor
+        self.verbose = verbose
         self.D = D
         self.focaldist = focaldist
         data = loadmat(matfile,
@@ -382,27 +383,35 @@ class SpinnerLidarMatlab(SampledData):
                       )
         self.scan = data['scan']
         self.scan_avg = data['scan_avg']
+        if verbose:
+            print('Loaded {:s} ({:s})'.format(matfile,str(data['__header__'])))
+            print('  x/D available:',np.unique(self.scan_avg.focus_dist_set_D))
         self.variables = data['variables']
         self._parse_variables()
+        self._convert_times()
         self._setup_grid(horzrange,vertrange,ds)
-        if verbose:
-            print('Loaded',matfile)
-            print(data['__header__'])
-            print('  x/D available:',np.unique(self.scan_avg.focus_dist_set_D))
 
     def _parse_variables(self):
         def array_to_str(arr):
             return ''.join(str(char) for char in arr).strip()
-        self.units = {}
+        self.var_units = {}
         for v,units in zip(self.variables.list,self.variables.units):
             splitvarname = array_to_str(v).split('.')
             datastruct = splitvarname[0]
             dataname = '.'.join(splitvarname[1:])
             units = array_to_str(units)
             try:
-                self.units[datastruct][dataname] = units
+                self.var_units[datastruct][dataname] = units
             except KeyError:
-                self.units[datastruct] = { dataname: units }
+                self.var_units[datastruct] = { dataname: units }
+
+    def _convert_times(self):
+        tavg = self.scan_avg.time # assumed seconds from 1970-01-00 00Z
+        self.t = [ datetime.utcfromtimestamp(ti) for ti in tavg ]
+        self.Ntimes = len(self.t)
+        if self.verbose:
+            print('  converted {:d} times from {:s}'.format(
+                    self.Ntimes, self.var_units['scan_avg']['time']))
 
     def _setup_grid(self,horzrange,vertrange,ds):
         assert (self.focaldist in self.scan_avg.focus_dist_set_D)
@@ -410,10 +419,52 @@ class SpinnerLidarMatlab(SampledData):
         # natural neighbor interpolation will interpolate to cell centers
         # - the interpolation grid defines the points of the output mesh
         # - the x-dimension is 1 cell thick
-        self.interp_grid_def = [[xD-ds/2,xD+ds,ds], [*horzrange,ds], [*vertrange,ds]]
-        self.x1 = np.arange(self.interp_grid_def[0][0], self.interp_grid_def[0][1]+0.001, ds)
-        self.y1 = np.arange(self.interp_grid_def[1][0], self.interp_grid_def[1][1]+0.001, ds)
-        self.z1 = np.arange(self.interp_grid_def[2][0], self.interp_grid_def[2][1]+0.001, ds)
+        self.interp_grid_def = [[xD-ds/2,xD+ds/2,ds], [*horzrange,ds], [*vertrange,ds]]
+        x1 = np.arange(self.interp_grid_def[0][0], self.interp_grid_def[0][1]+0.001, ds)
+        y1 = np.arange(self.interp_grid_def[1][0], self.interp_grid_def[1][1]+0.001, ds)
+        z1 = np.arange(self.interp_grid_def[2][0], self.interp_grid_def[2][1]+0.001, ds)
+        # save grid of cell centers
+        self.x, self.y, self.z = np.meshgrid((x1[:-1]+x1[1:])/2,
+                                             (y1[:-1]+y1[1:])/2,
+                                             (z1[:-1]+z1[1:])/2,
+                                             indexing='ij')
+
+    def interpolate(self,itime=None,coordsys='streamwiseCS'):
+        """Interpolate sampled velocity field in the specified
+        coordinate system.
+        
+        v_projected = scan.vlos / scan.streamwiseCS.vlos_projection
+        """
+        import naturalneighbor
+        if itime is not None:
+            times = [itime]
+        else:
+            times = np.arange(self.Ntimes)
+        scan_cs = getattr(self.scan,coordsys) # e.g., `scan.streamwiseCS`
+        # scan points in rosette pattern
+        xs = scan_cs.x
+        ys = scan_cs.y
+        zs = scan_cs.z
+        vlos = self.scan.vlos
+        proj = scan_cs.vlos_projection
+        self.vproj = np.empty([len(times),*self.x.shape])
+        for itime in times:
+            xi = xs[itime][np.isfinite(xs[itime])]
+            yi = ys[itime][np.isfinite(ys[itime])]
+            zi = zs[itime][np.isfinite(zs[itime])]
+            ui = vlos[itime][np.isfinite(vlos[itime])] \
+               / proj[itime][np.isfinite(proj[itime])]
+            assert np.all(np.isfinite(xi) == np.isfinite(yi))
+            assert np.all(np.isfinite(xi) == np.isfinite(zi))
+            assert np.all(np.isfinite(xi) == np.isfinite(ui))
+            points = np.stack((xi,yi,zi),axis=-1)
+            self.vproj[itime,:,:,:] = naturalneighbor.griddata(points, ui, self.interp_grid_def)
+            if self.verbose:
+                sys.stderr.write('\rProcessed vlos [{:s}] at t={:g} s ({:d}/{:d})'.format(
+                                 self.var_units['scan']['vlos'],
+                                 self.t[itime], itime+1, self.Ntimes))
+        if self.verbose:
+            sys.stderr.write('\n')
 
 
 #------------------------------------------------------------------------------
