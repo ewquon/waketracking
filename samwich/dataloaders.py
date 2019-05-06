@@ -209,15 +209,15 @@ class SampledData(object):
             Velocity array with dimensions (Ntimes,N1,N2,datasize).
         """
         if x is not None:
-            xmid = self.x[:,self.NY/2,self.NZ/2]
+            xmid = self.x[:,int(self.NY/2),int(self.NZ/2)]
             i0 = np.argmin(np.abs(xmid-x))
             return self.sliceI(i0)
         elif y is not None:
-            ymid = self.y[self.NX/2,:,self.NZ/2]
+            ymid = self.y[int(self.NX/2),:,int(self.NZ/2)]
             j0 = np.argmin(np.abs(ymid-y))
             return self.sliceJ(j0)
         elif z is not None:
-            zmid = self.z[self.NX/2,self.NY/2,:]
+            zmid = self.z[int(self.NX/2),int(self.NY/2),:]
             k0 = np.argmin(np.abs(zmid-z))
             return self.sliceK(k0)
         else:
