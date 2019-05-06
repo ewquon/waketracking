@@ -355,7 +355,51 @@ class PlanarData(SampledData):
 
 
 #------------------------------------------------------------------------------
+class SpinnerLidarMatlab(SampledData):
+    """Read SpinnerLidar data collected by SNL.
+    
+    Scans are mapped from discrete points along the rosette scan pattern
+    to a structured grid using _natural_ neighbor interpolation (not
+    nearest neighbor). This capability is provided by the python
+    `naturalneighbor` package, which may be installed by `pip install
+    naturalneighbor`. The interpolation is performed assuming that all
+    scan points are collapsed onto a 2-D plane in the 'streamwise'
+    frame of reference.
+    
+    File format: MATLAB 5.0 MAT-file, format updated April 2019
+    """
+    def __init__(self,matfile,verbose=True):
+        from scipy.io import loadmat
+        import naturalneighbor
+        data = loadmat(matfile,
+                       struct_as_record=False,
+                       squeeze_me=True, # don't need to index properties by [0][0] or [0,0]
+                      )
+        self.scan = data['scan']
+        self.scan_avg = data['scan_avg']
+        self.variables = data['variables']
+        self._parse_variables()
+        if verbose:
+            print('Loaded',matfile)
+            print(data['__header__'])
+            print('  x/D available:',np.unique(self.scan_avg.focus_dist_set_D))
 
+    def _parse_variables(self):
+        def array_to_str(arr):
+            return ''.join(str(char) for char in arr).strip()
+        self.units = {}
+        for v,units in zip(self.variables.list,self.variables.units):
+            splitvarname = array_to_str(v).split('.')
+            datastruct = splitvarname[0]
+            dataname = '.'.join(splitvarname[1:])
+            units = array_to_str(units)
+            try:
+                self.units[datastruct][dataname] = units
+            except KeyError:
+                self.units[datastruct] = { dataname: units }
+
+
+#------------------------------------------------------------------------------
 class PandasData(SampledData):
     """Raw data from pandas dataframe(s)
     
@@ -449,7 +493,6 @@ class PandasData(SampledData):
 
 
 #------------------------------------------------------------------------------
-
 class XarrayData(SampledData):
     """Xarray dataset
     
@@ -498,7 +541,6 @@ class XarrayData(SampledData):
 
 
 #------------------------------------------------------------------------------
-
 class FoamEnsightArray(SampledData):
     """OpenFOAM array sampling data in Ensight format
     
