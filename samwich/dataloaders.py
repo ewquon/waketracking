@@ -476,7 +476,8 @@ class SpinnerLidarMatlab(SampledData):
                     focaldist_D=5.0,
                     horzrange=[None,None], vertrange=[None,None], ds=2.5,
                     force2D=True,
-                    at_focaldist_only=True):
+                    at_focaldist_only=True,
+                    mask_outside=True):
         """Interpolate sampled velocity field in the specified
         coordinate system.
 
@@ -508,8 +509,11 @@ class SpinnerLidarMatlab(SampledData):
             proj = proj[at_focaldist]
         # set up interp_grid_def, update xs if force2D
         self._setup_grid(xs,ys,zs,horzrange,vertrange,ds,focaldist_D,force2D)
+        if mask_outside:
+            from scipy.spatial import ConvexHull, Delaunay
+            testpoints = np.stack((self.y.ravel(), self.z.ravel()), axis=-1)
         self.datasize = 1
-        self.vproj = np.empty([self.Ntimes,*self.x.shape])
+        self.data = np.empty([self.Ntimes,*self.x.shape])
         # interpolate to regular grid for all times
         for itime in range(self.Ntimes):
             xi = xs[itime][np.isfinite(xs[itime])]
@@ -521,19 +525,23 @@ class SpinnerLidarMatlab(SampledData):
             assert np.all(np.isfinite(xi) == np.isfinite(zi))
             assert np.all(np.isfinite(xi) == np.isfinite(ui))
             points = np.stack((xi,yi,zi),axis=-1)
-            self.vproj[itime,:,:,:] = naturalneighbor.griddata(points, ui, self.interp_grid_def)
+            self.data[itime,:,:,:] = naturalneighbor.griddata(points, ui, self.interp_grid_def)
+            if mask_outside:
+                # set to nan points that are outside the rosette
+                # - identify point envelope
+                points2d = np.stack((yi,zi),axis=-1)
+                hull = ConvexHull(points)
+                # - use Delaunay tesselation to determine whether we're inside
+                #   the scan region or not
+                edge = Delaunay(points2d[hull.vertices])
+                outside = (edge.find_simplex(testpoints) < 0).reshape(self.x.shape)
+                iout,jout,kout = np.where(outside)
+                self.data[itime,iout,jout,kout] = np.nan
             if self.verbose:
                 sys.stderr.write('\rProcessed vlos [{:s}] at {:s} ({:d}/{:d})'.format(
                                  self.var_units['scan']['vlos'],
                                  str(self.t[itime]), itime+1, self.Ntimes))
         if self.verbose: sys.stderr.write('\n')
-        # at this point, vproj is the projected velocity for the full
-        # plane, but we haven't attempted to mark the parts of the
-        # velocity field that lie outside the scan region
-        # - set data attribute at this point so we can proceed with
-        #   the wake tracking anyway
-        # - TODO: optional masking step to add nans
-        self.data = self.vproj
 
 
 #------------------------------------------------------------------------------
