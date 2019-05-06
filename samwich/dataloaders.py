@@ -371,14 +371,10 @@ class SpinnerLidarMatlab(SampledData):
     
     File format: MATLAB 5.0 MAT-file, format updated April 2019
     """
-    def __init__(self,matfile,
-                 focaldist=5.0, D=27.0,
-                 horzrange=(-100,100), vertrange=(0,120), ds=2.5,
-                 verbose=True):
+    def __init__(self,matfile,D=27.0,verbose=True):
         from scipy.io import loadmat
         self.verbose = verbose
         self.D = D
-        self.focaldist = focaldist
         data = loadmat(matfile,
                        struct_as_record=False,
                        squeeze_me=True, # don't need to index properties by [0][0] or [0,0]
@@ -391,7 +387,6 @@ class SpinnerLidarMatlab(SampledData):
         self.variables = data['variables']
         self._parse_variables()
         self._convert_times()
-        self._setup_grid(horzrange,vertrange,ds)
 
     def _parse_variables(self):
         def array_to_str(arr):
@@ -409,51 +404,114 @@ class SpinnerLidarMatlab(SampledData):
 
     def _convert_times(self):
         tavg = self.scan_avg.time # assumed seconds from 1970-01-00 00Z
-        self.t = [ datetime.utcfromtimestamp(ti) for ti in tavg ]
+        self.t = np.array([ datetime.utcfromtimestamp(ti) for ti in tavg ])
         self.Ntimes = len(self.t)
         if self.verbose:
             print('  converted {:d} times from {:s}'.format(
                     self.Ntimes, self.var_units['scan_avg']['time']))
 
-    def _setup_grid(self,horzrange,vertrange,ds):
-        assert (self.focaldist in self.scan_avg.focus_dist_set_D)
-        xD = self.focaldist * self.D
-        # natural neighbor interpolation will interpolate to cell centers
-        # - the interpolation grid defines the points of the output mesh
-        # - the x-dimension is 1 cell thick
-        self.interp_grid_def = [[xD-ds/2,xD+ds/2,ds], [*horzrange,ds], [*vertrange,ds]]
+    def _setup_grid(self,xs,ys,zs,horzrange,vertrange,ds,focaldist_D,force2D):
+        """Set up output grids
+
+        Natural neighbor interpolation will interpolate to cell centers;
+        the interpolation grid defines the points of the output mesh.
+        """
+        assert (focaldist_D in self.scan_avg.focus_dist_set_D)
+        # set up default ranges
+        xD = focaldist_D * self.D
+        if horzrange[0] is None:
+            ymin = np.min([np.nanmin(yi) for yi in ys])
+            horzrange[0] = np.floor(ymin/ds)*ds
+        if horzrange[1] is None:
+            ymax = np.max([np.nanmax(yi) for yi in ys])
+            horzrange[1] = np.ceil(ymax/ds)*ds
+        if vertrange[0] is None:
+            zmin = np.min([np.nanmin(zi) for zi in zs])
+            vertrange[0] = np.floor(zmin/ds)*ds
+        if vertrange[1] is None:
+            zmax = np.max([np.nanmax(zi) for zi in zs])
+            vertrange[1] = np.ceil(zmax/ds)*ds
+        # set up output grid definition for naturalneighbor
+        xmin = np.min([np.nanmin(xi) for xi in xs])
+        xmax = np.max([np.nanmax(xi) for xi in xs])
+        assert (xD >= xmin) and (xD <= xmax) 
+        if self.verbose:
+            print('  x range (detected):',xmin,xmax)
+            print('  y range (input):',*horzrange)
+            print('  z range (input):',*vertrange)
+        if force2D:
+            # output x-dimension is 1 cell thick, centered at the focal dist
+            xdef = [xD-ds/2, xD+ds/2, ds]
+            # normalize xs
+            norm = max(xD-xmin, xmax-xD) / (ds/2)
+            for itime in range(self.Ntimes):
+                xs[itime] = (xs[itime]-xD)/norm + xD
+            # DEBUG:
+            xmin = np.min([np.nanmin(xi) for xi in xs])
+            xmax = np.max([np.nanmax(xi) for xi in xs])
+            if self.verbose:
+                print('  new x range (forcing 2D):',xmin,xmax)
+            xmin = np.floor(xmin/ds)*ds
+            xmax = np.ceil(xmax/ds)*ds
+        else:
+            # output x-dimension is determined by the range of x values
+            xmin = np.floor(xmin/ds)*ds
+            xmax = np.ceil(xmax/ds)*ds
+            xdef = [xmin, xmax, ds]
+        self.interp_grid_def = [xdef, [*horzrange, ds], [*vertrange, ds]]
+        if self.verbose:
+            print('  interpolation grid:',self.interp_grid_def)
+        # save grid of cell centers
         x1 = np.arange(self.interp_grid_def[0][0], self.interp_grid_def[0][1]+0.001, ds)
         y1 = np.arange(self.interp_grid_def[1][0], self.interp_grid_def[1][1]+0.001, ds)
         z1 = np.arange(self.interp_grid_def[2][0], self.interp_grid_def[2][1]+0.001, ds)
-        # save grid of cell centers
         self.x, self.y, self.z = np.meshgrid((x1[:-1]+x1[1:])/2,
                                              (y1[:-1]+y1[1:])/2,
                                              (z1[:-1]+z1[1:])/2,
                                              indexing='ij')
         self.NX, self.NY, self.NZ = self.x.shape
 
-    def interpolate(self,itime=None,coordsys='streamwiseCS'):
+    def interpolate(self,
+                    coordsys='streamwiseCS',
+                    focaldist_D=5.0,
+                    horzrange=[None,None], vertrange=[None,None], ds=2.5,
+                    force2D=True,
+                    at_focaldist_only=True):
         """Interpolate sampled velocity field in the specified
         coordinate system.
+
+        If `at_focaldist_only`, then the scans are downselected to
+        only those with `scan_avg.focal_dist_set_D` equal to `focaldist`.
         
         v_projected = scan.vlos / scan.streamwiseCS.vlos_projection
         """
         import naturalneighbor
-        if itime is not None:
-            times = [itime]
-        else:
-            times = np.arange(self.Ntimes)
-        scan_cs = getattr(self.scan,coordsys) # e.g., `scan.streamwiseCS`
         # scan points in rosette pattern
+        scan_cs = getattr(self.scan,coordsys) # e.g., `scan.streamwiseCS`
         xs = scan_cs.x
         ys = scan_cs.y
         zs = scan_cs.z
         vlos = self.scan.vlos
         proj = scan_cs.vlos_projection
+        # filter scans
+        if at_focaldist_only:
+            at_focaldist = (self.scan_avg.focus_dist_set_D == focaldist_D)
+            self.t = self.t[at_focaldist]
+            if self.verbose:
+                print('Indices filtered from',self.Ntimes,
+                      'to',len(self.t),'times')
+            self.Ntimes = len(self.t)
+            xs = xs[at_focaldist]
+            ys = ys[at_focaldist]
+            zs = zs[at_focaldist]
+            vlos = vlos[at_focaldist]
+            proj = proj[at_focaldist]
+        # set up interp_grid_def, update xs if force2D
+        self._setup_grid(xs,ys,zs,horzrange,vertrange,ds,focaldist_D,force2D)
         self.datasize = 1
-        self.vproj = np.empty([len(times),*self.x.shape])
+        self.vproj = np.empty([self.Ntimes,*self.x.shape])
         # interpolate to regular grid for all times
-        for itime in times:
+        for itime in range(self.Ntimes):
             xi = xs[itime][np.isfinite(xs[itime])]
             yi = ys[itime][np.isfinite(ys[itime])]
             zi = zs[itime][np.isfinite(zs[itime])]
