@@ -7,7 +7,7 @@ import os
 import numpy as np
 import pandas as pd
 
-from samwich.dataloaders import planar_data
+from samwich.dataloaders import PlanarData
 from samwich.waketrackers import track
 from samwich.gaussian_functions import PorteAgel
 trackerlist = track()
@@ -36,7 +36,7 @@ if verbose:
 
 ## Read in test data
 varlist = ['x','y','z','u','v','w']
-sample = planar_data({v: np.loadtxt(datadir+'3D_{}_{}_WFoR.txt'.format(kind,v)) for v in varlist})
+sample = PlanarData({v: np.loadtxt(datadir+'3D_{}_{}_WFoR.txt'.format(kind,v)) for v in varlist})
 
 
 ## Calculate freestream
@@ -101,6 +101,7 @@ tracker = 'elliptical'
 wake[tracker] = track(sample.sliceI(),method='Gaussian2D',verbose=verbose) 
 wake[tracker].remove_shear(wind_profile=free_Uprofile)
 yc[tracker],zc[tracker] = wake[tracker].find_centers(umin=None,
+                                                     A_ref=ref_area,
                                                      A_min=ref_area/5.0,  # ad hoc value
                                                      A_max=ref_area*2.0,  # ad hoc value
                                                      AR_max=10.0,  # ad hoc value

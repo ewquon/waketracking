@@ -103,6 +103,7 @@ def track_all(kind,verbose=False,tol=1e-4):
     wake[tracker].remove_shear(wind_profile=free_Uprofile)
     yc[tracker],zc[tracker] = wake[tracker].find_centers(
             umin=None,
+            A_ref=ref_area,
             A_min=ref_area/5.0,  # ad hoc value
             A_max=ref_area*2.0,  # ad hoc value
             AR_max=10.0)  # ad hoc value
