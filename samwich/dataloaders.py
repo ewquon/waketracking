@@ -410,15 +410,15 @@ class SpinnerLidarMatlab(SampledData):
             print('  converted {:d} times from {:s}'.format(
                     self.Ntimes, self.var_units['scan_avg']['time']))
 
-    def _setup_grid(self,xs,ys,zs,horzrange,vertrange,ds,focaldist_D,force2D):
+    def _setup_grid(self,xs,ys,zs,horzrange,vertrange,ds):
         """Set up output grids
 
         Natural neighbor interpolation will interpolate to cell centers;
         the interpolation grid defines the points of the output mesh.
         """
-        assert (focaldist_D in self.scan_avg.focus_dist_set_D)
+        assert (self.focaldist_D in self.scan_avg.focus_dist_set_D)
         # set up default ranges
-        xD = focaldist_D * self.D
+        xD = self.focaldist_D * self.D
         if horzrange[0] is None:
             ymin = np.min([np.nanmin(yi) for yi in ys])
             horzrange[0] = np.floor(ymin/ds)*ds
@@ -439,7 +439,7 @@ class SpinnerLidarMatlab(SampledData):
             print('  x range (detected):',xmin,xmax)
             print('  y range (input):',*horzrange)
             print('  z range (input):',*vertrange)
-        if force2D:
+        if self.force2D:
             # output x-dimension is 1 cell thick, centered at the focal dist
             xdef = [xD-ds/2, xD+ds/2, ds]
             # normalize xs
@@ -487,6 +487,9 @@ class SpinnerLidarMatlab(SampledData):
         v_projected = scan.vlos / scan.streamwiseCS.vlos_projection
         """
         import naturalneighbor
+        # save global properties
+        self.focaldist_D = focaldist_D
+        self.force2D = force2D
         # scan points in rosette pattern
         scan_cs = getattr(self.scan,coordsys) # e.g., `scan.streamwiseCS`
         xs = scan_cs.x
@@ -508,7 +511,7 @@ class SpinnerLidarMatlab(SampledData):
             vlos = vlos[at_focaldist]
             proj = proj[at_focaldist]
         # set up interp_grid_def, update xs if force2D
-        self._setup_grid(xs,ys,zs,horzrange,vertrange,ds,focaldist_D,force2D)
+        self._setup_grid(xs,ys,zs,horzrange,vertrange,ds)
         if mask_outside:
             from scipy.spatial import ConvexHull, Delaunay
             testpoints = np.stack((self.y.ravel(), self.z.ravel()), axis=-1)
