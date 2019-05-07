@@ -6,7 +6,7 @@
 import os
 import numpy as np
 
-from samwich.dataloaders import planar_data
+from samwich.dataloaders import PlanarData
 from samwich.waketrackers import track
 from samwich.gaussian_functions import PorteAgel
 trackerlist = track()
@@ -34,7 +34,7 @@ def track_all(kind,verbose=False,tol=1e-4):
 
     # Read in test data
     varlist = ['x','y','z','u','v','w']
-    sample = planar_data({
+    sample = PlanarData({
         v: np.loadtxt(os.path.join(datadir,'3D_{}_{}_WFoR.txt'.format(kind,v))) for v in varlist
     })
 
