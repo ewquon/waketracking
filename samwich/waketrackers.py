@@ -137,9 +137,9 @@ class WakeTracker(object):
             zdata = args[2]
             udata = args[3]
         assert(xdata.shape == ydata.shape == zdata.shape)
-        self.x = xdata
-        self.y = ydata
-        self.z = zdata
+        self.x = xdata.copy()
+        self.y = ydata.copy()
+        self.z = zdata.copy()
         self.Nh, self.Nv = self.x.shape
 
         # calculate sampling plane unit normal
@@ -225,14 +225,14 @@ class WakeTracker(object):
         self.Ntimes = udata.shape[0]
         if len(udata.shape)==3: # SCALAR data
             self.datasize = 1
-            self.u_tot = udata  # shape=(Ntimes,Nh,Nv)
+            self.u_tot = udata.copy()  # shape=(Ntimes,Nh,Nv)
             self.v_tot = np.zeros(udata.shape)
             self.w_tot = np.zeros(udata.shape)
         else: # VECTOR data assumed
             self.datasize = udata.shape[3]
             assert(self.datasize == 3)
             if all(self.norm == [1,0,0]):
-                self.u_tot = udata[:,:,:,0]
+                self.u_tot = udata[:,:,:,0].copy()
 #                self.v_tot = udata[:,:,:,1]
 #                self.w_tot = udata[:,:,:,2]
             else:
