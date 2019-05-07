@@ -546,6 +546,39 @@ class SpinnerLidarMatlab(SampledData):
                                  str(self.t[itime]), itime+1, self.Ntimes))
         if self.verbose: sys.stderr.write('\n')
 
+    def to_netcdf(self,fpath,**kwargs):
+        import xarray
+        t_1d = self.t
+        x_1d = self.x[:,0,0]
+        y_1d = self.y[0,:,0]
+        z_1d = self.z[0,0,:]
+        vproj_name = 'Line-of-sight velocity projected into streamwise coordinate system'
+        vproj_data = self.data.swapaxes(2,3) # netcdf convention?
+        if self.force2D:
+            # paraview 5.6.0 isn't smart enough to handle dimensions
+            # with size==1, so remove dimension
+            vproj = xarray.DataArray(
+                data=vproj_data[:,0,:,:],
+                dims=['t','z','y'],
+                coords={'t':t_1d, 'z':z_1d, 'y':y_1d},
+                name='projected velocity',
+                attrs={'long_name':vproj_name,
+                       'units':self.var_units['scan']['vlos']}
+            )
+        else:
+            vproj = xarray.DataArray(
+                data=vproj_data,
+                dims=['t','x','z','y'],
+                coords={'t':t_1d, 'x':x_1d, 'z':z_1d, 'y':y_1d},
+                name='projected velocity',
+                attrs={'long_name':vproj_name,
+                       'units':self.var_units['scan']['vlos']}
+            )
+        xadata = xarray.Dataset(data_vars={'vproj':vproj})
+        if self.verbose:
+            print(xadata)
+        xadata.to_netcdf(path=fpath,**kwargs)
+
 
 #------------------------------------------------------------------------------
 class PandasData(SampledData):
@@ -607,10 +640,10 @@ class PandasData(SampledData):
         self.NY = refineFactor * NY
         self.NZ = refineFactor * NZ
 
-        xarray = np.ones((self.NX,self.NY,self.NZ))
+        xdata = np.ones((self.NX,self.NY,self.NZ))
         for i,xi in enumerate(xr):
-            xarray[i,:,:] *= xi
-        self.x = xarray
+            xdata[i,:,:] *= xi
+        self.x = xdata
         
         # sort and interpolate data
         ydata = [ df.y.as_matrix() for df in frames ]
