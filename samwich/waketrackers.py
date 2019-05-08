@@ -635,7 +635,9 @@ class WakeTracker(object):
         self.ax.set_ylabel(r'$z$ [m]', fontsize=14)
 
     def clear_plot(self):
-        """Resets all saved plot handles and requires reinitialization
+        """DEPRECATED: Use Plotter instead
+        
+        Resets all saved plot handles and requires reinitialization
         the next time plot_contour is called.
         """
         #if hasattr(self,'fig') and self.fig is not None:
@@ -653,7 +655,9 @@ class WakeTracker(object):
                     figsize=(8,6),
                     writepng=False,outdir='.',seriesname='U',
                     dpi=100):
-        """Plot/update contour and center marker in the rotor-aligned
+        """DEPRECATED: Use Plotter instead
+
+        Plot/update contour and center marker in the rotor-aligned
         frame at time ${itime}.
 
         Parameters
@@ -759,7 +763,9 @@ class WakeTracker(object):
     def plot_outline(self,itime=0,ax=None,
             lw=2,ls='-',facecolor='none',edgecolor='w',
             **kwargs):
-        """Helper function for plotting a representation of the wake
+        """DEPRECATED: Use Plotter instead
+        
+        Helper function for plotting a representation of the wake
         edge
 
         Additional plotting style keywords may be specified, e.g.:
@@ -788,7 +794,9 @@ class WakeTracker(object):
 
 
     def save_snapshots(self,**kwargs):
-        """Write out all snapshots to ${outdir}.
+        """DEPRECATED: Use Plotter instead
+        
+        Write out all snapshots to ${outdir}.
 
         See plot_contour for keyword arguments.
         """
@@ -799,6 +807,9 @@ class WakeTracker(object):
 
 
     def create_plotter(self,name='default',wake_kwargs={},**kwargs):
+        """Create a Plotter object for visualization and generating
+        animations.
+        """
         p = Plotter(self.xh, self.xv, self.u, **kwargs)
         p.add(name, self, **wake_kwargs)
         return p
