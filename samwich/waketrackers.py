@@ -560,6 +560,7 @@ class WakeTracker(object):
                                                 self.u[itime,:,:])
                 self.u_mfor[itime,:,:] = interpfun(y_mfor, z_mfor, grid=True)
                 sys.stderr.write('\rTransform: frame {:d}'.format(itime))
+            sys.stderr.write('\n')
         elif method == 'griddata':
             from scipy.interpolate import griddata
             print('Interpolating with',method)
@@ -574,6 +575,7 @@ class WakeTracker(object):
                 interpout = griddata(points, values, output)
                 self.u_mfor[itime,:,:] = interpout.reshape(self.xh_mfor.shape)
                 sys.stderr.write('\rTransform: frame {:d}'.format(itime))
+            sys.stderr.write('\n')
         else:
             raise ValueError('Unsupported interpolation method: '+method)
         self.paths_mfor = []
@@ -851,12 +853,15 @@ class WakeTracker(object):
             self.plot_contour(itime,writepng='True',**kwargs)
 
 
-    def create_plotter(self,name='default',wake_kwargs={},**kwargs):
+    def create_plotter(self,name='default',MFoR=False,wake_kwargs={},**kwargs):
         """Create a Plotter object for visualization and generating
         animations.
         """
-        p = Plotter(self.xh, self.xv, self.u, **kwargs)
-        p.add(name, self, **wake_kwargs)
+        if MFoR:
+            p = Plotter(self.xh_mfor, self.xv_mfor, self.u_mfor, MFoR=True, **kwargs)
+        else:
+            p = Plotter(self.xh, self.xv, self.u, **kwargs)
+        p.add(name, self,  **wake_kwargs)
         return p
 
 
@@ -1165,12 +1170,15 @@ class Plotter(object):
     """Class for plotting wakes and their identified centers and
     outlines.
     """
-    def __init__(self,y,z,u,
+    def __init__(self,y,z,u,MFoR=False,
                  figsize=(8,6),dpi=100,
                  vmin=None,vmax=None,
                  cmap='gray',
                 ):
         """
+        MFoR : bool, optional
+            Whether or not plots will be in the meandering frame of
+            reference (MFoR)
         figsize : tuple, optional
             Figure size (width,height)
         dpi : int, optional
@@ -1181,6 +1189,7 @@ class Plotter(object):
         cmap : string, optional
             Colormap for the contour plot.
         """
+        self.MFoR = MFoR
         self.wakes = OrderedDict()
         self.centers = OrderedDict()
         self.outlines = OrderedDict()
@@ -1217,7 +1226,7 @@ class Plotter(object):
         if color is None:
             color = colors[len(self.wakes.keys())-1]
         # add plot objects
-        if center:
+        if center and (not self.MFoR):
             self.centers[name], = self.ax.plot([],[],marker,color=color,
                                                markersize=markersize,
                                                markeredgewidth=markerwidth,
@@ -1270,16 +1279,20 @@ class Plotter(object):
                                             wake.xv_wake[itime]) 
                 updated.append(self.centers[name])
             if self.outlines[name] is not None:
-                self.outlines[name].set_data(wake.paths[itime][:,0],
-                                             wake.paths[itime][:,1]) 
+                if self.MFoR:
+                    self.outlines[name].set_data(wake.paths_mfor[itime][:,0],
+                                                 wake.paths_mfor[itime][:,1]) 
+                else:
+                    self.outlines[name].set_data(wake.paths[itime][:,0],
+                                                 wake.paths[itime][:,1]) 
                 updated.append(self.outlines[name])
         self.ax.set_title('itime = {:d}'.format(itime))
         sys.stderr.write('\rPlot: frame {:d}'.format(itime))
         return tuple(updated)
 
-    def animate(self,frames=None):
+    def animate(self,frames=None,**kwargs):
         """Wrapper around FuncAnimation"""
         if frames is None:
             frames = len(self.u)
         return FuncAnimation(self.fig, self.plot, frames=frames,
-                             init_func=self.init_plot, blit=True)
+                             init_func=self.init_plot, blit=True, **kwargs)
