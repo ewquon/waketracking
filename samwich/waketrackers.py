@@ -538,6 +538,51 @@ class WakeTracker(object):
 
         return yw_fix, zw_fix
 
+    def to_MFoR(self,y_mfor,z_mfor,method='RectBivariateSpline'):
+        """Translate wake to meandering frame of reference (MFoR) and
+        interpolate to rectangular grid with specified horizontal and
+        vertical coordinates.
+        """
+        if not self.wake_tracked:
+            print('Need to perform wake tracking first')
+        if np.any(np.isnan(self.u)) and method=='RectBivariateSpline':
+            print('NaNs found -- switching interpolation method to griddata')
+            method = 'griddata'
+        self.xh_mfor, self.xv_mfor = np.meshgrid(y_mfor, z_mfor, indexing='ij')
+        self.u_mfor = np.empty((self.Ntimes,len(y_mfor),len(z_mfor)))
+        if method == 'RectBivariateSpline':
+            from scipy.interpolate import RectBivariateSpline
+            print('Interpolating with',method)
+            for itime in range(self.Ntimes):
+                yw, zw = self.xh_wake[itime], self.xv_wake[itime]
+                interpfun = RectBivariateSpline(self.xh_range-yw,
+                                                self.xv_range-zw,
+                                                self.u[itime,:,:])
+                self.u_mfor[itime,:,:] = interpfun(y_mfor, z_mfor, grid=True)
+                sys.stderr.write('\rTransform: frame {:d}'.format(itime))
+        elif method == 'griddata':
+            from scipy.interpolate import griddata
+            print('Interpolating with',method)
+            output = np.stack((self.xh_mfor.ravel(), self.xv_mfor.ravel()), axis=-1)
+            for itime in range(self.Ntimes):
+                yw, zw = self.xh_wake[itime], self.xv_wake[itime]
+                uw = self.u[itime,:,:]
+                notnan = np.where(np.isfinite(uw))
+                points = np.stack((self.xh[notnan].ravel()-yw,
+                                   self.xv[notnan].ravel()-zw), axis=-1)
+                values = uw[notnan].ravel()
+                interpout = griddata(points, values, output)
+                self.u_mfor[itime,:,:] = interpout.reshape(self.xh_mfor.shape)
+                sys.stderr.write('\rTransform: frame {:d}'.format(itime))
+        else:
+            raise ValueError('Unsupported interpolation method: '+method)
+        self.paths_mfor = []
+        for itime,(yw,zw) in enumerate(zip(self.xh_wake,self.xv_wake)):
+            newpath = self.paths[itime].copy()
+            newpath[:,0] -= self.xh_wake[itime]
+            newpath[:,1] -= self.xv_wake[itime]
+            self.paths_mfor.append(newpath)
+
     def _write_data(self,fname,data):
         """Helper function to write out specified data (e.g., trajectory
         and optimization parameters)
