@@ -798,6 +798,12 @@ class WakeTracker(object):
             self.plot_contour(itime,writepng='True',**kwargs)
 
 
+    def create_plotter(self,name='default',wake_kwargs={},**kwargs):
+        p = Plotter(self.xh, self.xv, self.u, **kwargs)
+        p.add(name, self, **wake_kwargs)
+        return p
+
+
     def _read_outlines(self,fname):
         """Helper function to read compressed (pickled) outlines"""
         if (fname is None) or (not self.wake_tracked):
@@ -1212,6 +1218,7 @@ class Plotter(object):
                                              wake.paths[itime][:,1]) 
                 updated.append(self.outlines[name])
         self.ax.set_title('itime = {:d}'.format(itime))
+        sys.stderr.write('\rPlot: frame {:d}'.format(itime))
         return tuple(updated)
 
     def animate(self,frames=None):
