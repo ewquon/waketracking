@@ -600,7 +600,7 @@ class WakeTracker(object):
             if self.verbose: print('Creating data subdirectory:',fpath)
             os.makedirs(fpath)
 
-        np.savetxt(fname, data, fmt=fmtlist)
+        np.savetxt(fname, data, fmt=fmtlist, delimiter=',')
 
     def _read_trajectory(self,fname):
         """Helper function to read trajectory history typically called
