@@ -392,14 +392,41 @@ class WakeTracker(object):
             if wind_profile is None:
                 print('Need to specify wind_profile, shear not removed.')
                 return
-            if isinstance(wind_profile, (list,tuple,np.ndarray)):
-                assert(wind_profile.shape[-1] == self.Nv)
-                self.Uprofile = wind_profile
-            elif isinstance(wind_profile, str):
-                #zref,Uref = readRef(wind_profile)
-                #self.Uprofile = np.interp(self.z,zref,Uref)
-                self.Uprofile = np.loadtxt(wind_profile)
+            if isinstance(wind_profile, str):
+                wind_profile = np.loadtxt(wind_profile)
                 print('Wind profile read from {}'.format(wind_profile))
+                try:
+                    assert len(wind_profile) == self.Nv
+                    assert np.all(wind_profile[:,0] == self.xv[0,:])
+                except AssertionError:
+                    self.Uprofile = np.interp(self.xv[0,:],
+                                              wind_profile[:,0],wind_profile[:,1])
+            else:
+                if isinstance(wind_profile, list):
+                    # only mean velocities given; must match up
+                    assert len(wind_profile) == self.Nv
+                elif isinstance(wind_profile, np.ndarray):
+                    if len(wind_profile.shape) == 1:
+                        # only mean velocities given; must match up
+                        assert len(wind_profile) == self.Nv
+                    elif not np.all(wind_profile[:,0] == self.xv[0,:]):
+                        # vertical levels are not coincident
+                        if self.verbose:
+                            print('Interpolating freestream profile from',
+                                  wind_profile[:,0],'to',self.xv[0,:])
+                        self.Uprofile = np.interp(self.xv[0,:],
+                                                  wind_profile[:,0],wind_profile[:,1])
+                elif isinstance(wind_profile, tuple):
+                    assert(len(wind_profile[0]) == len(wind_profile[1]))
+                    if not np.all(wind_profile[0] == self.xv[0,:]):
+                        # vertical levels are not coincident
+                        if self.verbose:
+                            print('Interpolating freestream profile from',
+                                  wind_profile[0],'to',self.xv[0,:])
+                        self.Uprofile = np.interp(self.xv[0,:],
+                                                  wind_profile[0],wind_profile[1])
+                else:
+                    raise TypeError('Unexpected wind profile data type')
 
         elif method == 'powerlaw':
             assert (alpha is not None) and (Uref is not None) and (zref is not None)
