@@ -680,17 +680,25 @@ class XarrayData(SampledData):
     See superclass SampledData for more information.
     """
 
-    def __init__(self,fpath,tvar='t'):
+    def __init__(self,fpath,tvar='t',
+                 xvar='x',yvar='y',zvar='z',
+                 uvar='u',vvar='v',wvar='w',
+                 check_vars=None):
         """Reads a dataset with dimensions and coordinates time, x, y, and z.
         The expected variables are:
             U(tvar, x, y, z)
             V(tvar, x, y, z)
             W(tvar, x, y, z)
         x is assumed to be aligned with the downstream direction.
+
+        'check_vars' may be a function to verify and rename variable names on
+        the fly
         """
         import xarray
         self.data_read_from = fpath
         xa = xarray.open_dataset(fpath)
+        if check_vars is not None:
+            xa = check_vars(xa)
         #print(xa)
 
         self.ts = None # not a time series
@@ -698,20 +706,20 @@ class XarrayData(SampledData):
         self.Ntimes = xa.dims[tvar]
         assert(self.Ntimes == len(self.t))
 
-        self.NX = xa.dims['x']
-        self.NY = xa.dims['y']
-        self.NZ = xa.dims['z']
-        x = xa.variables['x'].values
-        y = xa.variables['y'].values
-        z = xa.variables['z'].values
+        self.NX = xa.dims[xvar]
+        self.NY = xa.dims[yvar]
+        self.NZ = xa.dims[zvar]
+        x = xa.variables[xvar].values
+        y = xa.variables[yvar].values
+        z = xa.variables[zvar].values
         self.x, self.y, self.z = np.meshgrid(x,y,z,indexing='ij')
 
-        U = xa.variables['U'].values
+        U = xa.variables[uvar].values
         assert(U.shape == (self.Ntimes,self.NX,self.NY,self.NZ))
         V,W = None,None
         try:
-            V = xa.V.values
-            W = xa.W.values
+            V = xa[vvar].values
+            W = xa[wvar].values
         except AttributeError:
             self.datasize = 1
             self.data = np.zeros((self.Ntimes,self.NX,self.NY,self.NZ))
