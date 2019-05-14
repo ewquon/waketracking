@@ -680,30 +680,33 @@ class XarrayData(SampledData):
     See superclass SampledData for more information.
     """
 
-    def __init__(self,xa):
+    def __init__(self,fpath,tvar='t'):
         """Reads a dataset with dimensions and coordinates time, x, y, and z.
         The expected variables are:
-            U(time, x, y, z)
-            V(time, x, y, z)
-            W(time, x, y, z)
+            U(tvar, x, y, z)
+            V(tvar, x, y, z)
+            W(tvar, x, y, z)
         x is assumed to be aligned with the downstream direction.
         """
-        print(xa)
+        import xarray
+        self.data_read_from = fpath
+        xa = xarray.open_dataset(fpath)
+        #print(xa)
 
         self.ts = None # not a time series
-        self.t = xa.time.values
-        self.Ntimes = xa.dims['time']
+        self.t = xa.variables[tvar].values
+        self.Ntimes = xa.dims[tvar]
         assert(self.Ntimes == len(self.t))
 
         self.NX = xa.dims['x']
         self.NY = xa.dims['y']
         self.NZ = xa.dims['z']
-        x = xa.x.values
-        y = xa.y.values
-        z = xa.z.values
+        x = xa.variables['x'].values
+        y = xa.variables['y'].values
+        z = xa.variables['z'].values
         self.x, self.y, self.z = np.meshgrid(x,y,z,indexing='ij')
 
-        U = xa.U.values
+        U = xa.variables['U'].values
         assert(U.shape == (self.Ntimes,self.NX,self.NY,self.NZ))
         V,W = None,None
         try:
