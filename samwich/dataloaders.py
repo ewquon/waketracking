@@ -113,6 +113,7 @@ class SampledData(object):
         else:
             s = str(self.datasize)+'-D vector data array'
         s += ' with shape ({:d},{:d},{:d})'.format(self.NX,self.NY,self.NZ)
+        s += ' at {:d} times'.format(self.Ntimes)
         if self.ts is not None:
             s += ' in a series with ' + str(self.ts)
         if self.data_read_from is not None:
