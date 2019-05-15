@@ -660,8 +660,14 @@ class WakeTracker(object):
             print('Failed to read',fname)
             return None
 
-        if not len(data) == self.Ntimes:
+        if len(data.shape) == 1:
+            Nread = 1
+            data = data.reshape((1,len(data)))
+        else:
+            Nread = len(data)
+        if not Nread == self.Ntimes:
             print('Incorrect number of time steps in',fname)
+            print('  found',Nread,'but expected',self.Ntimes)
             return None
 
         # data[:,0] is just an index
