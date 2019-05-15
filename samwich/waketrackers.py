@@ -655,7 +655,7 @@ class WakeTracker(object):
             return None
 
         try:
-            data = np.loadtxt(fname)
+            data = np.loadtxt(fname,delimiter=',')
         except IOError:
             print('Failed to read',fname)
             return None
