@@ -587,9 +587,12 @@ class WakeTracker(object):
         if np.any(np.isnan(self.u)) and method=='RectBivariateSpline':
             print('NaNs found -- switching interpolation method to griddata')
             method = 'griddata'
+        # create fields in meandering frame of reference (_mfor)
         self.xh_mfor, self.xv_mfor = np.meshgrid(y_mfor, z_mfor, indexing='ij')
         self.u_mfor = np.empty((self.Ntimes,len(y_mfor),len(z_mfor)))
+        # interpolate to regular grid
         if method == 'RectBivariateSpline':
+            # complete data (no nans) on structured grid -- faster calculation
             from scipy.interpolate import RectBivariateSpline
             print('Interpolating with',method)
             for itime in range(self.Ntimes):
@@ -601,6 +604,7 @@ class WakeTracker(object):
                 sys.stderr.write('\rTransform: frame {:d}'.format(itime))
             sys.stderr.write('\n')
         elif method == 'griddata':
+            # some missing data, e.g., scan from lidar
             from scipy.interpolate import griddata
             print('Interpolating with',method)
             output = np.stack((self.xh_mfor.ravel(), self.xv_mfor.ravel()), axis=-1)
@@ -617,12 +621,18 @@ class WakeTracker(object):
             sys.stderr.write('\n')
         else:
             raise ValueError('Unsupported interpolation method: '+method)
+        # translate paths to mfor as well
         self.paths_mfor = []
         for itime,(yw,zw) in enumerate(zip(self.xh_wake,self.xv_wake)):
-            newpath = self.paths[itime].copy()
-            newpath[:,0] -= self.xh_wake[itime]
-            newpath[:,1] -= self.xv_wake[itime]
-            self.paths_mfor.append(newpath)
+            if self.paths[itime] is not None \
+                    and (not self.xh_wake[itime] == self.xh_fail) \
+                    and (not self.xv_wake[itime] == self.xv_fail):
+                newpath = self.paths[itime].copy()
+                newpath[:,0] -= self.xh_wake[itime]
+                newpath[:,1] -= self.xv_wake[itime]
+                self.paths_mfor.append(newpath)
+            else:
+                self.paths_mfor.append([])
 
     def _write_data(self,fname,data):
         """Helper function to write out specified data (e.g., trajectory
