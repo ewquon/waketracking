@@ -715,12 +715,12 @@ class XarrayData(SampledData):
         z = xa.variables[zvar].values
         self.x, self.y, self.z = np.meshgrid(x,y,z,indexing='ij')
 
-        U = xa.variables[uvar].values
+        U = xa.variables[uvar].transpose(tvar,xvar,yvar,zvar).values
         assert(U.shape == (self.Ntimes,self.NX,self.NY,self.NZ))
         V,W = None,None
         try:
-            V = xa[vvar].values
-            W = xa[wvar].values
+            V = xa[vvar]
+            W = xa[wvar]
         except KeyError:
             self.datasize = 1
             self.data = np.zeros((self.Ntimes,self.NX,self.NY,self.NZ))
@@ -728,6 +728,8 @@ class XarrayData(SampledData):
         else:
             self.datasize = 3
             self.data = np.zeros((self.Ntimes,self.NX,self.NY,self.NZ,3))
+            V = V.transpose(tvar,xvar,yvar,zvar).values
+            W = W.transpose(tvar,xvar,yvar,zvar).values
             self.data[:,:,:,:,0] = U
             self.data[:,:,:,:,1] = V
             self.data[:,:,:,:,2] = W
