@@ -721,7 +721,7 @@ class XarrayData(SampledData):
         try:
             V = xa[vvar].values
             W = xa[wvar].values
-        except AttributeError:
+        except KeyError:
             self.datasize = 1
             self.data = np.zeros((self.Ntimes,self.NX,self.NY,self.NZ))
             self.data[:,:,:,:] = U
