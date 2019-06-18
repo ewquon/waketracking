@@ -301,6 +301,14 @@ class RawData(SampledData):
             z = data[:,2]
             u = data[:,3]
             self.datasize = 1
+        elif Ncols == 5:
+            x = np.zeros(Npts)
+            y = data[:,0]
+            z = data[:,1]
+            u = data[:,2]
+            v = data[:,3]
+            w = data[:,4]
+            self.datasize = 3
         elif Ncols == 6:
             x = data[:,0]
             y = data[:,1]
@@ -369,11 +377,22 @@ class PlanarData(SampledData):
         """
         #super(self.__class__,self).__init__(*args,**kwargs)
         self.NX = 1  # single plane
-        self.NY, self.NZ = datadict['u'].shape
-        self.datasize = 3  # vector
 
-        self.ts = None # not a time series
-        self.Ntimes = 1
+        assert 'u' in datadict.keys()
+        if 'v' in datadict.keys() and 'w' in datadict.keys():
+            self.datasize = 3  # vector
+        else:
+            self.datasize = 1  # scalar
+
+        self.ts = None # not a time series (corresponding to multiple files)
+        if len(datadict['u'].shape) == 2:
+            self.Ntimes = 1
+            self.NY, self.NZ = datadict['u'].shape
+        elif len(datadict['u'].shape) == 3:
+            self.Ntimes, self.NY, self.NZ = datadict['u'].shape
+        else:
+            raise ValueError('Unexpected number of dimensions in u')
+
 
         self.y = datadict['y'].reshape((1,self.NY,self.NZ))
         self.z = datadict['z'].reshape((1,self.NY,self.NZ))
@@ -382,14 +401,22 @@ class PlanarData(SampledData):
         except KeyError:
             self.x = np.zeros((1,self.NY,self.NZ))
 
-        self.data = np.zeros((1,1,self.NY,self.NZ,3))  # shape == (Ntimes,NX,NY,NZ,datasize)
-        self.data[0,0,:,:,0] = datadict['u']
-        try:
-            self.data[0,0,:,:,1] = datadict['v']
-        except KeyError: pass
-        try:
-            self.data[0,0,:,:,2] = datadict['w']
-        except KeyError: pass
+        if self.datasize == 1:
+            self.data = np.zeros((self.Ntimes,1,self.NY,self.NZ))
+            if self.Ntimes == 1:
+                self.data[0,0,:,:] = datadict['u']
+            else:
+                self.data[:,0,:,:] = datadict['u']
+        else:
+            self.data = np.zeros((self.Ntimes,1,self.NY,self.NZ,3))
+            if self.Ntimes == 1:
+                self.data[0,0,:,:,0] = datadict['u']
+                self.data[0,0,:,:,1] = datadict['v']
+                self.data[0,0,:,:,2] = datadict['w']
+            else:
+                self.data[:,0,:,:,0] = datadict['u']
+                self.data[:,0,:,:,1] = datadict['v']
+                self.data[:,0,:,:,2] = datadict['w']
         self.data_read_from = None
 
         if center_x:

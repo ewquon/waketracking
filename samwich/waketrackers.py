@@ -223,12 +223,14 @@ class WakeTracker(object):
         assert(len(udata.shape) in (3,4))
         assert((self.Nh,self.Nv) == udata.shape[1:3])
         self.Ntimes = udata.shape[0]
-        if len(udata.shape)==3: # SCALAR data
+        if len(udata.shape)==3:
+            # SCALAR data
             self.datasize = 1
             self.u_tot = udata.astype(float,copy=True)  # shape=(Ntimes,Nh,Nv)
             self.v_tot = np.zeros(udata.shape)
             self.w_tot = np.zeros(udata.shape)
-        else: # VECTOR data assumed
+        else:
+            # VECTOR data (assumed)
             self.datasize = udata.shape[3]
             assert(self.datasize == 3)
             if all(self.norm == [1,0,0]):
