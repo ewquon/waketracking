@@ -295,17 +295,32 @@ class RawData(SampledData):
         self.Ntimes = 1
 
         data = np.loadtxt(fname,skiprows=skiprows,delimiter=delimiter)
+        Npts,Ncols = data.shape
+        datasize = Ncols - 2
+        assert datasize in (1,3)
         y = data[:,0]
         z = data[:,1]
         u = data[:,2]
+        if datasize == 3:
+            v = data[:,3]
+            w = data[:,4]
 
         order = np.lexsort((z,y))
-
         self.x = np.zeros((1,NY,NZ))
         self.y = y[order].reshape((1,NY,NZ))
         self.z = z[order].reshape((1,NY,NZ))
-        self.data = u[order].reshape((1,1,NY,NZ))  # shape == (Ntimes,NX,NY,NZ[,datasize])
-        self.data_read_from = None
+
+        # self.data.shape == (Ntimes,NX,NY,NZ[,datasize])
+        u = u[order].reshape((1,1,NY,NZ))
+        if datasize == 1:
+            self.data = u
+        else:
+            v = v[order].reshape((1,1,NY,NZ))
+            w = w[order].reshape((1,1,NY,NZ))
+            data = np.stack((u,v,w), axis=-1)
+            self.data = data
+
+        self.data_read_from = fname
 
 class PlanarData(SampledData):
     """Pre-processed data, in 2D arrays.
