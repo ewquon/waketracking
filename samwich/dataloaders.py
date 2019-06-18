@@ -262,7 +262,7 @@ class RawData(SampledData):
 
     See superclass SampledData for more information.
     """
-    def __init__(self,fname,NY,NZ=None,
+    def __init__(self,fname,dims=None,
                  skiprows=1,delimiter=','):
         """Reads a single snapshot from the specified file. Data are
         expected to be in xh, xv, and u columns, with xh/xv being the
@@ -284,39 +284,64 @@ class RawData(SampledData):
             String to use as delimiter when calling np.loadtxt.
         """
         #super(self.__class__,self).__init__(*args,**kwargs)
-        if NZ is None:
-            NZ = NY
-        self.NX = 1  # single plane
-        self.NY = NY
-        self.NZ = NZ
-        self.datasize = 1  # scalar
-
         self.ts = None # not a time series
         self.Ntimes = 1
 
         data = np.loadtxt(fname,skiprows=skiprows,delimiter=delimiter)
         Npts,Ncols = data.shape
-        datasize = Ncols - 2
-        assert datasize in (1,3)
-        y = data[:,0]
-        z = data[:,1]
-        u = data[:,2]
-        if datasize == 3:
-            v = data[:,3]
-            w = data[:,4]
+        if Ncols == 3:
+            x = np.zeros(Npts)
+            y = data[:,0]
+            z = data[:,1]
+            u = data[:,2]
+            self.datasize = 1
+        elif Ncols == 4:
+            x = data[:,0]
+            y = data[:,1]
+            z = data[:,2]
+            u = data[:,3]
+            self.datasize = 1
+        elif Ncols == 6:
+            x = data[:,0]
+            y = data[:,1]
+            z = data[:,2]
+            u = data[:,3]
+            v = data[:,4]
+            w = data[:,5]
+            self.datasize = 3
 
-        order = np.lexsort((z,y))
-        self.x = np.zeros((1,NY,NZ))
-        self.y = y[order].reshape((1,NY,NZ))
-        self.z = z[order].reshape((1,NY,NZ))
+        # figure out dimensions if needed
+        if dims is not None:
+            if len(dims) == 2:
+                # single plane
+                NX = 1
+                NY,NZ = dims
+            elif len(dims) == 3:
+                NX,NY,NZ = dims
+            else:
+                raise ValueError('Unexpected number of dimensions')
+        else:
+            NX = len(np.unique(x))
+            NY = len(np.unique(y))
+            NZ = len(np.unique(z))
+            if not NX*NY*NZ == Npts:
+                raise ValueError('Could not guess dimensions, specify dim kwarg')
+        self.NX = NX
+        self.NY = NY
+        self.NZ = NZ
+
+        order = np.lexsort((z,y,x))
+        self.x = x[order].reshape((NX,NY,NZ))
+        self.y = y[order].reshape((NX,NY,NZ))
+        self.z = z[order].reshape((NX,NY,NZ))
 
         # self.data.shape == (Ntimes,NX,NY,NZ[,datasize])
-        u = u[order].reshape((1,1,NY,NZ))
-        if datasize == 1:
+        u = u[order].reshape((1,NX,NY,NZ))
+        if self.datasize == 1:
             self.data = u
         else:
-            v = v[order].reshape((1,1,NY,NZ))
-            w = w[order].reshape((1,1,NY,NZ))
+            v = v[order].reshape((1,NX,NY,NZ))
+            w = w[order].reshape((1,NX,NY,NZ))
             data = np.stack((u,v,w), axis=-1)
             self.data = data
 
