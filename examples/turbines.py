@@ -15,7 +15,7 @@ class Turbine(object):
         defdict = getattr(self, name)
         for key,val in defdict.items():
             setattr(self, key, val)
-        self.ref_area = np.pi/4 * self.D**2
+        self.rotor_area = np.pi/4 * self.D**2
         self.ref_CT = 4*self.a*(1-self.a) # thrust coefficient
         self.ref_CP = 4*self.a*(1-self.a)**2 # power coefficient
 

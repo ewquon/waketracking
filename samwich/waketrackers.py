@@ -1291,9 +1291,12 @@ class Plotter(object):
         self.ax.set_xlabel('y [m]')
         self.ax.set_ylabel('z [m]')
 
+    def __repr__(self):
+        s = str(wakes.keys())
+
     def add(self,name,wake,color=None,center=True,outline=True,
             marker='+',markersize=14,markerwidth=2,markeralpha=1.0,
-            outlinewidth=3,outlinealpha=0.5,
+            linestyle='-',linewidth=3,linealpha=0.5,
            ):
         """Add wake object to visualize"""
         # set up styles
@@ -1311,8 +1314,9 @@ class Plotter(object):
             self.centers[name] = None
         if outline:
             self.outlines[name], = self.ax.plot([],[],color=color,
-                                                lw=outlinewidth,
-                                                alpha=outlinealpha,
+                                                ls=linestyle,
+                                                lw=linewidth,
+                                                alpha=linealpha,
                                                 label=name)
         else:
             self.outlines[name] = None

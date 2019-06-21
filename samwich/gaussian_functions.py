@@ -1,7 +1,7 @@
 from __future__ import print_function
 import numpy as np
 
-class PorteAgel(object):
+class Bastankhah(object):
     """Based on model described in Bastankhah and Porte-Agel, "A new
     analytical model for wind-turbine wakes," Renewable Energy 70 (2014)
     pp.116--123. 
