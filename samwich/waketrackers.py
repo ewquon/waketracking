@@ -1384,10 +1384,17 @@ class Plotter(object):
         return tuple(updated)
 
     def animation(self,frames=None,**kwargs):
-        """Wrapper around FuncAnimation
+        """Wrapper around FuncAnimation to return a
+        `matplotlib.animation.Animation` object
         
-        Note: to show the animation or save the video, call .save()
-        or .to_html5_video().
+        You may need to install additional packages on your system
+        (e.g., ffmpeg). If you encounter unexpected animation errors
+        after installing the additional packages, you may need to 
+        explicitly specify which animation writer to use:
+          `plt.rcParams['animation.ffmpeg_path'] = '/usr/local/bin/ffmpeg'`
+
+        Note: to show the animation or save the video, call anim.save()
+        or anim.to_html5_video().
         """
         if frames is None:
             frames = len(self.u)
@@ -1398,13 +1405,8 @@ class Plotter(object):
                 fps=24, writer='ffmpeg', codec='h264',
                 extra_args=['-pix_fmt','yuv420p'],
                 **kwargs):
-        """Create animation using system utilities
-
-        You may need to install additional packages on your system
-        (e.g., ffmpeg). If you encounter unexpected animation errors
-        after installing the additional packages, you may need to 
-        explicitly specify which animation writer to use:
-          `plt.rcParams['animation.ffmpeg_path'] = '/usr/local/bin/ffmpeg'`
+        """Convenience function for creating an animation using
+        FuncAnimation with some default parameters.
         """
         anim = self.animation()
         anim.save(fname, fps=fps, writer=writer, codec=codec,
