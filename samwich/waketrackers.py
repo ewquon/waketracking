@@ -11,7 +11,7 @@ from scipy import ndimage  # to perform moving average, filtering
 import matplotlib.pyplot as plt
 import matplotlib.path as mpath
 import matplotlib.patches as mpatch
-from matplotlib.animation import FuncAnimation
+from matplotlib.animation import FuncAnimation, writers
 colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
 
 from samwich.contour_functions import Contours
@@ -1313,11 +1313,7 @@ class Plotter(object):
         self.ax.axis('scaled')
         self.ax.set_xlabel('y [m]')
         self.ax.set_ylabel('z [m]')
-
-    def __str__(self):
-        s = 'Stored wakes:\n- '
-        s += '\n- '.join(self.wakes.keys())
-        return s
+        self.fig.tight_layout()
 
     def add(self,name,wake,color=None,center=True,outline=True,
             marker='+',markersize=14,markerwidth=2,markeralpha=1.0,
@@ -1430,7 +1426,7 @@ class Plotter(object):
         return FuncAnimation(self.fig, self.plot, frames=frames,
                              init_func=self.init_plot, blit=True, **kwargs)
 
-    def animate(self,fname,
+    def animate(self,fname,bitrate=1000,
                 fps=24, writer='ffmpeg', codec='h264',
                 extra_args=['-pix_fmt','yuv420p'],
                 **kwargs):
@@ -1438,7 +1434,8 @@ class Plotter(object):
         FuncAnimation with some default parameters.
         """
         anim = self.animation()
-        anim.save(fname, fps=fps, writer=writer, codec=codec,
-                  extra_args=extra_args, **kwargs)
+        writer = writers[writer](fps=fps, bitrate=bitrate, codec=codec,
+                                 extra_args=extra_args)
+        anim.save(fname, writer=writer, **kwargs)
         return anim
 
