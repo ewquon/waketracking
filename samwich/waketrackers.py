@@ -1246,7 +1246,7 @@ class Plotter(object):
         'utot': r'$u_{tot}$ [m/s]',
     }
 
-    def __init__(self,y,z,u,MFoR=False,
+    def __init__(self,y=None,z=None,u=None,MFoR=False,
                  figsize=(8,6),dpi=100,
                  vmin=None,vmax=None,
                  cmap='gray',
@@ -1269,26 +1269,45 @@ class Plotter(object):
         self.wakes = OrderedDict()
         self.centers = OrderedDict()
         self.outlines = OrderedDict()
-        self.y = y
-        self.z = z
-        if len(u.shape) == 4:
-            # 3-D velocity field
-            self.u = u[:,:,:,0] # (Nt,Ny,Nz,3)
+        self.figsize = figsize
+        self.dpi = dpi
+        self.cmap = cmap
+        self.vmin = vmin
+        self.vmax = vmax
+        if (y is not None) and (z is not None) and (u is not None):
+            self.y = y
+            self.z = z
+            if len(u.shape) == 4:
+                # 3-D velocity field
+                self.u = u[:,:,:,0] # (Nt,Ny,Nz,3)
+            else:
+                # x-component of velocity only
+                self.u = u
+            self.Ntimes = self.u.shape[0]
+            self._create_figure()
         else:
-            # x-component of velocity only
-            self.u = u
-        self.Ntimes = self.u.shape[0]
+            self.y = None
+            self.z = None
+            self.u = None
+            self.Ntimes = -1
 
+    def __str__(self):
+        s = 'Stored wakes:\n- '
+        s += '\n- '.join(self.wakes.keys())
+        return s
+
+    def _create_figure(self):
         # create basic plot elements
-        self.fig, self.ax = plt.subplots(figsize=figsize,dpi=dpi)
-        blank = np.empty(y.shape)
+        self.fig, self.ax = plt.subplots(figsize=self.figsize,
+                                         dpi=self.dpi)
+        blank = np.empty(self.y.shape)
         blank.fill(np.nan)
-        if vmin is None:
-            vmin = np.nanmin(self.u)
-        if vmax is None:
-            vmax = np.nanmax(self.u)
-        self.bkg = self.ax.pcolormesh(self.y, self.z, blank,
-                                      cmap=cmap,vmin=vmin,vmax=vmax,)
+        if self.vmin is None:
+            self.vmin = np.nanmin(self.u)
+        if self.vmax is None:
+            self.vmax = np.nanmax(self.u)
+        self.bkg = self.ax.pcolormesh(self.y, self.z, blank, cmap=self.cmap,
+                                      vmin=self.vmin, vmax=self.vmax,)
         self.cbar = self.fig.colorbar(self.bkg)
         self.cbar.ax.tick_params(labelsize='x-large')
         self.ax.axis('scaled')
@@ -1305,7 +1324,14 @@ class Plotter(object):
             linestyle='-',linewidth=3,linealpha=0.5,
            ):
         """Add wake object to visualize"""
-        assert wake.Ntimes == self.Ntimes
+        if self.Ntimes < 0:
+            self.y = wake.xh
+            self.z = wake.xv
+            self.u = wake.u
+            self.Ntimes = wake.Ntimes
+            self._create_figure()
+        else:
+            assert wake.Ntimes == self.Ntimes
         # set up styles
         self.wakes[name] = wake
         if color is None:
