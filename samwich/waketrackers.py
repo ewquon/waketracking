@@ -1295,8 +1295,10 @@ class Plotter(object):
         self.ax.set_xlabel('y [m]')
         self.ax.set_ylabel('z [m]')
 
-    def __repr__(self):
-        s = str(wakes.keys())
+    def __str__(self):
+        s = 'Stored wakes:\n- '
+        s += '\n- '.join(self.wakes.keys())
+        return s
 
     def add(self,name,wake,color=None,center=True,outline=True,
             marker='+',markersize=14,markerwidth=2,markeralpha=1.0,
@@ -1350,7 +1352,7 @@ class Plotter(object):
                 updated.append(self.outlines[name])
         return tuple(updated)
 
-    def plot(self,itime=0,var='u'):
+    def plot(self,itime=0,var='u',verbose=False):
         """Updates plot with axes objects corresponding to the specified
         time frame (can be used with FuncAnimation).
         """
@@ -1361,6 +1363,8 @@ class Plotter(object):
         for name,wake in self.wakes.items():
             if not wake.wake_tracked:
                 continue
+            if verbose:
+                print(name, wake.xh_wake[itime], wake.xv_wake[itime])
             if self.centers[name] is not None:
                 self.centers[name].set_data(wake.xh_wake[itime],
                                             wake.xv_wake[itime]) 
