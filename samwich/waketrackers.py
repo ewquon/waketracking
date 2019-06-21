@@ -1378,7 +1378,7 @@ class Plotter(object):
                 updated.append(self.outlines[name])
         return tuple(updated)
 
-    def plot(self,itime=0,var='u',verbose=False):
+    def plot(self,itime=0,var='u',wakes=None,verbose=False):
         """Updates plot with axes objects corresponding to the specified
         time frame (can be used with FuncAnimation).
         """
@@ -1386,7 +1386,10 @@ class Plotter(object):
         bkgdata = np.ma.masked_invalid(field[itime,:-1,:-1])
         self.bkg.set_array(bkgdata.ravel())
         updated = [self.bkg]
-        for name,wake in self.wakes.items():
+        if wakes is None:
+            wakes = self.wakes.keys()
+        for name in wakes:
+            wake = self.wakes[name]
             if not wake.wake_tracked:
                 continue
             if verbose:
