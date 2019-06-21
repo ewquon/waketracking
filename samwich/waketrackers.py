@@ -731,8 +731,7 @@ class WakeTracker(object):
 
         self.ax.set_xlim(self.xh_range[0], self.xh_range[-1])
         self.ax.set_ylim(self.xv_range[0], self.xv_range[-1])
-        self.ax.set_autoscale_on(False)
-        self.ax.set_aspect('equal',adjustable='box',anchor='C')
+        self.ax.axis('scaled')
 
         self.ax.tick_params(axis='both', labelsize=12, size=10)
         self.ax.set_xlabel(r'$y$ [m]', fontsize=14)
@@ -912,13 +911,27 @@ class WakeTracker(object):
 
     def create_plotter(self,name='default',MFoR=False,wake_kwargs={},**kwargs):
         """Create a Plotter object for visualization and generating
-        animations.
+        animations. A convenience function that is equivalent to
+        initializing a Plotter and then adding the current wake
+        instance.
+
+        Parameters
+        ----------
+        name : str, optional
+            Name of the current wake analysis (to be used in labels).
+        MFoR : bool, optional
+            If True, visualize in the meandering frame of reference.
+        wake_kwargs : dict, optional
+            Extra arguments that apply to this particular wake.
+        kwargs : dict, optional
+            Extra arguments with which to initialize the Plotter object.
         """
         if MFoR:
             p = Plotter(self.xh_mfor, self.xv_mfor, self.u_mfor, MFoR=True, **kwargs)
         else:
             p = Plotter(self.xh, self.xv, self.u, **kwargs)
         p.add(name, self,  **wake_kwargs)
+        p.plot()
         return p
 
 
@@ -1269,7 +1282,7 @@ class Plotter(object):
         self.cbar = self.fig.colorbar(self.bkg)
         self.cbar.set_label(label=r'$U$ [m/s]',fontsize='x-large')
         self.cbar.ax.tick_params(labelsize='x-large')
-        self.ax.axis('equal')
+        self.ax.axis('scaled')
         self.ax.set_xlabel('y [m]')
         self.ax.set_ylabel('z [m]')
 
@@ -1323,7 +1336,7 @@ class Plotter(object):
                 updated.append(self.outlines[name])
         return tuple(updated)
 
-    def plot(self,itime):
+    def plot(self,itime=0):
         """Updates plot with axes objects corresponding to the specified
         time frame (can be used with FuncAnimation).
         """
@@ -1331,6 +1344,8 @@ class Plotter(object):
         self.bkg.set_array(bkgdata.ravel())
         updated = [self.bkg]
         for name,wake in self.wakes.items():
+            if not wake.wake_tracked:
+                continue
             if self.centers[name] is not None:
                 self.centers[name].set_data(wake.xh_wake[itime],
                                             wake.xv_wake[itime]) 
