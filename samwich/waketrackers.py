@@ -1272,9 +1272,13 @@ class Plotter(object):
         self.y = y
         self.z = z
         if len(u.shape) == 4:
+            # 3-D velocity field
             self.u = u[:,:,:,0] # (Nt,Ny,Nz,3)
         else:
+            # x-component of velocity only
             self.u = u
+        self.Ntimes = self.u.shape[0]
+
         # create basic plot elements
         self.fig, self.ax = plt.subplots(figsize=figsize,dpi=dpi)
         blank = np.empty(y.shape)
@@ -1299,6 +1303,7 @@ class Plotter(object):
             linestyle='-',linewidth=3,linealpha=0.5,
            ):
         """Add wake object to visualize"""
+        assert wake.Ntimes == self.Ntimes
         # set up styles
         self.wakes[name] = wake
         if color is None:
