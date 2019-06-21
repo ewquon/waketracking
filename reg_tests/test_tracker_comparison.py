@@ -13,7 +13,8 @@ trackerlist = track()
 
 # TODO: Move these settings to a .yaml file
 
-datadir = os.path.join('demo','MWE-data')
+rootdir = os.path.join(os.environ['HOME'],'waketracking')
+datadir = os.path.join(rootdir,'examples','MWE-data')
 
 D = 27.0  # to define the search range, and the reference area for the contour methods
 zhub = 32.1  # hub height [m], for estimating the freestream reference velocity
@@ -123,7 +124,8 @@ def track_all(kind,verbose=False,tol=1e-4):
     all_yc = np.array([ yc[tracker][itime] for tracker in wake.keys() ])
     all_zc = np.array([ zc[tracker][itime] for tracker in wake.keys() ])
 
-    refpath = os.path.join('reg_tests','refdata','{}_detected_centers.csv'.format(kind))
+    refpath = os.path.join(rootdir,'reg_tests','ref-data',
+                           '{}_detected_centers.csv'.format(kind))
     #refdata = np.genfromtxt(refpath,skip_header=1,delimiter=',',dtype=None,encoding=None)
     #trackers = [vals[0] for vals in refdata]
     #yref = [vals[1] for vals in refdata]
@@ -154,3 +156,12 @@ def test_mean():
 def test_instantaneous():
     track_all('instantaneous')
 
+
+if __name__ == '__main__':
+    import sys
+    if len(sys.argv) > 1:
+        cases = sys.argv[1:]
+    else:
+        cases = ['mean','instantaneous']
+    for case in cases:
+        track_all(case)

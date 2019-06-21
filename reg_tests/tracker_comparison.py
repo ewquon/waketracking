@@ -13,7 +13,7 @@ from samwich.gaussian_functions import PorteAgel
 trackerlist = track()
 
 
-datadir = '../demo/MWE-data/'
+datadir = '../examples/MWE-data/'
 
 #kind = 'mean'  # sanity check, not very interesting
 kind = 'instantaneous'
@@ -124,7 +124,7 @@ all_zc = [ zc[tracker][itime] for tracker in wake.keys() ]
 df = pd.DataFrame(index=wake.keys(), data={'y':all_yc, 'z':all_zc})
 
 fname = '{}_detected_centers.csv'.format(kind)
-refpath = 'refdata/'+fname
+refpath = 'ref-data/'+fname
 writecsv = True
 if os.path.isfile(refpath):
     ref = pd.read_csv(refpath,index_col=0)
