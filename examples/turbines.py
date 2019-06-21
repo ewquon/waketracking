@@ -19,7 +19,7 @@ class Turbine(object):
         self.ref_CT = 4*self.a*(1-self.a) # thrust coefficient
         self.ref_CP = 4*self.a*(1-self.a)**2 # power coefficient
 
-    def __repr__(self):
+    def __str__(self):
         s = self.name + '\n' + len(self.name)*'-'
         s += '\nhub height: {:g} m'.format(self.zhub)
         s += '\ndiameter: {:g} m'.format(self.D)
