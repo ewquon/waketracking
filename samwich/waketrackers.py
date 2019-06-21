@@ -331,7 +331,7 @@ class WakeTracker(object):
         self.Navg = Navg
         return self.uavg
 
-    def remove_shear(self,method='fringe',Navg=None,wind_profile=None,
+    def remove_shear(self,method=None,Navg=None,wind_profile=None,
                      alpha=None,Uref=None,zref=None):
         """Removes wind shear from data.
 
@@ -1240,6 +1240,12 @@ class Plotter(object):
     """Class for plotting wakes and their identified centers and
     outlines.
     """
+
+    varnames = {
+        'u': r'$u$ [m/s]',
+        'utot': r'$u_{tot}$ [m/s]',
+    }
+
     def __init__(self,y,z,u,MFoR=False,
                  figsize=(8,6),dpi=100,
                  vmin=None,vmax=None,
@@ -1280,7 +1286,6 @@ class Plotter(object):
         self.bkg = self.ax.pcolormesh(self.y, self.z, blank,
                                       cmap=cmap,vmin=vmin,vmax=vmax,)
         self.cbar = self.fig.colorbar(self.bkg)
-        self.cbar.set_label(label=r'$U$ [m/s]',fontsize='x-large')
         self.cbar.ax.tick_params(labelsize='x-large')
         self.ax.axis('scaled')
         self.ax.set_xlabel('y [m]')
@@ -1336,11 +1341,12 @@ class Plotter(object):
                 updated.append(self.outlines[name])
         return tuple(updated)
 
-    def plot(self,itime=0):
+    def plot(self,itime=0,var='u'):
         """Updates plot with axes objects corresponding to the specified
         time frame (can be used with FuncAnimation).
         """
-        bkgdata = np.ma.masked_invalid(self.u[itime,:-1,:-1])
+        field = getattr(self,var)
+        bkgdata = np.ma.masked_invalid(field[itime,:-1,:-1])
         self.bkg.set_array(bkgdata.ravel())
         updated = [self.bkg]
         for name,wake in self.wakes.items():
@@ -1358,6 +1364,8 @@ class Plotter(object):
                     self.outlines[name].set_data(wake.paths[itime][:,0],
                                                  wake.paths[itime][:,1]) 
                 updated.append(self.outlines[name])
+        label = self.varnames.get(var,var)
+        self.cbar.set_label(label=label,fontsize='x-large')
         self.ax.set_title('itime = {:d}'.format(itime))
         sys.stderr.write('\rPlot: frame {:d}'.format(itime))
         return tuple(updated)
