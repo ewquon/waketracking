@@ -1383,9 +1383,31 @@ class Plotter(object):
         sys.stderr.write('\rPlot: frame {:d}'.format(itime))
         return tuple(updated)
 
-    def animate(self,frames=None,**kwargs):
-        """Wrapper around FuncAnimation"""
+    def animation(self,frames=None,**kwargs):
+        """Wrapper around FuncAnimation
+        
+        Note: to show the animation or save the video, call .save()
+        or .to_html5_video().
+        """
         if frames is None:
             frames = len(self.u)
         return FuncAnimation(self.fig, self.plot, frames=frames,
                              init_func=self.init_plot, blit=True, **kwargs)
+
+    def animate(self,fname,
+                fps=24, writer='ffmpeg', codec='h264',
+                extra_args=['-pix_fmt','yuv420p'],
+                **kwargs):
+        """Create animation using system utilities
+
+        You may need to install additional packages on your system
+        (e.g., ffmpeg). If you encounter unexpected animation errors
+        after installing the additional packages, you may need to 
+        explicitly specify which animation writer to use:
+          `plt.rcParams['animation.ffmpeg_path'] = '/usr/local/bin/ffmpeg'`
+        """
+        anim = self.animation()
+        anim.save(fname, fps=fps, writer=writer, codec=codec,
+                  extra_args=extra_args, **kwargs)
+        return anim
+
