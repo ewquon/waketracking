@@ -23,7 +23,7 @@ class Turbine(object):
         s = self.name + '\n' + len(self.name)*'-'
         s += '\nhub height: {:g} m'.format(self.zhub)
         s += '\ndiameter: {:g} m'.format(self.D)
-        s += '\nref area: {:g} m^2'.format(self.ref_area)
+        s += '\nref area: {:g} m^2'.format(self.rotor_area)
         s += '\nref CP: {:g}'.format(self.ref_CP)
         s += '\nref CT: {:g}'.format(self.ref_CT)
         return s
