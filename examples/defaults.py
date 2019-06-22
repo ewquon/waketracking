@@ -1,3 +1,7 @@
+import matplotlib.pyplot as plt
+
+colorcycle = plt.rcParams['axes.prop_cycle'].by_key()['color']
+
 # default tracker styles to be using in plotting
 styles = {
     '1-D Gaussian': {
@@ -19,24 +23,24 @@ styles = {
     },
     '2-D Gaussian': {
         #'label':r'2-D Gaussian (opt $\sigma_x$,$\sigma_y$,$\theta$)',
-        'color':'y',
+        'color':'g',
         'linestyle':'--','linewidth':2,
         'marker':'o','markersize':6
     },
     
     'const area': {
-        'color':'b',
+        'color':colorcycle[0],
         'linestyle':'-','linewidth':2,
         'marker':'+','markersize':10
     },
     'const momentum deficit': {
-        'color':'r',
+        'color':colorcycle[1],
         'linestyle':'-','linewidth':2,
         'marker':'+','markersize':10
     },
     
     'min power': {
-        'color':'0.6',
+        'color':'y',
         'linestyle':'-','linewidth':2,
         'marker':'x','markersize':8
     },
