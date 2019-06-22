@@ -1385,6 +1385,11 @@ class Plotter(object):
         if wakes is None:
             # plot all wakes
             wakes = self.wakes.keys()
+        else:
+            for name in wakes:
+                if not name in self.wakes.keys():
+                    print('Specified wake',name,
+                          'not in',list(self.wakes.keys()))
         for name,wake in self.wakes.items():
             if not wake.wake_tracked:
                 continue
