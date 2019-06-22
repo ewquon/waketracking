@@ -1383,19 +1383,25 @@ class Plotter(object):
         self.bkg.set_array(bkgdata.ravel())
         updated = [self.bkg]
         if wakes is None:
+            # plot all wakes
             wakes = self.wakes.keys()
-        for name in wakes:
-            wake = self.wakes[name]
+        for name,wake in self.wakes.items():
             if not wake.wake_tracked:
                 continue
             if verbose:
                 print(name, wake.xh_wake[itime], wake.xv_wake[itime])
+            hidden = (not (name in wakes))
             if self.centers[name] is not None:
-                self.centers[name].set_data(wake.xh_wake[itime],
-                                            wake.xv_wake[itime]) 
+                if hidden:
+                    self.centers[name].set_data([],[]) 
+                else:
+                    self.centers[name].set_data(wake.xh_wake[itime],
+                                                wake.xv_wake[itime]) 
                 updated.append(self.centers[name])
             if self.outlines[name] is not None:
-                if self.MFoR:
+                if hidden:
+                    self.outlines[name].set_data([],[]) 
+                elif self.MFoR:
                     self.outlines[name].set_data(wake.paths_mfor[itime][:,0],
                                                  wake.paths_mfor[itime][:,1]) 
                 else:
