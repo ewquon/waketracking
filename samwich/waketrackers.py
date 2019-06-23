@@ -1316,7 +1316,7 @@ class Plotter(object):
         self.fig.tight_layout()
 
     def add(self,name,wake,color=None,center=True,outline=True,
-            marker='+',markersize=14,markerwidth=2,markeralpha=1.0,
+            marker='+',markersize=10,markerwidth=2,markeralpha=1.0,
             linestyle='-',linewidth=3,linealpha=0.5,
            ):
         """Add wake object to visualize"""
@@ -1354,14 +1354,6 @@ class Plotter(object):
         """Set the contour level limits"""
         self.bkg.set_clim(minmax)
 
-    def legend(self,markers=True,**kwargs):
-        """Display legend based on markers or outlines"""
-        if markers:
-            handles = [h for _,h in self.centers.items()]
-        else:
-            handles = [h for _,h in self.outlines.items()]
-        self.lgd = self.ax.legend(handles, self.wakes.keys(), **kwargs)
-
     def init_plot(self):
         """For FuncAnimation init_func, to clear axes objects"""
         updated = []
@@ -1384,19 +1376,23 @@ class Plotter(object):
         updated = [self.bkg]
         if wakes is None:
             # plot all wakes
-            wakes = self.wakes.keys()
+            self.selected_wakes = self.wakes.keys()
         else:
+            # check selected wakes exist
             for name in wakes:
                 if not name in self.wakes.keys():
                     print('Specified wake',name,
                           'not in',list(self.wakes.keys()))
+            self.selected_wakes = wakes
+        # update all wakes (if tracking was performed)
         for name,wake in self.wakes.items():
             if not wake.wake_tracked:
                 continue
             if verbose:
                 print(name, wake.xh_wake[itime], wake.xv_wake[itime])
-            hidden = (not (name in wakes))
+            hidden = (not (name in self.selected_wakes))
             if self.centers[name] is not None:
+                # update wake centers
                 if hidden:
                     self.centers[name].set_data([],[]) 
                 else:
@@ -1404,6 +1400,7 @@ class Plotter(object):
                                                 wake.xv_wake[itime]) 
                 updated.append(self.centers[name])
             if self.outlines[name] is not None:
+                # update wake outlines
                 if hidden:
                     self.outlines[name].set_data([],[]) 
                 elif self.MFoR:
@@ -1413,11 +1410,26 @@ class Plotter(object):
                     self.outlines[name].set_data(wake.paths[itime][:,0],
                                                  wake.paths[itime][:,1]) 
                 updated.append(self.outlines[name])
+        sys.stderr.write('\rPlot: frame {:d}'.format(itime))
+        # formatting
         label = self.varnames.get(var,var)
         self.cbar.set_label(label=label,fontsize='x-large')
         self.ax.set_title('itime = {:d}'.format(itime))
-        sys.stderr.write('\rPlot: frame {:d}'.format(itime))
         return tuple(updated)
+
+    def legend(self,markers=True,**kwargs):
+        """Display legend based on markers or outlines"""
+        if markers:
+            handles = [
+                h for name,h in self.centers.items()
+                if name in self.selected_wakes
+            ]
+        else:
+            handles = [
+                h for name,h in self.outlines.items()
+                if name in self.selected_wakes
+            ]
+        self.lgd = self.ax.legend(handles, self.wakes.keys(), **kwargs)
 
     def animation(self,frames=None,**kwargs):
         """Wrapper around FuncAnimation to return a
