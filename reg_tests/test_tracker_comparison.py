@@ -5,163 +5,183 @@
 #
 import os
 import numpy as np
+import pandas as pd
 
-from samwich.dataloaders import PlanarData
+from samwich.dataloaders import RawData
+from examples.turbines import Turbine  # container for turbine properties
 from samwich.waketrackers import track
-from samwich.gaussian_functions import PorteAgel
+from samwich.gaussian_functions import Bastankhah
+
 trackerlist = track()
-
-# TODO: Move these settings to a .yaml file
-
 rootdir = os.path.join(os.environ['HOME'],'waketracking')
-datadir = os.path.join(rootdir,'examples','MWE-data')
-
-D = 27.0  # to define the search range, and the reference area for the contour methods
-zhub = 32.1  # hub height [m], for estimating the freestream reference velocity
-aref = 0.3  # induction, for estimating the momentum theory mass/momentum flux
-
-#kind = 'mean'  # sanity check, not very interesting
-#kind = 'instantaneous'
-
-def track_all(kind,verbose=False,tol=1e-4):
-    """Test all trackers given sample data with label 'kind'"""
-
-    # Preliminary calculations
-    ref_area = np.pi*D**2/4
-    ref_CT = 4*aref*(1-aref)  # thrust coefficient
-    ref_CP = 4*aref*(1-aref)**2  # power coefficient
-    if verbose:
-        print('reference area/C_T/C_P :',ref_area,ref_CT,ref_CP)
-
-    # Read in test data
-    varlist = ['x','y','z','u','v','w']
-    sample = PlanarData({
-        v: np.loadtxt(os.path.join(datadir,'3D_{}_{}_WFoR.txt'.format(kind,v))) for v in varlist
-    })
-
-    # Calculate freestream
-    data = {
-        v: np.loadtxt(os.path.join(datadir,'freestream_mean_{}_WFoR.txt'.format(v)))
-        for v in varlist
-    }
-    free_z = data['z'][0,:]
-    free_Uprofile = np.mean(data['u'],axis=0)
-    jhub = np.argmin(np.abs(data['y'][:,0]-np.mean(data['y'][:,0])))
-    khub = np.argmin(np.abs(data['z'][0,:]-zhub))
-    ref_velocity = data['u'][jhub,khub]
-    ref_thrust = ref_CT * 0.5*ref_velocity**2 * ref_area  # force / density
-    if verbose:
-        print('ref velocity (at z={z}) : {Uref}'.format(z=data['z'][0,khub],Uref=ref_velocity))
-        print('ref thrust (momentum deficit) :',ref_thrust,'N/(kg/m^3)')
+datadir = os.path.join(rootdir,'reg_tests','MWE-data')
 
 
-    # Perform wake identification
-    wake,yc,zc = {},{},{}
+class TrackerComparison(object):
 
-    ## - Constant area contours
-    tracker = 'const area'
-    wake[tracker] = track(sample.sliceI(),method='ConstantArea',verbose=verbose) 
-    wake[tracker].remove_shear(wind_profile=free_Uprofile)
-    yc[tracker],zc[tracker] = wake[tracker].find_centers(ref_area,tol=0.01)
+    def __init__(self,turbine='V27',base_location=(0,0),verbose=True):
+        self.verbose = verbose
 
-    ## - Momentum deficit contours
-    tracker = 'momentum deficit'
-    func = lambda u,u_tot: -u*u_tot
-    wake[tracker] = track(sample.sliceI(),method='ConstantFlux',verbose=verbose) 
-    wake[tracker].remove_shear(wind_profile=free_Uprofile)
-    yc[tracker],zc[tracker] = wake[tracker].find_centers(ref_thrust,
-                                                         flux_function=func,
-                                                         field_names=('u','u_tot'),
-                                                         tol=0.01)
+        turb = Turbine(turbine)
+        self.turb = turb
+        self.turb.base_location = base_location
 
-    ## - Gaussian Fits
-    tracker = 'gaussian (R)'
-    wake[tracker] = track(sample.sliceI(),method='Gaussian',verbose=verbose) 
-    wake[tracker].remove_shear(wind_profile=free_Uprofile)
-    yc[tracker],zc[tracker] = wake[tracker].find_centers(umin=None,sigma=D/2)
+        self.profile = np.loadtxt(os.path.join(datadir,'wind_profile.csv'), delimiter=',')
 
-    tracker = 'gaussian (Porte-Agel)'
-    #xref = np.mean(sample.x) - x0  # need to know turbine location...
-    xloc = 3*D  # samples 3D downstream
-    # model depends on case-dependent wake growth rate, kstar
-    fernando = PorteAgel(CT=ref_CT,d0=D,kstar=0.03) # ad-hoc value taken from Bastankhah & Porte-Agel 2014 (the smallest of the full-scale cases)
-    wake[tracker] = track(sample.sliceI(),method='Gaussian',verbose=verbose) 
-    wake[tracker].remove_shear(wind_profile=free_Uprofile)
-    yc[tracker],zc[tracker] = wake[tracker].find_centers(
-            umin=fernando.amplitude(xloc,-ref_velocity),
-            sigma=fernando.sigma(xloc))
+        # additional tracking parameters
+        self.Uref = np.interp(turb.zhub, self.profile[:,0], self.profile[:,1])
+        self.ref_thrust = turb.ref_CT * 0.5*self.Uref**2 * turb.rotor_area  # force / density
+        if verbose:
+            print('ref thrust (momentum deficit) is',self.ref_thrust,'N/(kg/m^3)')
 
-    tracker = 'gaussian (ideal)' # sigma estimated from momentum deficit
-    wake[tracker] = track(sample.sliceI(),method='Gaussian',verbose=verbose) 
-    wake[tracker].remove_shear(wind_profile=free_Uprofile)
-    max_VD = -np.min(wake[tracker].u,axis=(1,2))  # max velocity deficit, u.shape == (Ntimes,Nh,Nv)
-    sigma_opt = np.sqrt(ref_thrust / (np.pi*max_VD*(2*ref_velocity - max_VD)))
-    yc[tracker],zc[tracker] = wake[tracker].find_centers(umin=None,sigma=sigma_opt)
 
-    ## - 2D Gaussian
-    tracker = 'elliptical'
-    wake[tracker] = track(sample.sliceI(),method='Gaussian2D',verbose=verbose) 
-    wake[tracker].remove_shear(wind_profile=free_Uprofile)
-    yc[tracker],zc[tracker] = wake[tracker].find_centers(
+    def track_all(self,testname,tol=1e-4):
+        """Test all trackers given sample data with label 'testname'"""
+        wake,yc,zc = {},{},{}
+
+        self.sample = RawData(
+            os.path.join(datadir,'snapshot_'+testname+'_WFoR.csv')
+        )
+        sliceI = self.sample.sliceI()
+        x,y,z,u = sliceI
+        xloc = (np.mean(x) - self.turb.base_location[0])
+        if self.verbose:
+            print('slice at x/D:',xloc/self.turb.D)
+
+        # Constant area contours
+        tracker = 'const area'
+        print('\n'+tracker+'\n'+len(tracker)*'-')
+        wake[tracker] = track(sliceI, method='ConstantArea', verbose=self.verbose) 
+        wake[tracker].remove_shear(wind_profile=self.profile)
+        yc[tracker],zc[tracker] = wake[tracker].find_centers(self.turb.rotor_area)
+
+        # Momentum deficit contours
+        tracker = 'momentum deficit'
+        print('\n'+tracker+'\n'+len(tracker)*'-')
+        flux = lambda u,u_w: -u * u_w  # function arguments correspond to field_names
+        wake[tracker] = track(sliceI, method='ConstantFlux', verbose=self.verbose) 
+        wake[tracker].remove_shear(wind_profile=self.profile)
+        yc[tracker],zc[tracker] = wake[tracker].find_centers(self.ref_thrust,
+                                                             flux_function=flux,
+                                                             field_names=('u','u_tot'))
+
+        # Gaussian Fits
+        tracker = 'gaussian (R)'
+        print('\n'+tracker+'\n'+len(tracker)*'-')
+        wake[tracker] = track(sliceI, method='Gaussian', verbose=self.verbose) 
+        wake[tracker].remove_shear(wind_profile=self.profile)
+        yc[tracker],zc[tracker] = wake[tracker].find_centers(umin=None,
+                                                             sigma=self.turb.D/2)
+
+        tracker = 'gaussian (Bastankhah)'
+        print('\n'+tracker+'\n'+len(tracker)*'-')
+        # - model depends on case-dependent wake growth rate, kstar
+        #   ad-hoc value of kstar taken from Bastankhah & Porte-Agel 2014
+        #   (the smallest of the full-scale cases)
+        gauss = Bastankhah(CT=self.turb.ref_CT, d0=self.turb.D, kstar=0.03)
+        wake[tracker] = track(sliceI, method='Gaussian', verbose=self.verbose) 
+        wake[tracker].remove_shear(wind_profile=self.profile)
+        yc[tracker],zc[tracker] = wake[tracker].find_centers(
+            umin=gauss.amplitude(xloc, -self.Uref),
+            sigma=gauss.sigma(xloc)
+        )
+
+        # - sigma estimated from momentum deficit
+        tracker = 'gaussian (ideal)'
+        print('\n'+tracker+'\n'+len(tracker)*'-')
+        wake[tracker] = track(sliceI, method='Gaussian', verbose=self.verbose) 
+        wake[tracker].remove_shear(wind_profile=self.profile)
+        max_VD = -np.min(wake[tracker].u,axis=(1,2))  # max velocity deficit, u.shape == (Ntimes,Nh,Nv)
+        sigma_opt = np.sqrt(self.ref_thrust / (np.pi*max_VD*(2*self.Uref - max_VD)))
+        yc[tracker],zc[tracker] = wake[tracker].find_centers(umin=None, sigma=sigma_opt)
+
+        # 2D Gaussian
+        tracker = 'elliptical'
+        print('\n'+tracker+'\n'+len(tracker)*'-')
+        wake[tracker] = track(sliceI, method='Gaussian2D', verbose=self.verbose) 
+        wake[tracker].remove_shear(wind_profile=self.profile)
+        yc[tracker],zc[tracker] = wake[tracker].find_centers(
             umin=None,
-            A_ref=ref_area,
-            A_min=ref_area/5.0,  # ad hoc value
-            A_max=ref_area*2.0,  # ad hoc value
-            AR_max=10.0)  # ad hoc value
+            A_ref=self.turb.rotor_area,
+            A_min=self.turb.rotor_area/5.0,  # ad hoc value
+            A_max=self.turb.rotor_area*2.0,  # ad hoc value
+            AR_max=10.0  # ad hoc value
+        )
 
-    ## - Test Region
-    tracker = 'min power'
-    wake[tracker] = track(sample.sliceI(),method='CircularTestRegion',verbose=verbose) 
-    wake[tracker].remove_shear(wind_profile=free_Uprofile)
-    yc[tracker],zc[tracker] = wake[tracker].find_centers(
-            test_radius=D/2,  # following Vollmer 2016
+        # Test Region
+        # - minimum power within circular region
+        tracker = 'min power'
+        print('\n'+tracker+'\n'+len(tracker)*'-')
+        wake[tracker] = track(sliceI, method='CircularTestRegion', verbose=self.verbose) 
+        wake[tracker].remove_shear(wind_profile=self.profile)
+        yc[tracker],zc[tracker] = wake[tracker].find_centers(
+            test_radius=self.turb.D/2,  # following Vollmer 2016
             test_function=lambda u: u**3,
-            test_field='u_tot')
+            test_field='u_tot'
+        )
 
 
-    # NOW, compare detected wake centers
-    itime = 0
-    all_yc = np.array([ yc[tracker][itime] for tracker in wake.keys() ])
-    all_zc = np.array([ zc[tracker][itime] for tracker in wake.keys() ])
+        # NOW, compare detected wake centers
+        itime = 0
+        all_yc = np.array([ yc[tracker][itime] for tracker in wake.keys() ])
+        all_zc = np.array([ zc[tracker][itime] for tracker in wake.keys() ])
 
-    refpath = os.path.join(rootdir,'reg_tests','ref-data',
-                           '{}_detected_centers.csv'.format(kind))
-    #refdata = np.genfromtxt(refpath,skip_header=1,delimiter=',',dtype=None,encoding=None)
-    #trackers = [vals[0] for vals in refdata]
-    #yref = [vals[1] for vals in refdata]
-    #zref = [vals[2] for vals in refdata]
-    # unpythonic but guaranteed to load w/o error
-    trackers, yref, zref = [], [], []
-    with open(refpath,'r') as f:
-        f.readline()
-        for line in f:
-            line = line.split(',')
-            trackers.append(line[0])
-            yref.append(float(line[1]))
-            zref.append(float(line[2]))
-    yref = np.array(yref)
-    zref = np.array(zref)
+        refpath = os.path.join(rootdir,'reg_tests','ref-data',
+                               '{}_detected_centers.csv'.format(testname))
+        #refdata = np.genfromtxt(refpath,skip_header=1,delimiter=',',dtype=None,encoding=None)
+        #trackers = [vals[0] for vals in refdata]
+        #yref = [vals[1] for vals in refdata]
+        #zref = [vals[2] for vals in refdata]
+        # unpythonic but guaranteed to load w/o error
+        trackers, yref, zref = [], [], []
+        with open(refpath,'r') as f:
+            f.readline()
+            for line in f:
+                line = line.split(',')
+                trackers.append(line[0])
+                yref.append(float(line[1]))
+                zref.append(float(line[2]))
+        yref = np.array(yref)
+        zref = np.array(zref)
 
-    yerr = np.abs(yref - all_yc)
-    zerr = np.abs(zref - all_zc)
-    for tracker,ye,ze in zip(trackers,yerr,zerr):
-        print(tracker,ye,ze)
+        yerr = np.abs(yref - all_yc)
+        zerr = np.abs(zref - all_zc)
+        if self.verbose:
+            print('\n\nTRACKER ERRORS')
+            for tracker,ye,ze in zip(trackers,yerr,zerr):
+                print(tracker,ye,ze)
 
-    assert np.all(yerr < tol) and np.all(zerr < tol)
+        # Compare with existing data
+        print('Max y,z error:', np.max(yerr), np.max(zerr))
+        if np.all(yerr > tol) or np.all(zerr > tol):
+            fname = '{}_detected_centers.csv'.format(testname)
+            df = pd.DataFrame(index=wake.keys(), data={'y':all_yc, 'z':all_zc})
+            df.to_csv(fname)
+            errstr = 'Identified wake centers for \'' + testname \
+                    + '\' differ by more than ' + str(tol)
+            raise AssertionError(errstr)
 
 
-def test_mean():
-    track_all('mean')
+#==============================================================================
+# pytests
 
-def test_instantaneous():
-    track_all('instantaneous')
+def test_MWE():
+    tester = TrackerComparison(turbine='V27', base_location=(2414.8, 1633.3))
+    tester.track_all('mean')
+    tester.track_all('instantaneous')
 
 
+#==============================================================================
 if __name__ == '__main__':
     import sys
     if len(sys.argv) > 1:
         cases = sys.argv[1:]
     else:
         cases = ['mean','instantaneous']
+
+    print(trackerlist)
+
+    tester = TrackerComparison(turbine='V27', base_location=(2414.8, 1633.3))
     for case in cases:
-        track_all(case)
+        tester.track_all(case)
+
