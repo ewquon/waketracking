@@ -1,3 +1,3 @@
 [submodule "reg_tests/waketracking-rtest"]
 	path = reg_tests/waketracking-rtest
-	url = git@github.com:ewquon/waketracking-rtest.git
+	url = https://github.com/ewquon/waketracking-rtest.git
