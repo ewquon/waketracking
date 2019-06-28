@@ -1462,3 +1462,7 @@ class Plotter(object):
         anim.save(fname, writer=writer, **kwargs)
         return anim
 
+    def savefig(self,*args,**kwargs):
+        """Convenience function self.fig.savefig"""
+        self.fig.savefig(*args,**kwargs)
+
