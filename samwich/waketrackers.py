@@ -1367,6 +1367,13 @@ class Plotter(object):
         return tuple(updated)
 
     def plot(self,itime=0,var='u',wakes=None,verbose=False):
+        """Plot selected wakes (or by default, `wakes=None` for all
+        wakes) at the specified time"""
+        self.update(itime,var,wakes,verbose)
+        # return figure so that it displays within notebook
+        return self.fig
+
+    def update(self,itime=0,var='u',wakes=None,verbose=False):
         """Updates plot with axes objects corresponding to the specified
         time frame (can be used with FuncAnimation).
         """
@@ -1446,7 +1453,7 @@ class Plotter(object):
         """
         if frames is None:
             frames = len(self.u)
-        return FuncAnimation(self.fig, self.plot, frames=frames,
+        return FuncAnimation(self.fig, self.update, frames=frames,
                              init_func=self.init_plot, blit=True, **kwargs)
 
     def animate(self,fname,bitrate=1000,
