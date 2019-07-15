@@ -118,7 +118,7 @@ class WakeTracker(object):
         self.wake_tracked = False
         self.shear_removal = None
         self.Navg = None  # for removing shear
-        self.plot_initialized = False
+        self._plot_initialized = False
 
         self.prefix = kwargs.get('prefix','.')
         if not os.path.isdir(self.prefix):
@@ -510,7 +510,7 @@ class WakeTracker(object):
     def find_centers(self,
                     trajectory_file=None,
                     frame='rotor-aligned'):
-        self.plot_initialized = False
+        self._plot_initialized = False
         print('{} needs to override this function!'.format(self.__class__.__name))
         #self.wake_tracked = True
 
@@ -724,7 +724,7 @@ class WakeTracker(object):
         self.fig = plt.figure(figsize=figsize)
 
         def handle_close(event):
-            self.plot_initialized = False
+            self._plot_initialized = False
         cid = self.fig.canvas.mpl_connect('close_event', handle_close)
 
         self.ax = self.fig.add_axes([0.15, 0.15, 0.8, 0.8])
@@ -747,7 +747,7 @@ class WakeTracker(object):
         #    plt.close(self.fig)
         self.fig = None
         self.ax = None
-        self.plot_initialized = False
+        self._plot_initialized = False
 
     def plot_contour(self,
                     itime=0,
@@ -791,7 +791,7 @@ class WakeTracker(object):
 
         outline = outline and self.wake_tracked
 
-        if not self.plot_initialized:
+        if not self._plot_initialized:
             self._init_plot(figsize)  # first time
 
             if vmin is None:
@@ -831,7 +831,7 @@ class WakeTracker(object):
             #        horizontalalignment='right', verticalalignment='center',
             #        transform=self.ax.transAxes)
 
-            self.plot_initialized = True
+            self._plot_initialized = True
 
         else:
             if outline and hasattr(self,'plotobj_wakeoutline'):
