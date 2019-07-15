@@ -1237,8 +1237,8 @@ class ContourWakeTracker(WakeTracker):
 
 
 class Plotter(object):
-    """Class for plotting wakes and their identified centers and
-    outlines.
+    """Class for plotting one (or more) wakes and their identified
+    centers and outlines.
     """
 
     varnames = {
@@ -1377,10 +1377,12 @@ class Plotter(object):
         """Updates plot with axes objects corresponding to the specified
         time frame (can be used with FuncAnimation).
         """
+        # update background field
         field = getattr(self,var)
         bkgdata = np.ma.masked_invalid(field[itime,:-1,:-1])
         self.bkg.set_array(bkgdata.ravel())
-        updated = [self.bkg]
+        updated = [self.bkg] # list of updated artists to return for blitting
+        # update detected wakes
         if wakes is None:
             # plot all wakes
             self.selected_wakes = self.wakes.keys()
@@ -1422,6 +1424,12 @@ class Plotter(object):
         label = self.varnames.get(var,var)
         self.cbar.set_label(label=label,fontsize='x-large')
         self.ax.set_title('itime = {:d}'.format(itime))
+        # save figure (optional)
+        if 'fpath' in kwargs.keys():
+            fpath = kwargs.pop('fpath').format(itime)
+            self.fig.savefig(fpath, **kwargs)
+            if verbose:
+                print('Wrote',fpath)
         return tuple(updated)
 
     def legend(self,markers=True,**kwargs):
@@ -1438,7 +1446,7 @@ class Plotter(object):
             ]
         self.lgd = self.ax.legend(handles, self.wakes.keys(), **kwargs)
 
-    def animation(self,frames=None,**kwargs):
+    def animation(self,frames=None,fargs=None,**kwargs):
         """Wrapper around FuncAnimation to return a
         `matplotlib.animation.Animation` object
         
@@ -1454,16 +1462,17 @@ class Plotter(object):
         if frames is None:
             frames = len(self.u)
         return FuncAnimation(self.fig, self.update, frames=frames,
-                             init_func=self.init_plot, blit=True, **kwargs)
+                             init_func=self.init_plot, fargs=fargs,
+                             blit=True, **kwargs)
 
-    def animate(self,fname,bitrate=1000,
+    def animate(self,fname,frames=None,bitrate=1000,
                 fps=24, writer='ffmpeg', codec='h264',
                 extra_args=['-pix_fmt','yuv420p'],
                 **kwargs):
         """Convenience function for creating an animation using
         FuncAnimation with some default parameters.
         """
-        anim = self.animation()
+        anim = self.animation(frames=frames)
         writer = writers[writer](fps=fps, bitrate=bitrate, codec=codec,
                                  extra_args=extra_args)
         anim.save(fname, writer=writer, **kwargs)
@@ -1473,3 +1482,26 @@ class Plotter(object):
         """Convenience function self.fig.savefig"""
         self.fig.savefig(*args,**kwargs)
 
+    def savefigs(self,frames=None,fpath='snapshot_{:04d}.png',**kwargs):
+        """Save all wake snapshots.
+        
+        This is a convenience function for creating an animation and
+        saving each frame using FuncAnimation.
+        """
+        if frames is None:
+            frames = range(len(self.u))
+        elif not hasattr(frames,'__iter__'):
+            # single snapshot
+            frames = [frames]
+        # do some sanity checks on the file name
+        if len(frames) > 1:
+            # multiple files to write out, need a formattable fpath
+            if fpath.format(0) == fpath:
+                # format did nothing; file name will be the same for
+                # every frame
+                print("Output fpath '{:s}' is not formattable".format(fpath))
+                raise ValueError('Image will be repeatedly overwritten')
+        # now loop over all frames:
+        for itime in frames:
+            self.plot(itime, fpath=fpath, **kwargs)
+        
