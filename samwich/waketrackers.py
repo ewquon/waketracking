@@ -1366,10 +1366,16 @@ class Plotter(object):
                 updated.append(self.outlines[name])
         return tuple(updated)
 
-    def plot(self,itime=0,var='u',wakes=None,verbose=False,**kwargs):
+    def plot(self,itime=0,var='u',wakes=None,verbose=False,
+            xlim=None,ylim=None,
+             **kwargs):
         """Plot selected wakes (or by default, `wakes=None` for all
         wakes) at the specified time"""
         self.update(itime,var,wakes,verbose,**kwargs)
+        if xlim is not None:
+            self.ax.set_xlim(xlim)
+        if ylim is not None:
+            self.ax.set_ylim(ylim)
         # return figure so that it displays within notebook
         return self.fig
 
