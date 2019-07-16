@@ -909,11 +909,13 @@ class WakeTracker(object):
             self.plot_contour(itime,writepng='True',**kwargs)
 
 
-    def create_plotter(self,name='default',MFoR=False,wake_kwargs={},**kwargs):
+    def plot(self,name='default',MFoR=False,wake_kwargs={},**kwargs):
         """Create a Plotter object for visualization and generating
-        animations. A convenience function that is equivalent to
+        animations. This is a convenience function that is equivalent to
         initializing a Plotter and then adding the current wake
         instance.
+
+        A Plotter object is returned, containing fig and ax.
 
         Parameters
         ----------
