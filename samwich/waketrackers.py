@@ -1335,12 +1335,13 @@ class Plotter(object):
         if color is None:
             color = colors[len(self.wakes.keys())-1]
         # add plot objects
+        labelstr = name if not outline else ''
         if center and (not self.MFoR):
             self.centers[name], = self.ax.plot([],[],marker,color=color,
                                                markersize=markersize,
                                                markeredgewidth=markerwidth,
                                                alpha=markeralpha,
-                                               label=name)
+                                               label=labelstr)
         else:
             self.centers[name] = None
         if outline:
