@@ -401,7 +401,7 @@ class WakeTracker(object):
                 print('Need to specify wind_profile, shear not removed.')
                 return
             if isinstance(wind_profile, str):
-                # 2D array read from file
+                # 2D array (i.e., table with height,windspeed columns) read from file
                 wind_profile = np.loadtxt(wind_profile)
                 print('Wind profile read from {}'.format(wind_profile))
                 try:
@@ -421,20 +421,28 @@ class WakeTracker(object):
                     # 1D or 2D array
                     if len(wind_profile.shape) == 1:
                         # 1D array (only mean velocities given; must match up)
+                        # - assume input profile at same heights as the grid
                         assert len(wind_profile) == self.Nv
                         self.Uprofile = wind_profile
-                    elif np.all(wind_profile[:,0] == self.xv[0,:]):
-                        # 2D array, vertical levels match
-                        self.Uprofile = wind_profile[:,1]
+                    elif wind_profile.shape[1] == 2:
+                        # table with height,windspeed columns
+                        if np.all(wind_profile[:,0] == self.xv[0,:]):
+                            # 2D array, vertical levels match
+                            self.Uprofile = wind_profile[:,1]
+                        else:
+                            # 2D array but vertical levels are not coincident
+                            if self.verbose:
+                                print('Interpolating freestream profile from',
+                                      wind_profile[:,0],'to',self.xv[0,:])
+                            self.Uprofile = np.interp(self.xv[0,:],
+                                                      wind_profile[:,0],wind_profile[:,1])
                     else:
-                        # 2D array but vertical levels are not coincident
-                        if self.verbose:
-                            print('Interpolating freestream profile from',
-                                  wind_profile[:,0],'to',self.xv[0,:])
-                        self.Uprofile = np.interp(self.xv[0,:],
-                                                  wind_profile[:,0],wind_profile[:,1])
+                        # 2D windspeed array, U(t,z)
+                        # - assume innput profile at same heights as the grid
+                        self.Uprofile = wind_profile
+
                 elif isinstance(wind_profile, tuple):
-                    # two ndarray or lists
+                    # two 1D-ndarrays or lists: height, windspeed
                     assert(len(wind_profile[0]) == len(wind_profile[1]))
                     if np.all(wind_profile[0] == self.xv[0,:]):
                         self.Uprofile = np.array(wind_profile[1])
