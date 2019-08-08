@@ -100,6 +100,9 @@ class WakeTracker(object):
             in the vector case, the planar normal velocity is
             calculated assuming that the sampling plane is only yawed
             (and not tilted).
+        load3D : bool, optional
+            If True, load the 3D velocity vector (with v and w
+            components); otherwise, just load u. (Default: False)
         horz_range,vert_range : tuple, optional
             Range of points in the horizontal and vertical directions,
             respectively, in the rotor-aligned sampling plane through
@@ -220,6 +223,7 @@ class WakeTracker(object):
 
         # check and calculate instantaneous velocities including shear,
         # u_tot
+        load3D = kwargs.get('load3D',False)
         assert(len(udata.shape) in (3,4))
         assert((self.Nh,self.Nv) == udata.shape[1:3])
         self.Ntimes = udata.shape[0]
@@ -227,37 +231,39 @@ class WakeTracker(object):
             # SCALAR data
             self.datasize = 1
             self.u_tot = udata.astype(float,copy=True)  # shape=(Ntimes,Nh,Nv)
-            self.v_tot = np.zeros(udata.shape)
-            self.w_tot = np.zeros(udata.shape)
+            if load3D:
+                print('Warning: velocity data does not have 3 components')
         else:
             # VECTOR data (assumed)
             self.datasize = udata.shape[3]
             assert(self.datasize == 3)
             if all(self.norm == [1,0,0]):
                 self.u_tot = udata[:,:,:,0].astype(float,copy=True)
-#                self.v_tot = udata[:,:,:,1]
-#                self.w_tot = udata[:,:,:,2]
+                if load3D:
+                    self.v_tot = udata[:,:,:,1]
+                    self.w_tot = udata[:,:,:,2]
             else:
                 # calculate velocities in the sampling plane frame of reference
                 self.u_tot = np.zeros((self.Ntimes,self.Nh,self.Nv))
-#                self.v_tot = np.zeros((self.Ntimes,self.Nh,self.Nv))
-#                self.w_tot = np.zeros((self.Ntimes,self.Nh,self.Nv))
+                if load3D:
+                    self.v_tot = np.zeros(udata.shape)
+                    self.w_tot = np.zeros(udata.shape)
                 for itime in range(self.Ntimes):
                     for ih in range(self.Nh):
                         for iv in range(self.Nv):
                             # normal velocity
                             self.u_tot[itime,ih,iv] = \
                                     udata[itime,ih,iv,:].dot(self.norm)
-#                            # horizontal velocity
-#                            self.v_tot[itime,ih,iv] = \
-#                                    udata[itime,ih,iv,:].dot(self.horz)
-#                            # vertical velocity (expect norm[2]==0, vert=[0,0,1])
-#                            self.w_tot[itime,ih,iv] = \
-#                                    udata[itime,ih,iv,2]
+                            if load3D:
+                                # horizontal velocity
+                                self.v_tot[itime,ih,iv] = udata[itime,ih,iv,:].dot(self.horz)
+                                # vertical velocity (expect norm[2]==0, vert=[0,0,1])
+                                self.w_tot[itime,ih,iv] = udata[itime,ih,iv,2]
 
         self.u = self.u_tot  # in case input u already has shear removed
-#        self.v = self.v_tot
-#        self.w = self.w_tot
+        if load3D:
+            self.v = self.v_tot
+            self.w = self.w_tot
 
         self.xwake = np.zeros(self.Ntimes)
         self.ywake = np.zeros(self.Ntimes)
