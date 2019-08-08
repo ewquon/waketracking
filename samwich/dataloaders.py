@@ -751,6 +751,7 @@ class XarrayData(SampledData):
     def __init__(self,fpath,tvar='t',
                  xvar='x',yvar='y',zvar='z',
                  uvar='u',vvar='v',wvar='w',
+                 trim_time=slice(0,None),
                  check_vars=None):
         """Reads a dataset with dimensions and coordinates time, x, y, and z.
         The expected variables are:
@@ -759,8 +760,10 @@ class XarrayData(SampledData):
             W(tvar, x, y, z)
         x is assumed to be aligned with the downstream direction.
 
+        'trim_time' allows a time-range to be selected.
+
         'check_vars' may be a function to verify and rename variable names on
-        the fly
+        the fly.
         """
         import xarray
         self.data_read_from = fpath
@@ -770,9 +773,8 @@ class XarrayData(SampledData):
         #print(xa)
 
         self.ts = None # not a time series
-        self.t = xa.variables[tvar].values
-        self.Ntimes = xa.dims[tvar]
-        assert(self.Ntimes == len(self.t))
+        self.t = xa.variables[tvar].values[trim_time]
+        self.Ntimes = len(self.t)
 
         self.NX = xa.dims[xvar]
         self.NY = xa.dims[yvar]
@@ -783,6 +785,7 @@ class XarrayData(SampledData):
         self.x, self.y, self.z = np.meshgrid(x,y,z,indexing='ij')
 
         U = xa.variables[uvar].transpose(tvar,xvar,yvar,zvar).values
+        U = U[trim_time,:,:,:]
         assert(U.shape == (self.Ntimes,self.NX,self.NY,self.NZ))
         V,W = None,None
         try:
@@ -797,6 +800,8 @@ class XarrayData(SampledData):
             self.data = np.zeros((self.Ntimes,self.NX,self.NY,self.NZ,3))
             V = V.transpose(tvar,xvar,yvar,zvar).values
             W = W.transpose(tvar,xvar,yvar,zvar).values
+            V = V[trim_time,:,:,:]
+            W = W[trim_time,:,:,:]
             self.data[:,:,:,:,0] = U
             self.data[:,:,:,:,1] = V
             self.data[:,:,:,:,2] = W
