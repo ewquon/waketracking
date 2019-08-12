@@ -1312,6 +1312,23 @@ class Plotter(object):
         s += '\n- '.join(self.wakes.keys())
         return s
 
+    def _cell_centers_to_corners(self):
+        # setup grid such that the pcolormesh uses points that correspond to
+        # the edges of the colormesh and the centers of each colormesh cell
+        # correspond to the actual sampled data
+        assert np.all(self.y[:,0] == self.y[:,-1])
+        assert np.all(self.z[0,:] == self.z[-1,:])
+        y1 = (self.y[1:,0] + self.y[:-1,0]) / 2  # midpoints
+        z1 = (self.z[0,1:] + self.z[0,:-1]) / 2
+        y0 = [2*self.y[0,0] - y1[0]] # y0 - (y1 - y0)
+        z0 = [2*self.z[0,0] - z1[0]] # y0 - (y1 - y0)
+        yn = [2*self.y[-1,0] - y1[-1]] # yn + (yn - ym)
+        zn = [2*self.z[0,-1] - z1[-1]] # yn + (yn - ym)
+        self.y1 = np.concatenate((y0,y1,yn))
+        self.z1 = np.concatenate((z0,z1,zn))
+        yy,zz = np.meshgrid(self.y1,self.z1,indexing='ij')
+        return yy,zz
+
     def _create_figure(self):
         # create basic plot elements
         self.fig, self.ax = plt.subplots(figsize=self.figsize,
@@ -1322,7 +1339,8 @@ class Plotter(object):
             self.vmin = np.nanmin(self.u)
         if self.vmax is None:
             self.vmax = np.nanmax(self.u)
-        self.bkg = self.ax.pcolormesh(self.y, self.z, blank, cmap=self.cmap,
+        yy,zz = self._cell_centers_to_corners()
+        self.bkg = self.ax.pcolormesh(yy, zz, blank, cmap=self.cmap,
                                       vmin=self.vmin, vmax=self.vmax,)
         self.cbar = self.fig.colorbar(self.bkg)
         self.cbar.ax.tick_params(labelsize='x-large')
@@ -1402,7 +1420,7 @@ class Plotter(object):
         """
         # update background field
         field = getattr(self,var)
-        bkgdata = np.ma.masked_invalid(field[itime,:-1,:-1])
+        bkgdata = np.ma.masked_invalid(field[itime,:,:])
         self.bkg.set_array(bkgdata.ravel())
         updated = [self.bkg] # list of updated artists to return for blitting
         # update detected wakes
@@ -1433,7 +1451,7 @@ class Plotter(object):
                 updated.append(self.centers[name])
             if self.outlines[name] is not None:
                 # update wake outlines
-                if hidden:
+                if hidden or (wake.paths[itime] is None):
                     self.outlines[name].set_data([],[]) 
                 elif self.MFoR:
                     self.outlines[name].set_data(wake.paths_mfor[itime][:,0],
