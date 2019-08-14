@@ -923,7 +923,7 @@ class WakeTracker(object):
             self.plot_contour(itime,writepng='True',**kwargs)
 
 
-    def plot(self,name='default',MFoR=False,wake_kwargs={},**kwargs):
+    def plot(self,itime=0,name='default',MFoR=False,wake_kwargs={},**kwargs):
         """Create a Plotter object for visualization and generating
         animations. This is a convenience function that is equivalent to
         initializing a Plotter and then adding the current wake
@@ -947,7 +947,7 @@ class WakeTracker(object):
         else:
             p = Plotter(self.xh, self.xv, self.u, **kwargs)
         p.add(name, self,  **wake_kwargs)
-        p.plot()
+        p.plot(itime)
         return p
 
 
