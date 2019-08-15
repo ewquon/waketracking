@@ -212,6 +212,7 @@ class Contours(object):
         if min_points is None:
             min_points = 3
         ignored = 0
+        Nnew = 0
         for path,closed in zip(all_contours,is_closed):
             if closed:
                 if len(path) >= min_points:
@@ -220,6 +221,7 @@ class Contours(object):
                     ignored += 1
                     #if verbose:
                     #    print('  ignoring contour with {} points'.format(len(path)))
+
             elif closure == 'simple':
                 # need to close open contour(s)
                 # - Note: a single open contour identified by opencv may be
@@ -233,8 +235,13 @@ class Contours(object):
                     if (xstart[0] == xend[0]) or (xstart[1] == xend[1]):
                         # simplest case: both ends point on same edge
                         path_list.append(path)
-                if verbose and (len(newpaths) > 1):
-                    print('  - found',len(newpaths),'new path(s) by splitting')
+                    else:
+                        ignored += 1
+                if (len(newpaths) > 1):
+                    Nnew = Nnew + len(newpaths) - 1
+                    if verbose:
+                        print('  - found',len(newpaths),'new path(s) by splitting')
+
             elif closure == 'compound':
                 # TODO: need to test this for opencv contours
                 xstart = path[0,:]
@@ -316,17 +323,16 @@ class Contours(object):
                         print('  {} {}'.format(xstart,xend))
             elif closure is not None:
                 print('Unrecognized contour closure method:',closure)
+                ignored += 1
         if verbose and ignored > 0:
             print('  - ignored {:d}/{:d} contours with fewer than {:d} points'.format(
-                    ignored,len(all_contours),min_points))
+                    ignored, len(all_contours)+Nnew, min_points))
         return path_list
 
     def calc_area(self, path=None, coords=None):
         """Calculate the area enclosed by an arbitrary path using Green's
         Theorem, assuming that the path is closed.
         """
-        if path is None:
-            return 0
         if coords is None:
             xp,yp = self.to_coords(path,closed=True)
         else:
