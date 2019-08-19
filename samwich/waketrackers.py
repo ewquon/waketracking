@@ -593,19 +593,28 @@ class WakeTracker(object):
 
         return yw_fix, zw_fix
 
-    def to_MFoR(self,y_mfor,z_mfor,method='RectBivariateSpline'):
+    def to_MFoR(self,y_mfor,z_mfor,field='u',method='RectBivariateSpline'):
         """Translate wake to meandering frame of reference (MFoR) and
         interpolate to rectangular grid with specified horizontal and
         vertical coordinates.
         """
         if not self.wake_tracked:
             print('Need to perform wake tracking first')
-        if np.any(np.isnan(self.u)) and method=='RectBivariateSpline':
+        inputfield = getattr(self, field)
+        if np.any(np.isnan(inputfield)) and method=='RectBivariateSpline':
             print('NaNs found -- switching interpolation method to griddata')
             method = 'griddata'
+        if hasattr(self, 'xh_mfor') or hasattr(self, 'xv_mfor'):
+            assert (hasattr(self,'xh_mfor') and hasattr(self, 'xv_mfor'))
+            if (~np.all(y_mfor == self.xh_mfor[:,0]) or \
+                    ~np.all(z_mfor == self.xv_mfor[0,:])):
+                print('Specified rectangular MFoR grid does not match previous call')
+        outputfieldname = field + '_mfor'
+        if hasattr(self, outputfieldname):
+            print('Overwriting previously transformed',outputfieldname)
         # create fields in meandering frame of reference (_mfor)
         self.xh_mfor, self.xv_mfor = np.meshgrid(y_mfor, z_mfor, indexing='ij')
-        self.u_mfor = np.empty((self.Ntimes,len(y_mfor),len(z_mfor)))
+        outputfield = np.empty((self.Ntimes,len(y_mfor),len(z_mfor)))
         # interpolate to regular grid
         if method == 'RectBivariateSpline':
             # complete data (no nans) on structured grid -- faster calculation
@@ -615,8 +624,8 @@ class WakeTracker(object):
                 yw, zw = self.xh_wake[itime], self.xv_wake[itime]
                 interpfun = RectBivariateSpline(self.xh_range-yw,
                                                 self.xv_range-zw,
-                                                self.u[itime,:,:])
-                self.u_mfor[itime,:,:] = interpfun(y_mfor, z_mfor, grid=True)
+                                                inputfield[itime,:,:])
+                outputfield[itime,:,:] = interpfun(y_mfor, z_mfor, grid=True)
                 sys.stderr.write('\rTransform: frame {:d}'.format(itime))
             sys.stderr.write('\n')
         elif method == 'griddata':
@@ -626,17 +635,18 @@ class WakeTracker(object):
             output = np.stack((self.xh_mfor.ravel(), self.xv_mfor.ravel()), axis=-1)
             for itime in range(self.Ntimes):
                 yw, zw = self.xh_wake[itime], self.xv_wake[itime]
-                uw = self.u[itime,:,:]
+                uw = inputfield[itime,:,:]
                 notnan = np.where(np.isfinite(uw))
                 points = np.stack((self.xh[notnan].ravel()-yw,
                                    self.xv[notnan].ravel()-zw), axis=-1)
                 values = uw[notnan].ravel()
                 interpout = griddata(points, values, output)
-                self.u_mfor[itime,:,:] = interpout.reshape(self.xh_mfor.shape)
+                outputfield[itime,:,:] = interpout.reshape(self.xh_mfor.shape)
                 sys.stderr.write('\rTransform: frame {:d}'.format(itime))
             sys.stderr.write('\n')
         else:
             raise ValueError('Unsupported interpolation method: '+method)
+        setattr(self, outputfieldname, outputfield)
         # translate paths to mfor as well
         self.paths_mfor = []
         for itime,(yw,zw) in enumerate(zip(self.xh_wake,self.xv_wake)):
