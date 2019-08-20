@@ -593,10 +593,14 @@ class WakeTracker(object):
 
         return yw_fix, zw_fix
 
-    def to_MFoR(self,y_mfor,z_mfor,field='u',method='RectBivariateSpline'):
+    def to_MFoR(self,y_mfor,z_mfor,field='u',
+                method='RectBivariateSpline',mask_outside=np.nan):
         """Translate wake to meandering frame of reference (MFoR) and
         interpolate to rectangular grid with specified horizontal and
         vertical coordinates.
+
+        If method is 'RectBivariateSpline' and mask_outside is not None,
+        then set points outside the interpolation region to this value.
         """
         if not self.wake_tracked:
             print('Need to perform wake tracking first')
@@ -626,6 +630,14 @@ class WakeTracker(object):
                                                 self.xv_range-zw,
                                                 inputfield[itime,:,:])
                 outputfield[itime,:,:] = interpfun(y_mfor, z_mfor, grid=True)
+                if mask_outside is not None:
+                    outside = (
+                        (self.xh_mfor > (self.xh_range[-1] - yw)) | 
+                        (self.xh_mfor < (self.xh_range[ 0] - yw)) | 
+                        (self.xv_mfor > (self.xv_range[-1] - zw)) | 
+                        (self.xv_mfor < (self.xv_range[ 0] - zw))
+                    )
+                    outputfield[itime,outside] = mask_outside
                 sys.stderr.write('\rTransform: frame {:d}'.format(itime))
             sys.stderr.write('\n')
         elif method == 'griddata':
