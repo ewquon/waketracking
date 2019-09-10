@@ -442,6 +442,7 @@ class SpinnerLidarMatlab(SampledData):
     def __init__(self,matfile,D=27.0,verbose=True):
         from scipy.io import loadmat
         self.verbose = verbose
+        self.data_read_from = matfile
         self.D = D
         data = loadmat(matfile,
                        struct_as_record=False,
@@ -455,6 +456,17 @@ class SpinnerLidarMatlab(SampledData):
         self.variables = data['variables']
         self._parse_variables()
         self._convert_times()
+
+    def __repr__(self):
+        s = 'Datafile: ' + self.data_read_from
+        s += '\nx/D: '
+        s += str(np.unique(self.scan_avg.focus_dist_set_D))
+        s += '\nt: {:d} ['.format(self.Ntimes)
+        s += self.t[0].strftime('%Y-%m-%d %H:%M:%S')
+        s += ' ... '
+        s += self.t[-1].strftime('%Y-%m-%d %H:%M:%S')
+        s += ' ]'
+        return s
 
     def _parse_variables(self):
         def array_to_str(arr):
@@ -475,7 +487,7 @@ class SpinnerLidarMatlab(SampledData):
         self.t = np.array([ datetime.utcfromtimestamp(ti) for ti in tavg ])
         self.Ntimes = len(self.t)
         if self.verbose:
-            print('  converted {:d} times from {:s}'.format(
+            print('  converted {:d} times from units "{:s}"'.format(
                     self.Ntimes, self.var_units['scan_avg']['time']))
 
     def _setup_grid(self,xs,ys,zs,horzrange,vertrange,ds):
