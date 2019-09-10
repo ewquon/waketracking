@@ -453,6 +453,8 @@ class SpinnerLidarMatlab(SampledData):
         if verbose:
             print('Loaded {:s} ({:s})'.format(matfile,str(data['__header__'])))
             print('  x/D available:',np.unique(self.scan_avg.focus_dist_set_D))
+            print('  coordinate systems available:',
+                  [ attr for attr in dir(self.scan) if attr.endswith('CS') ])
         self.variables = data['variables']
         self._parse_variables()
         self._convert_times()
