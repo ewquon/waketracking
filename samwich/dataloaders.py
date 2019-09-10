@@ -561,7 +561,7 @@ class SpinnerLidarMatlab(SampledData):
                     at_focaldist_only=True,
                     mask_outside=True):
         """Interpolate sampled velocity field in the specified
-        coordinate system.
+        coordinate system to set up data array.
 
         If `at_focaldist_only`, then the scans are downselected to
         only those with `scan_avg.focal_dist_set_D` equal to `focaldist`.
