@@ -554,6 +554,9 @@ class SpinnerLidarMatlab(SampledData):
         self.NX, self.NY, self.NZ = self.x.shape
 
     def _interp_naturalneighbor(self,xs,ys,zs,vlos,proj,mask_outside=True):
+        """Natural neighbor interpolation provided by
+        naturalneighbor.griddata()
+        """
         import naturalneighbor
         if mask_outside:
             from scipy.spatial import ConvexHull, Delaunay
@@ -585,6 +588,48 @@ class SpinnerLidarMatlab(SampledData):
                                  self.var_units['scan']['vlos'],
                                  str(self.t[itime]), itime+1, self.Ntimes))
         if self.verbose: sys.stderr.write('\n')
+
+    def _interp_metpy(self,xs,ys,zs,vlos,proj,ds,bbox):
+        """Natural neighbor interpolation provided by
+        metpy.interpolate.interpolate_to_grid()
+        """
+        from metpy.interpolate import interpolate_to_grid
+        from metpy.interpolate.grid import get_xy_steps
+        from scipy.optimize import fsolve
+        # need to adjust input grid spacing to trick metpy into giving
+        # us back the correct output grid
+        yrange = self.y[0, -1,0] - self.y[0,0,0]
+        zrange = self.z[0, 0,-1] - self.z[0,0,0]
+        Ny = int(yrange/ds + 1) # expected number of points in output grid
+        Nz = int(zrange/ds + 1)
+        def optfun(delta):
+            metpy_steps = np.array(get_xy_steps(bbox,delta))
+            err = metpy_steps - np.array([Ny,Nz])
+            return err.dot(err)
+        ds_adjusted = fsolve(optfun,ds)[0]
+        print('ds (adjusted for metpy) =',ds_adjusted)
+        for itime in range(self.Ntimes):
+            xi = xs[itime][np.isfinite(xs[itime])]
+            yi = ys[itime][np.isfinite(ys[itime])]
+            zi = zs[itime][np.isfinite(zs[itime])]
+            ui = vlos[itime][np.isfinite(vlos[itime])] \
+               / proj[itime][np.isfinite(proj[itime])]
+            assert np.all(np.isfinite(xi) == np.isfinite(yi))
+            assert np.all(np.isfinite(xi) == np.isfinite(zi))
+            assert np.all(np.isfinite(xi) == np.isfinite(ui))
+            yo,zo,uo = interpolate_to_grid(yi, zi, ui,
+                                           interp_type='natural_neighbor',
+                                           hres=ds_adjusted,
+                                           boundary_coords=bbox)
+            assert np.all(yo.T == self.y[0,:,:])
+            assert np.all(zo.T == self.z[0,:,:])
+            self.data[itime,:,:,:] = uo.T
+            if self.verbose:
+                sys.stderr.write('\rProcessed vlos [{:s}] at {:s} ({:d}/{:d})'.format(
+                                 self.var_units['scan']['vlos'],
+                                 str(self.t[itime]), itime+1, self.Ntimes))
+        if self.verbose: sys.stderr.write('\n')
+
 
     def interpolate(self,
                     coordsys='streamwiseCS',
@@ -619,7 +664,8 @@ class SpinnerLidarMatlab(SampledData):
         force2D : bool
             Assume all scan points at the specified focal distance are
             coplanar (whereas in reality, points lie on a concave
-            surface)
+            surface) - force2D==False only affects implementation ==
+            'naturalneighbor'
         at_focaldist_only : bool
             Only extract scans at the specified focal distance; results
             in a reduced set of scans (e.g., recorded scans during which
@@ -660,6 +706,16 @@ class SpinnerLidarMatlab(SampledData):
         # finally, interpolate to regular grid over all times
         if implementation == 'naturalneighbor':
             self._interp_naturalneighbor(xs,ys,zs,vlos,proj,mask_outside)
+        elif implementation == 'metpy':
+            bbox = {
+                'west':  self.y[0, 0, 0],
+                'east':  self.y[0,-1, 0],
+                'south': self.z[0, 0, 0],
+                'north': self.z[0, 0,-1],
+            }
+            self._interp_metpy(xs,ys,zs,vlos,proj,ds,bbox)
+        else:
+            raise ValueError(implementation+' interpolation not implemented')
 
     def to_netcdf(self,fpath,**kwargs):
         import xarray
