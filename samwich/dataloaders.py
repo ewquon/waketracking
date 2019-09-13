@@ -630,6 +630,30 @@ class SpinnerLidarMatlab(SampledData):
                                  str(self.t[itime]), itime+1, self.Ntimes))
         if self.verbose: sys.stderr.write('\n')
 
+    def _interp_griddata(self,xs,ys,zs,vlos,proj,method='linear'):
+        """Linear interpolation provided by scipy.interpolate.griddata()
+        """
+        from scipy.interpolate import griddata
+        outpoints = np.stack([self.y[0,:,:].ravel(),
+                              self.z[0,:,:].ravel()], axis=-1)
+        for itime in range(self.Ntimes):
+            xi = xs[itime][np.isfinite(xs[itime])]
+            yi = ys[itime][np.isfinite(ys[itime])]
+            zi = zs[itime][np.isfinite(zs[itime])]
+            ui = vlos[itime][np.isfinite(vlos[itime])] \
+               / proj[itime][np.isfinite(proj[itime])]
+            assert np.all(np.isfinite(xi) == np.isfinite(yi))
+            assert np.all(np.isfinite(xi) == np.isfinite(zi))
+            assert np.all(np.isfinite(xi) == np.isfinite(ui))
+            points = np.stack((yi,zi), axis=-1)
+            uo = griddata(points, ui, outpoints, method=method, fill_value=np.nan)
+            self.data[itime,:,:,:] = uo.reshape(self.x.shape)
+            if self.verbose:
+                sys.stderr.write('\rProcessed vlos [{:s}] at {:s} ({:d}/{:d})'.format(
+                                 self.var_units['scan']['vlos'],
+                                 str(self.t[itime]), itime+1, self.Ntimes))
+        if self.verbose: sys.stderr.write('\n')
+
 
     def interpolate(self,
                     coordsys='streamwiseCS',
@@ -673,7 +697,10 @@ class SpinnerLidarMatlab(SampledData):
         mask_outside : bool
             Set points outside the scan rosette to np.nan
         implementation : str
-            Currently options include 'naturalneighbor' and 'metpy'
+            Currently options include 'naturalneighbor', 'metpy' (also
+            natural neighbor), 'griddata' (linear), or
+            'griddata-<method>' (where method corresponds to the kwarg
+            for scipy.interpolate.griddata)
         """
         # save global properties
         self.focaldist_D = focaldist_D
@@ -707,6 +734,7 @@ class SpinnerLidarMatlab(SampledData):
         if implementation == 'naturalneighbor':
             self._interp_naturalneighbor(xs,ys,zs,vlos,proj,mask_outside)
         elif implementation == 'metpy':
+            # natural neighbor interpolation provided by metpy package
             bbox = {
                 'west':  self.y[0, 0, 0],
                 'east':  self.y[0,-1, 0],
@@ -714,6 +742,17 @@ class SpinnerLidarMatlab(SampledData):
                 'north': self.z[0, 0,-1],
             }
             self._interp_metpy(xs,ys,zs,vlos,proj,ds,bbox)
+        elif implementation.startswith('griddata'):
+            # unstructured grid interpolation
+            if implementation == 'griddata':
+                # default
+                method = 'linear'
+            else:
+                # implementation == 'griddata-<method>'
+                method = implementation[len('griddata-'):]
+            if self.verbose:
+                print('Using scipy.interpolate.griddata with method='+method)
+            self._interp_griddata(xs,ys,zs,vlos,proj,method=method)
         else:
             raise ValueError(implementation+' interpolation not implemented')
 
