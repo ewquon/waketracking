@@ -662,7 +662,7 @@ class SpinnerLidarMatlab(SampledData):
                     force2D=True,
                     at_focaldist_only=True,
                     mask_outside=True,
-                    implementation='naturalneighbor'):
+                    implementation='griddata'):
         """Interpolate sampled velocity field in the specified
         coordinate system to set up data array.
 
