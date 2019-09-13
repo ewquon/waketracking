@@ -553,13 +553,47 @@ class SpinnerLidarMatlab(SampledData):
                                              indexing='ij')
         self.NX, self.NY, self.NZ = self.x.shape
 
+    def _interp_naturalneighbor(self,xs,ys,zs,vlos,proj,mask_outside=True):
+        import naturalneighbor
+        if mask_outside:
+            from scipy.spatial import ConvexHull, Delaunay
+            testpoints = np.stack((self.y.ravel(), self.z.ravel()), axis=-1)
+        for itime in range(self.Ntimes):
+            xi = xs[itime][np.isfinite(xs[itime])]
+            yi = ys[itime][np.isfinite(ys[itime])]
+            zi = zs[itime][np.isfinite(zs[itime])]
+            ui = vlos[itime][np.isfinite(vlos[itime])] \
+               / proj[itime][np.isfinite(proj[itime])]
+            assert np.all(np.isfinite(xi) == np.isfinite(yi))
+            assert np.all(np.isfinite(xi) == np.isfinite(zi))
+            assert np.all(np.isfinite(xi) == np.isfinite(ui))
+            points = np.stack((xi,yi,zi),axis=-1)
+            self.data[itime,:,:,:] = naturalneighbor.griddata(points, ui, self.interp_grid_def)
+            if mask_outside:
+                # set to nan points that are outside the rosette
+                # - identify point envelope
+                points2d = np.stack((yi,zi),axis=-1)
+                hull = ConvexHull(points)
+                # - use Delaunay tesselation to determine whether we're inside
+                #   the scan region or not
+                edge = Delaunay(points2d[hull.vertices])
+                outside = (edge.find_simplex(testpoints) < 0).reshape(self.x.shape)
+                iout,jout,kout = np.where(outside)
+                self.data[itime,iout,jout,kout] = np.nan
+            if self.verbose:
+                sys.stderr.write('\rProcessed vlos [{:s}] at {:s} ({:d}/{:d})'.format(
+                                 self.var_units['scan']['vlos'],
+                                 str(self.t[itime]), itime+1, self.Ntimes))
+        if self.verbose: sys.stderr.write('\n')
+
     def interpolate(self,
                     coordsys='streamwiseCS',
                     focaldist_D=5.0,
                     horzrange=[None,None], vertrange=[None,None], ds=2.5,
                     force2D=True,
                     at_focaldist_only=True,
-                    mask_outside=True):
+                    mask_outside=True,
+                    implementation='naturalneighbor'):
         """Interpolate sampled velocity field in the specified
         coordinate system to set up data array.
 
@@ -595,7 +629,6 @@ class SpinnerLidarMatlab(SampledData):
         implementation : str
             Currently options include 'naturalneighbor' and 'metpy'
         """
-        import naturalneighbor
         # save global properties
         self.focaldist_D = focaldist_D
         self.force2D = force2D
@@ -621,39 +654,12 @@ class SpinnerLidarMatlab(SampledData):
             proj = proj[at_focaldist]
         # set up interp_grid_def, update xs if force2D
         self._setup_grid(xs,ys,zs,horzrange,vertrange,ds)
-        if mask_outside:
-            from scipy.spatial import ConvexHull, Delaunay
-            testpoints = np.stack((self.y.ravel(), self.z.ravel()), axis=-1)
+        # initialize
         self.datasize = 1
-        self.data = np.empty([self.Ntimes,*self.x.shape])
-        # interpolate to regular grid for all times
-        for itime in range(self.Ntimes):
-            xi = xs[itime][np.isfinite(xs[itime])]
-            yi = ys[itime][np.isfinite(ys[itime])]
-            zi = zs[itime][np.isfinite(zs[itime])]
-            ui = vlos[itime][np.isfinite(vlos[itime])] \
-               / proj[itime][np.isfinite(proj[itime])]
-            assert np.all(np.isfinite(xi) == np.isfinite(yi))
-            assert np.all(np.isfinite(xi) == np.isfinite(zi))
-            assert np.all(np.isfinite(xi) == np.isfinite(ui))
-            points = np.stack((xi,yi,zi),axis=-1)
-            self.data[itime,:,:,:] = naturalneighbor.griddata(points, ui, self.interp_grid_def)
-            if mask_outside:
-                # set to nan points that are outside the rosette
-                # - identify point envelope
-                points2d = np.stack((yi,zi),axis=-1)
-                hull = ConvexHull(points)
-                # - use Delaunay tesselation to determine whether we're inside
-                #   the scan region or not
-                edge = Delaunay(points2d[hull.vertices])
-                outside = (edge.find_simplex(testpoints) < 0).reshape(self.x.shape)
-                iout,jout,kout = np.where(outside)
-                self.data[itime,iout,jout,kout] = np.nan
-            if self.verbose:
-                sys.stderr.write('\rProcessed vlos [{:s}] at {:s} ({:d}/{:d})'.format(
-                                 self.var_units['scan']['vlos'],
-                                 str(self.t[itime]), itime+1, self.Ntimes))
-        if self.verbose: sys.stderr.write('\n')
+        self.data = np.empty([self.Ntimes,*(self.x.shape)])
+        # finally, interpolate to regular grid over all times
+        if implementation == 'naturalneighbor':
+            self._interp_naturalneighbor(xs,ys,zs,vlos,proj,mask_outside)
 
     def to_netcdf(self,fpath,**kwargs):
         import xarray
