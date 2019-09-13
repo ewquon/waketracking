@@ -567,6 +567,33 @@ class SpinnerLidarMatlab(SampledData):
         only those with `scan_avg.focal_dist_set_D` equal to `focaldist`.
         
         v_projected = scan.vlos / scan.streamwiseCS.vlos_projection
+
+        Parameters
+        ----------
+        coordsys : str
+            Name of coordinate system, corresponding to self.scan.*CS
+        focaldist_D : float
+            Focal distance (in diameters) at which to extract scans
+        horzrange : list-like
+            Two values corresponding to the horizontal min/max extent
+            of the output grid
+        vertrange : list-like
+            Two values corresponding to the vertical min/max extent of
+            the output grid
+        ds : float
+            Uniform grid spacing of the output grid
+        force2D : bool
+            Assume all scan points at the specified focal distance are
+            coplanar (whereas in reality, points lie on a concave
+            surface)
+        at_focaldist_only : bool
+            Only extract scans at the specified focal distance; results
+            in a reduced set of scans (e.g., recorded scans during which
+            the focal distance was changing will be ignored)
+        mask_outside : bool
+            Set points outside the scan rosette to np.nan
+        implementation : str
+            Currently options include 'naturalneighbor' and 'metpy'
         """
         import naturalneighbor
         # save global properties
