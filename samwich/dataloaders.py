@@ -907,32 +907,46 @@ class XarrayData(SampledData):
         'check_vars' may be a function to verify and rename variable names on
         the fly.
         """
-        import xarray
+        import xarray as xr
         self.data_read_from = fpath
-        xa = xarray.open_dataset(fpath)
+        ds = xr.open_dataset(fpath)
         if check_vars is not None:
-            xa = check_vars(xa)
-        #print(xa)
+            ds = check_vars(ds)
+
+        # check for dimensions without coordinates
+        new_coords = {}
+        for dim in ds.dims.keys():
+            if dim not in ds.coords.keys():
+                print('Note: Dimension',dim,
+                      'does not have an associated coordinate, assigning 0')
+                new_coords[dim] = 0.
+                # to avoid "ValueError: Dimension 'dim' already exists."
+                ds = ds.squeeze(dim)
+        if len(new_coords) > 0:
+            # add missing coordinates
+            ds = ds.assign_coords(**new_coords)
+            # add back dimensions that were squeezed out
+            ds = ds.expand_dims(list(new_coords.keys()))
 
         self.ts = None # not a time series
-        self.t = xa.variables[tvar].values[trim_time]
+        self.t = ds.variables[tvar].values[trim_time]
         self.Ntimes = len(self.t)
 
-        self.NX = xa.dims[xvar]
-        self.NY = xa.dims[yvar]
-        self.NZ = xa.dims[zvar]
-        x = xa.variables[xvar].values
-        y = xa.variables[yvar].values
-        z = xa.variables[zvar].values
+        self.NX = ds.dims[xvar]
+        self.NY = ds.dims[yvar]
+        self.NZ = ds.dims[zvar]
+        x = ds.variables[xvar].values
+        y = ds.variables[yvar].values
+        z = ds.variables[zvar].values
         self.x, self.y, self.z = np.meshgrid(x,y,z,indexing='ij')
 
-        U = xa.variables[uvar].transpose(tvar,xvar,yvar,zvar).values
+        U = ds.variables[uvar].transpose(tvar,xvar,yvar,zvar).values
         U = U[trim_time,:,:,:]
         assert(U.shape == (self.Ntimes,self.NX,self.NY,self.NZ))
         V,W = None,None
         try:
-            V = xa[vvar]
-            W = xa[wvar]
+            V = ds[vvar]
+            W = ds[wvar]
         except KeyError:
             self.datasize = 1
             self.data = np.zeros((self.Ntimes,self.NX,self.NY,self.NZ))
@@ -947,7 +961,7 @@ class XarrayData(SampledData):
             self.data[:,:,:,:,0] = U
             self.data[:,:,:,:,1] = V
             self.data[:,:,:,:,2] = W
-        xa.close()
+        ds.close()
 
 
 #------------------------------------------------------------------------------
