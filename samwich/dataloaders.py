@@ -913,6 +913,21 @@ class XarrayData(SampledData):
         if check_vars is not None:
             ds = check_vars(ds)
 
+        # check for dimensions without coordinates
+        new_coords = {}
+        for dim in ds.dims.keys():
+            if dim not in ds.coords.keys():
+                print('Note: Dimension',dim,
+                      'does not have an associated coordinate, assigning 0')
+                new_coords[dim] = 0.
+                # to avoid "ValueError: Dimension 'dim' already exists."
+                ds = ds.squeeze(dim)
+        if len(new_coords) > 0:
+            # add missing coordinates
+            ds = ds.assign_coords(**new_coords)
+            # add back dimensions that were squeezed out
+            ds = ds.expand_dims(list(new_coords.keys()))
+
         self.ts = None # not a time series
         self.t = ds.variables[tvar].values[trim_time]
         self.Ntimes = len(self.t)
